@@ -43,7 +43,7 @@ const cashierItems: MenuItem[] = [
 ];
 
 const adminItems: MenuItem[] = [
-  makeItem(<Link href="/reports">Dashboard</Link>, '/reports', <BarChartOutlined />),
+  // makeItem(<Link href="/reports">Dashboard</Link>, '/reports', <BarChartOutlined />),
   makeItem(<Link href="/tickets">Tickets</Link>, '/tickets', <CarOutlined />),
   makeItem(
     <Link href="/cash-register">Caja</Link>,
@@ -87,8 +87,8 @@ export function AppSidebar() {
         position: 'sticky',
         top: 0,
         left: 0,
-        background: '#111111',
-        borderRight: '1px solid #1e1e1e',
+        background: '#fbf7f2',
+        borderRight: '1px solid #d9cfc4',
       }}
     >
       {/* Logo */}
@@ -99,7 +99,7 @@ export function AppSidebar() {
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'flex-start',
           padding: collapsed ? '0' : '0 20px',
-          borderBottom: '1px solid #1e1e1e',
+          borderBottom: '1px solid #d9cfc4',
           gap: 10,
         }}
       >
@@ -108,21 +108,21 @@ export function AppSidebar() {
             width: 28,
             height: 28,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #db2777, #9333ea)',
+            background: 'linear-gradient(145deg, #2f6d73, #6f8f94)',
             flexShrink: 0,
           }}
         />
         {!collapsed && (
           <span
             style={{
-              color: '#e0e0e0',
+              color: '#2f3639',
               fontWeight: 700,
               fontSize: 16,
               letterSpacing: '-0.5px',
               whiteSpace: 'nowrap',
             }}
           >
-            Playa <span style={{ color: '#db2777' }}>ROSE</span>
+            Playa <span style={{ color: '#2f6d73' }}>ROSE</span>
           </span>
         )}
       </div>
@@ -137,19 +137,19 @@ export function AppSidebar() {
           justifyContent: collapsed ? 'center' : 'flex-end',
           padding: '0 16px',
           cursor: 'pointer',
-          color: '#666',
-          borderBottom: '1px solid #1a1a1a',
+          color: '#65767d',
+          borderBottom: '1px solid #d9cfc4',
         }}
       >
         {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
       </div>
 
       <Menu
-        theme="dark"
+        theme="light"
         mode="inline"
         selectedKeys={[selectedKey]}
         items={items}
-        style={{ background: '#111111', border: 'none', marginTop: 8 }}
+        style={{ background: '#fbf7f2', border: 'none', marginTop: 8 }}
       />
     </Sider>
   );

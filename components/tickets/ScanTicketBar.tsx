@@ -47,8 +47,8 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
   return (
     <div
       style={{
-        background: '#1a1a1a',
-        border: '1px solid #2d2d2d',
+        background: '#fbf7f2',
+        border: '1px solid #d9cfc4',
         borderRadius: 12,
         padding: '12px 16px',
         marginBottom: 16,
@@ -59,7 +59,7 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
       }}
     >
       <div style={{ flex: 1, minWidth: 200 }}>
-        <Text style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>
+        <Text style={{ fontSize: 11, color: '#65767d', display: 'block', marginBottom: 4 }}>
           Escanear ticket (QR / código)
         </Text>
         <Space.Compact style={{ width: '100%' }}>
@@ -75,7 +75,6 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
             type="primary"
             loading={scanTicket.isPending}
             onClick={handleScan}
-            style={{ background: '#db2777', borderColor: '#db2777' }}
           >
             Cobrar
           </Button>
@@ -83,7 +82,7 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
       </div>
 
       <div style={{ flex: 1, minWidth: 200 }}>
-        <Text style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 4 }}>
+        <Text style={{ fontSize: 11, color: '#65767d', display: 'block', marginBottom: 4 }}>
           Comprobante post-pago (por placa)
         </Text>
         <Space.Compact style={{ width: '100%' }}>

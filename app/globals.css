@@ -1,7 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+  --app-bg: #f3eee8;
+  --app-surface: #fbf7f2;
+  --app-border: #d9cfc4;
+  --app-text: #2f3639;
+  --app-text-muted: #65767d;
+  --app-primary: #2f6d73;
 }
 
 * {
@@ -11,8 +17,8 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #0f0f0f;
-  color: #e0e0e0;
+  background-color: var(--app-bg);
+  color: var(--app-text);
 }
 
 /* Scrollbar */
@@ -21,21 +27,21 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #ebe1d6;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
+  background: #b8aea4;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #9f958b;
 }
 
 /* Ant Design layout fixes */
 .ant-layout {
-  background: #0f0f0f !important;
+  background: var(--app-bg) !important;
 }
 
 .ant-layout-sider {
-  background: #111111 !important;
+  background: var(--app-surface) !important;
 }

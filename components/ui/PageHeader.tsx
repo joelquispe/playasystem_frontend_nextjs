@@ -21,11 +21,11 @@ export function PageHeader({ title, subtitle, extra }: PageHeaderProps) {
       }}
     >
       <div>
-        <Title level={4} style={{ margin: 0, color: '#e0e0e0' }}>
+        <Title level={4} style={{ margin: 0, color: '#2f3639' }}>
           {title}
         </Title>
         {subtitle && (
-          <Text style={{ color: '#666', fontSize: 13 }}>{subtitle}</Text>
+          <Text style={{ color: '#65767d', fontSize: 13 }}>{subtitle}</Text>
         )}
       </div>
       {extra && <div>{extra}</div>}

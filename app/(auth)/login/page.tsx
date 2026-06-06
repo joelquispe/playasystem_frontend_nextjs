@@ -1,12 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Alert, Button, Card, Input, Typography } from 'antd';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Alert, Button, Card, Form, Input, Typography } from 'antd';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '@/providers/AuthProvider';
 
 const { Title, Text } = Typography;
@@ -19,8 +17,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { login, isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+  const { login } = useAuth();
 
   const {
     control,
@@ -31,12 +28,6 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: { username: '', password: '' },
   });
-
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      router.replace('/tickets');
-    }
-  }, [isLoading, isAuthenticated, router]);
 
   const onSubmit = async (values: LoginForm) => {
     try {
@@ -53,7 +44,12 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#0f0f0f',
+        backgroundColor: '#f3eee8',
+        backgroundImage:
+          'linear-gradient(rgba(243, 238, 232, 0.74), rgba(243, 238, 232, 0.82)), url("/images/background_image.png")',
+        backgroundPosition: 'center bottom',
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -68,25 +64,28 @@ export default function LoginPage() {
               width: 52,
               height: 52,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #db2777, #9333ea)',
+              background: 'linear-gradient(145deg, #2f6d73, #6f8f94)',
               margin: '0 auto 16px',
+              boxShadow: '0 12px 30px rgba(47, 109, 115, 0.28)',
             }}
           />
-          <Title level={3} style={{ color: '#e0e0e0', margin: 0 }}>
-            Playa <span style={{ color: '#db2777' }}>ROSE</span>
+          <Title level={3} style={{ color: '#2f3639', margin: 0 }}>
+            Playa <span style={{ color: '#2f6d73' }}>ROSE</span>
           </Title>
-          <Text style={{ color: '#888', fontSize: 13 }}>Sistema de gestión de parqueo</Text>
+          <Text style={{ color: '#65767d', fontSize: 13 }}>Sistema de gestión de parqueo</Text>
         </div>
 
         <Card
           style={{
-            background: '#1a1a1a',
-            border: '1px solid #2d2d2d',
-            borderRadius: 12,
+            background: 'rgba(255, 253, 251, 0.86)',
+            border: '1px solid #d9cfc4',
+            borderRadius: 16,
+            boxShadow: '0 20px 46px rgba(35, 45, 50, 0.14)',
+            backdropFilter: 'blur(6px)',
           }}
           styles={{ body: { padding: 32 } }}
         >
-          <Title level={4} style={{ color: '#e0e0e0', marginBottom: 24, marginTop: 0 }}>
+          <Title level={4} style={{ color: '#2f3639', marginBottom: 24, marginTop: 0 }}>
             Iniciar sesión
           </Title>
 
@@ -95,53 +94,83 @@ export default function LoginPage() {
               message={errors.root.message}
               type="error"
               showIcon
-              style={{ marginBottom: 20, background: '#2a1010', border: '1px solid #5a1a1a' }}
+              style={{ marginBottom: 20 }}
             />
           )}
 
-          <Form layout="vertical" onFinish={handleSubmit(onSubmit)} requiredMark={false}>
-            <Form.Item
-              label={<span style={{ color: '#aaa', fontSize: 13 }}>Usuario</span>}
-              validateStatus={errors.username ? 'error' : ''}
-              help={errors.username?.message}
-            >
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            noValidate
+          >
+            <div style={{ marginBottom: 20 }}>
+              <label
+                htmlFor="username"
+                style={{ color: '#65767d', fontSize: 13, display: 'block', marginBottom: 6 }}
+              >
+                Usuario
+              </label>
               <Controller
                 name="username"
                 control={control}
                 render={({ field }) => (
                   <Input
                     {...field}
-                    prefix={<UserOutlined style={{ color: '#555' }} />}
+                    id="username"
+                    prefix={<UserOutlined style={{ color: '#8e9ba0' }} />}
                     placeholder="Ingresa tu usuario"
                     size="large"
                     autoComplete="username"
-                    style={{ background: '#111', borderColor: '#2d2d2d', color: '#e0e0e0' }}
+                    status={errors.username ? 'error' : ''}
+                    style={{
+                      background: '#fffdfb',
+                      borderColor: '#d9cfc4',
+                      color: '#2f3639',
+                      borderRadius: 10,
+                    }}
                   />
                 )}
               />
-            </Form.Item>
+              {errors.username?.message && (
+                <div style={{ color: '#c4605c', fontSize: 12, marginTop: 6 }}>
+                  {errors.username.message}
+                </div>
+              )}
+            </div>
 
-            <Form.Item
-              label={<span style={{ color: '#aaa', fontSize: 13 }}>Contraseña</span>}
-              validateStatus={errors.password ? 'error' : ''}
-              help={errors.password?.message}
-              style={{ marginBottom: 24 }}
-            >
+            <div style={{ marginBottom: 24 }}>
+              <label
+                htmlFor="password"
+                style={{ color: '#65767d', fontSize: 13, display: 'block', marginBottom: 6 }}
+              >
+                Contraseña
+              </label>
               <Controller
                 name="password"
                 control={control}
                 render={({ field }) => (
                   <Input.Password
                     {...field}
-                    prefix={<LockOutlined style={{ color: '#555' }} />}
+                    id="password"
+                    prefix={<LockOutlined style={{ color: '#8e9ba0' }} />}
                     placeholder="Ingresa tu contraseña"
                     size="large"
                     autoComplete="current-password"
-                    style={{ background: '#111', borderColor: '#2d2d2d', color: '#e0e0e0' }}
+                    status={errors.password ? 'error' : ''}
+                    style={{
+                      background: '#fffdfb',
+                      borderColor: '#d9cfc4',
+                      color: '#2f3639',
+                      borderRadius: 10,
+                    }}
                   />
                 )}
               />
-            </Form.Item>
+              {errors.password?.message && (
+                <div style={{ color: '#c4605c', fontSize: 12, marginTop: 6 }}>
+                  {errors.password.message}
+                </div>
+              )}
+            </div>
 
             <Button
               type="primary"
@@ -150,15 +179,17 @@ export default function LoginPage() {
               block
               loading={isSubmitting}
               style={{
-                background: '#db2777',
-                borderColor: '#db2777',
+                background: '#2f6d73',
+                borderColor: '#2f6d73',
                 height: 44,
                 fontWeight: 600,
+                borderRadius: 10,
+                boxShadow: '0 10px 22px rgba(47, 109, 115, 0.25)',
               }}
             >
               Ingresar
             </Button>
-          </Form>
+          </form>
         </Card>
       </div>
     </div>

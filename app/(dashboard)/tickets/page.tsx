@@ -60,10 +60,9 @@ export default function TicketsPage() {
           <Space size={8}>
             <Badge
               count={tickets.length}
-              style={{ backgroundColor: '#db2777' }}
               showZero
             />
-            <Text style={{ color: '#888', fontSize: 13 }}>
+            <Text style={{ color: '#65767d', fontSize: 13 }}>
               {tickets.length === 1 ? 'vehículo en parqueo' : 'vehículos en parqueo'}
             </Text>
           </Space>
@@ -73,14 +72,12 @@ export default function TicketsPage() {
             <Button
               icon={<ReloadOutlined spin={isFetching} />}
               onClick={() => refetch()}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
             >
               Actualizar
             </Button>
             <Button
               icon={<FileAddOutlined />}
               onClick={() => setManualModalOpen(true)}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
             >
               Manual
             </Button>
@@ -88,7 +85,6 @@ export default function TicketsPage() {
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setNewDrawerOpen(true)}
-              style={{ background: '#db2777', borderColor: '#db2777' }}
             >
               Nuevo ticket
             </Button>
@@ -105,7 +101,7 @@ export default function TicketsPage() {
 
       {/* Filters */}
       <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <Text style={{ color: '#888', fontSize: 13 }}>Filtrar por tipo:</Text>
+        <Text style={{ color: '#65767d', fontSize: 13 }}>Filtrar por tipo:</Text>
         <Select
           allowClear
           placeholder="Todos los vehículos"
@@ -119,7 +115,6 @@ export default function TicketsPage() {
           <Tag
             closable
             onClose={() => setVehicleFilter(undefined)}
-            style={{ background: '#1a1a1a', border: '1px solid #2d2d2d', color: '#bbb' }}
           >
             {vehicles.find((v) => v.id === vehicleFilter)?.name}
           </Tag>
@@ -133,7 +128,7 @@ export default function TicketsPage() {
             <Col key={i} xs={24} sm={12} md={8} lg={6} xl={6}>
               <Skeleton
                 active
-                style={{ background: '#1a1a1a', borderRadius: 12, padding: 16 }}
+                style={{ borderRadius: 12, padding: 16 }}
               />
             </Col>
           ))}

@@ -51,7 +51,7 @@ export default function DashboardLayout({
       <div
         style={{
           minHeight: '100vh',
-          background: '#0f0f0f',
+          background: '#f3eee8',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -67,14 +67,14 @@ export default function DashboardLayout({
   const title = PAGE_TITLES[pathname] ?? 'Playa ROSE';
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#0f0f0f' }}>
+    <Layout style={{ minHeight: '100vh', background: '#f3eee8' }}>
       <AppSidebar />
-      <Layout style={{ background: '#0f0f0f' }}>
+      <Layout style={{ background: '#f3eee8' }}>
         <AppHeader title={title} />
         <Content
           style={{
             padding: '24px',
-            background: '#0f0f0f',
+            background: '#f3eee8',
             minHeight: 'calc(100vh - 56px)',
             overflow: 'auto',
           }}

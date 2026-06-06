@@ -20,8 +20,8 @@ export function AppHeader({ title }: AppHeaderProps) {
       key: 'user-info',
       label: (
         <div style={{ padding: '4px 0', minWidth: 160 }}>
-          <div style={{ fontWeight: 600, color: '#e0e0e0' }}>{user?.fullName}</div>
-          <div style={{ fontSize: 12, color: '#888' }}>@{user?.username}</div>
+          <div style={{ fontWeight: 600, color: '#2f3639' }}>{user?.fullName}</div>
+          <div style={{ fontSize: 12, color: '#65767d' }}>@{user?.username}</div>
         </div>
       ),
       disabled: true,
@@ -39,12 +39,12 @@ export function AppHeader({ title }: AppHeaderProps) {
   return (
     <Header
       style={{
-        background: '#111111',
+        background: '#fbf7f2',
         padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid #1e1e1e',
+        borderBottom: '1px solid #d9cfc4',
         height: 56,
         position: 'sticky',
         top: 0,
@@ -53,7 +53,7 @@ export function AppHeader({ title }: AppHeaderProps) {
     >
       <Text
         strong
-        style={{ fontSize: 16, color: '#e0e0e0', letterSpacing: '-0.3px' }}
+        style={{ fontSize: 16, color: '#2f3639', letterSpacing: '-0.3px' }}
       >
         {title}
       </Text>
@@ -71,7 +71,7 @@ export function AppHeader({ title }: AppHeaderProps) {
             <Avatar
               size={32}
               icon={<UserOutlined />}
-              style={{ background: '#db2777', cursor: 'pointer' }}
+              style={{ background: '#2f6d73', cursor: 'pointer' }}
             />
           </Button>
         </Dropdown>

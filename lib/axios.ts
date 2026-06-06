@@ -26,17 +26,17 @@ apiClient.interceptors.request.use(
 );
 
 // On 401 — clear session and redirect to login
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
-        clearAuth();
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  },
-);
+// apiClient.interceptors.response.use(
+//   (response) => response,
+//   (error: AxiosError) => {
+//     if (error.response?.status === 401) {
+//       if (typeof window !== 'undefined') {
+//         clearAuth();
+//         window.location.href = '/login';
+//       }
+//     }
+//     return Promise.reject(error);
+//   },
+// );
 
 export default apiClient;
