@@ -17,7 +17,7 @@ import {
   TruckOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { useVehicles } from '@/hooks/useVehicles';
+import { useVehicles, useSetVehicleDefaultRate } from '@/hooks/useVehicles';
 import { useRates } from '@/hooks/useRates';
 import { useCreateTicket } from '@/hooks/useTickets';
 import { useClientByPlate } from '@/hooks/useClients';
@@ -28,6 +28,7 @@ import {
   formatRateOption,
   getDefaultHourRate,
   getVehicleRates,
+  pickDefaultRate,
 } from '@/lib/vehicles';
 import { cardStyle, colors } from '@/lib/theme';
 
@@ -49,6 +50,7 @@ interface SistemaEntryPanelProps {
 export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
   const { data: vehicles = [] } = useVehicles();
   const createTicket = useCreateTicket();
+  const setVehicleDefaultRate = useSetVehicleDefaultRate();
 
   const [plate, setPlate] = useState('');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
@@ -65,31 +67,78 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     [vehicles, selectedVehicleId],
   );
 
-  const vehicleHourRates = useMemo(
-    () => getVehicleRates(selectedVehicle, 'hour_fraction'),
-    [selectedVehicle],
+  const isHourFractionMode = !!selectedVehicleId && !specialRateType;
+
+  const { data: hourFractionRates = [] } = useRates(
+    selectedVehicleId ?? undefined,
+    'hour_fraction',
+    { enabled: isHourFractionMode },
   );
 
-  const { data: overnightRates = [] } = useRates(selectedVehicleId ?? undefined, 'overnight');
-  const { data: flatRates = [] } = useRates(selectedVehicleId ?? undefined, 'flat');
+  const { data: overnightRates = [] } = useRates(undefined, 'overnight', {
+    enabled: specialRateType === 'overnight',
+  });
+
+  const { data: flatRates = [] } = useRates(undefined, 'flat', {
+    enabled: specialRateType === 'flat',
+  });
+
   const { data: subscriberRates = [] } = useRates(undefined, 'subscriber');
+
+  const vehicleHourRates = useMemo(() => {
+    if (hourFractionRates.length > 0) return hourFractionRates;
+    return getVehicleRates(selectedVehicle, 'hour_fraction');
+  }, [hourFractionRates, selectedVehicle]);
 
   useEffect(() => {
     if (foundClient?.vehicleTypeId) {
-      const clientVehicle = vehicles.find((v) => v.id === foundClient.vehicleTypeId);
       setSelectedVehicleId(foundClient.vehicleTypeId);
       setSpecialRateType(null);
-      setSelectedRateId(getDefaultHourRate(clientVehicle)?.id);
     }
     if (foundSubscriber && !foundClient?.specialRate) {
       setSpecialRateType('subscriber');
-      const defaultSubscriberRate = subscriberRates[0];
-      setSelectedRateId(defaultSubscriberRate?.id);
     }
     if (foundClient?.specialRate && parseFloat(foundClient.specialRate) > 0) {
       setClientModalOpen(true);
     }
-  }, [foundClient, foundSubscriber, vehicles, subscriberRates]);
+  }, [foundClient, foundSubscriber]);
+
+  useEffect(() => {
+    if (specialRateType) return;
+
+    const rates = vehicleHourRates;
+    if (rates.length === 0) {
+      setSelectedRateId(undefined);
+      return;
+    }
+
+    const isCurrentRateValid =
+      !!selectedRateId && rates.some((rate) => rate.id === selectedRateId);
+
+    if (!isCurrentRateValid) {
+      setSelectedRateId(pickDefaultRate(rates)?.id);
+    }
+  }, [selectedVehicleId, specialRateType, vehicleHourRates, selectedRateId]);
+
+  useEffect(() => {
+    if (!specialRateType) return;
+
+    const pool =
+      specialRateType === 'overnight'
+        ? overnightRates
+        : specialRateType === 'flat'
+          ? flatRates
+          : subscriberRates;
+
+    if (pool.length === 0) return;
+
+    const isCurrentRateValid =
+      !!selectedRateId && pool.some((rate) => rate.id === selectedRateId);
+
+    if (!isCurrentRateValid) {
+      setSelectedRateId(pool[0]?.id);
+    }
+  }, [specialRateType, overnightRates, flatRates, subscriberRates, selectedRateId]);
 
   const selectedRate = useMemo((): Rate | undefined => {
     if (specialRateType === 'subscriber' && foundSubscriber) {
@@ -134,10 +183,21 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     return 0;
   }, [specialRateType, foundSubscriber, foundClient, selectedRate]);
 
+  const persistDefaultRate = (vehicleTypeId: string, rateId: string) => {
+    setVehicleDefaultRate.mutate({ vehicleTypeId, rateId });
+  };
+
   const selectVehicle = (vehicle: VehicleType) => {
     setSelectedVehicleId(vehicle.id);
     setSpecialRateType(null);
-    setSelectedRateId(getDefaultHourRate(vehicle)?.id);
+
+    const defaultRate = getDefaultHourRate(vehicle);
+    const rateId = defaultRate?.id;
+    setSelectedRateId(rateId);
+
+    if (rateId) {
+      persistDefaultRate(vehicle.id, rateId);
+    }
   };
 
   const selectSpecial = (type: RateType) => {
@@ -158,7 +218,14 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     setSelectedRateId(pool[0]?.id);
   };
 
-  const handleRateChange = (rateId: string) => {
+  const handleHourRateChange = (rateId: string) => {
+    setSelectedRateId(rateId);
+    if (selectedVehicleId) {
+      persistDefaultRate(selectedVehicleId, rateId);
+    }
+  };
+
+  const handleSpecialRateChange = (rateId: string) => {
     setSelectedRateId(rateId);
   };
 
@@ -214,7 +281,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
           {vehicles.map((vehicle) => {
             const selected = selectedVehicleId === vehicle.id && !specialRateType;
             const defaultRate = getDefaultHourRate(vehicle);
-            const hourRates = getVehicleRates(vehicle, 'hour_fraction');
+            const hourRates = selected ? vehicleHourRates : getVehicleRates(vehicle, 'hour_fraction');
 
             return (
               <Col key={vehicle.id} xs={12} sm={8} md={6} lg={4}>
@@ -246,7 +313,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                       size="small"
                       placeholder="Tarifa"
                       value={selectedRateId}
-                      onChange={handleRateChange}
+                      onChange={handleHourRateChange}
                       options={rateOptions(hourRates)}
                       style={{ width: '100%', marginTop: 8 }}
                       onClick={(e) => e.stopPropagation()}
@@ -280,7 +347,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                   size="small"
                   placeholder="Seleccionar"
                   value={selectedRateId}
-                  onChange={handleRateChange}
+                  onChange={handleSpecialRateChange}
                   options={rateOptions(overnightRates)}
                   style={{ width: '100%', marginTop: 8 }}
                   onClick={(e) => e.stopPropagation()}
@@ -312,7 +379,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                   size="small"
                   placeholder="Seleccionar"
                   value={selectedRateId}
-                  onChange={handleRateChange}
+                  onChange={handleSpecialRateChange}
                   options={rateOptions(flatRates)}
                   style={{ width: '100%', marginTop: 8 }}
                   onClick={(e) => e.stopPropagation()}
@@ -344,7 +411,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                   size="small"
                   placeholder="Seleccionar"
                   value={selectedRateId}
-                  onChange={handleRateChange}
+                  onChange={handleSpecialRateChange}
                   options={rateOptions(subscriberRates)}
                   style={{ width: '100%', marginTop: 8 }}
                   onClick={(e) => e.stopPropagation()}

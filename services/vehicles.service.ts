@@ -51,6 +51,14 @@ export const vehiclesService = {
     return res.data.data;
   },
 
+  setDefaultRate: async (vehicleTypeId: string, rateId: string): Promise<VehicleType> => {
+    const res = await apiClient.patch<ApiResponse<VehicleType>>(
+      `/vehicles/${vehicleTypeId}/default-rate`,
+      { rateId },
+    );
+    return res.data.data;
+  },
+
   deactivateVehicleType: async (id: string): Promise<void> => {
     await apiClient.delete(`/vehicles/${id}`);
   },

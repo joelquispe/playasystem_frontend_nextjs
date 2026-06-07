@@ -6,6 +6,7 @@ import {
   CreateVehicleTypeDto,
   UpdateVehicleTypeDto,
 } from '@/services/vehicles.service';
+import { VehicleType } from '@/types/api';
 
 function getErrorMessage(err: unknown): string | undefined {
   return (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -57,6 +58,29 @@ export function useUpdateVehicleType() {
     },
     onError: (err: unknown) => {
       message.error(getErrorMessage(err) ?? 'Error al actualizar tipo de vehículo');
+    },
+  });
+}
+
+/** Persist selected hour/fraction rate as default (Sistema + admin). Silent on success. */
+export function useSetVehicleDefaultRate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ vehicleTypeId, rateId }: { vehicleTypeId: string; rateId: string }) =>
+      vehiclesService.setDefaultRate(vehicleTypeId, rateId),
+    onSuccess: (updatedVehicle) => {
+      qc.setQueryData(QUERY_KEYS.VEHICLES, (current: VehicleType[] | undefined) => {
+        if (!current) return [updatedVehicle];
+        return current.map((vehicle) =>
+          vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle,
+        );
+      });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.VEHICLES });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.VEHICLES_MANAGE });
+      qc.invalidateQueries({ queryKey: ['rates'] });
+    },
+    onError: (err: unknown) => {
+      message.error(getErrorMessage(err) ?? 'No se pudo guardar la tarifa del vehículo');
     },
   });
 }

@@ -17,7 +17,13 @@ export function getVehicleRates(vehicle: VehicleType | undefined, rateType?: Rat
 
 export function getDefaultHourRate(vehicle: VehicleType | undefined): Rate | undefined {
   const hourRates = getVehicleRates(vehicle, 'hour_fraction');
-  return hourRates.sort((a, b) => a.displayOrder - b.displayOrder)[0];
+  return pickDefaultRate(hourRates);
+}
+
+export function pickDefaultRate(rates: Rate[]): Rate | undefined {
+  return [...rates]
+    .filter((rate) => rate.isActive)
+    .sort((a, b) => a.displayOrder - b.displayOrder || Number(a.amount) - Number(b.amount))[0];
 }
 
 export function formatRateOption(rate: Rate): { value: string; label: string } {
