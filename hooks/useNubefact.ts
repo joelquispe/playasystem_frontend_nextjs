@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { identityService } from '@/services/identity.service';
 
 /**
- * Look up taxpayer info by RUC from APIS Peru.
+ * Look up taxpayer info by RUC from ApiPeru.dev.
  * Only runs when `ruc` is exactly 11 digits.
  */
 export function useTaxpayer(ruc: string) {
@@ -16,7 +16,7 @@ export function useTaxpayer(ruc: string) {
 }
 
 /**
- * Look up person name by DNI from APIS Peru.
+ * Look up person name by DNI from ApiPeru.dev (padrón reducido SUNAT).
  * Only runs when `dni` is exactly 8 digits.
  */
 export function usePersonByDni(dni: string) {

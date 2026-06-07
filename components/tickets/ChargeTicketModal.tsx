@@ -29,6 +29,7 @@ import { PlateEvent, Ticket } from '@/types/api';
 import { useChargeTicket, useCancelTicket } from '@/hooks/useTickets';
 import { usePlateEvents } from '@/hooks/usePlateEvents';
 import { useTaxpayer, usePersonByDni } from '@/hooks/useNubefact';
+import { formatDniDisplayName } from '@/services/identity.service';
 import { TicketPrintModal } from '@/components/tickets/TicketPrintModal';
 import { nestedPanelStyle, colors } from '@/lib/theme';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
@@ -111,10 +112,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
 
   useEffect(() => {
     if (!person) return;
-    const fullName = [person.nombres, person.apellidoPaterno, person.apellidoMaterno]
-      .filter(Boolean)
-      .join(' ')
-      .trim();
+    const fullName = formatDniDisplayName(person);
     if (fullName) setValue('customerBusinessName', fullName);
   }, [person, setValue]);
 
@@ -410,9 +408,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                     <Form.Item label="Cliente">
                       <Input
                         readOnly
-                        value={[person.nombres, person.apellidoPaterno, person.apellidoMaterno]
-                          .filter(Boolean)
-                          .join(' ')}
+                        value={formatDniDisplayName(person)}
                       />
                     </Form.Item>
                   )}

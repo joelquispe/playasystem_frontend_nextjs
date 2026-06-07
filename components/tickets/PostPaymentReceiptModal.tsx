@@ -8,6 +8,7 @@ import { Button, Form, Input, Modal, Select, Space, Spin, Typography } from 'ant
 import { Ticket } from '@/types/api';
 import { usePostPaymentReceipt } from '@/hooks/useTickets';
 import { useTaxpayer, usePersonByDni } from '@/hooks/useNubefact';
+import { formatDniDisplayName } from '@/services/identity.service';
 import { nestedPanelStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -73,10 +74,7 @@ export function PostPaymentReceiptModal({
 
   useEffect(() => {
     if (!person) return;
-    const fullName = [person.nombres, person.apellidoPaterno, person.apellidoMaterno]
-      .filter(Boolean)
-      .join(' ')
-      .trim();
+    const fullName = formatDniDisplayName(person);
     if (fullName) setValue('customerBusinessName', fullName);
   }, [person, setValue]);
 

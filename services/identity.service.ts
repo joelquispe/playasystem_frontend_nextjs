@@ -4,24 +4,23 @@ import { ApiResponse } from '@/types/api';
 export interface RucIdentity {
   ruc: string;
   razonSocial: string;
-  nombreComercial: string | null;
-  telefonos: string[];
-  estado: string;
-  condicion: string;
-  direccion: string;
-  departamento: string;
-  provincia: string;
-  distrito: string;
-  ubigeo?: string;
-  capital?: string;
+  direccion: string | null;
+  direccionCompleta: string | null;
+  estado: string | null;
+  condicion: string | null;
+  departamento: string | null;
+  provincia: string | null;
+  distrito: string | null;
+  ubigeo: string | null;
 }
 
 export interface DniIdentity {
   dni: string;
-  nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
-  codVerifica: string;
+  nombreCompleto: string | null;
+  nombres: string | null;
+  apellidoPaterno: string | null;
+  apellidoMaterno: string | null;
+  codVerifica: string | null;
 }
 
 export interface TaxpayerInfo extends RucIdentity {
@@ -39,3 +38,12 @@ export const identityService = {
     return res.data.data;
   },
 };
+
+/** Builds display name from a DNI lookup result. */
+export function formatDniDisplayName(person: DniIdentity): string {
+  if (person.nombreCompleto?.trim()) return person.nombreCompleto.trim();
+  return [person.nombres, person.apellidoPaterno, person.apellidoMaterno]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+}
