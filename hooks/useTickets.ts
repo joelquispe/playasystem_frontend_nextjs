@@ -84,6 +84,7 @@ export function useRevertTicket() {
     mutationFn: (id: string) => ticketsService.revertTicket(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.PENDING_TICKETS });
       message.success('Ticket revertido a pendiente');
     },
     onError: (err: unknown) => {

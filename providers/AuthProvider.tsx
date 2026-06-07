@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuth(data.accessToken, data.user);
     setUser(data.user);
     const isAdminUser = data.user.role === 'admin' || data.user.roleDetail?.slug === 'admin';
-    router.replace(isAdminUser ? '/reports' : '/tickets');
+    router.replace(isAdminUser ? '/reports' : '/sistema');
   }, [router]);
 
   const logout = useCallback(async () => {

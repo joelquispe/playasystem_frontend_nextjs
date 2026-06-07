@@ -61,6 +61,9 @@ export interface VehicleType {
   iconName: string;
   displayOrder: number;
   isActive: boolean;
+  rates?: Rate[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Rate {

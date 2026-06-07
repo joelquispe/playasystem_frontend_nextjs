@@ -8,6 +8,8 @@ export const QUERY_KEYS = {
   CLIENTS: ['clients'] as const,
   CLIENT: (id: string) => ['clients', id] as const,
   VEHICLES: ['vehicles'] as const,
+  VEHICLES_MANAGE: ['vehicles', 'manage'] as const,
+  VEHICLE: (id: string) => ['vehicles', id] as const,
   RATES: (vehicleTypeId?: string, rateType?: string) =>
     ['rates', vehicleTypeId, rateType] as const,
   CASH_REGISTER_CURRENT: ['cash-register', 'current'] as const,

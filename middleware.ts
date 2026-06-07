@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AUTH_TOKEN_KEY } from '@/lib/constants';
 
-// Routes that require authentication
 const PROTECTED_PREFIXES = [
+  '/sistema',
   '/tickets',
   '/cash-register',
   '/clients',
   '/reports',
   '/users',
+  '/roles',
   '/attendance',
   '/settings',
+  '/subscribers',
 ];
 
-// Routes that are only accessible to admins
-const ADMIN_ROUTES = ['/reports', '/users', '/attendance', '/settings', '/clients'];
-
-// Public routes (no auth needed)
 const PUBLIC_PATHS = ['/login'];
 
 export function middleware(request: NextRequest) {
@@ -28,22 +26,23 @@ export function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + '/'),
   );
 
-  // Redirect unauthenticated users away from protected routes
+  if (pathname === '/tickets' || pathname.startsWith('/tickets/')) {
+    return NextResponse.redirect(new URL('/sistema', request.url));
+  }
+
   if (isProtected && !token) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from login
   if (isPublic && token) {
-    return NextResponse.redirect(new URL('/tickets', request.url));
+    return NextResponse.redirect(new URL('/sistema', request.url));
   }
 
-  // Root redirect
   if (pathname === '/') {
     if (token) {
-      return NextResponse.redirect(new URL('/tickets', request.url));
+      return NextResponse.redirect(new URL('/sistema', request.url));
     }
     return NextResponse.redirect(new URL('/login', request.url));
   }
@@ -52,14 +51,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths EXCEPT:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico
-     * - api routes
-     */
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/).*)'],
 };

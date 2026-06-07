@@ -15,6 +15,7 @@ import {
   SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
+  TruckOutlined,
   UserOutlined,
   IdcardOutlined,
 } from '@ant-design/icons';
@@ -34,20 +35,21 @@ function makeItem(
 
 /** Cajero: solo operaciones (tickets → cobro → caja) y clientes */
 const cashierItems: MenuItem[] = [
-  makeItem(<Link href="/tickets">Tickets</Link>, '/tickets', <CarOutlined />),
+  makeItem(<Link href="/sistema">Sistema</Link>, '/sistema', <CarOutlined />),
   makeItem(<Link href="/cash-register">Caja</Link>, '/cash-register', <DollarOutlined />),
   makeItem(<Link href="/clients">Clientes</Link>, '/clients', <UserOutlined />),
 ];
 
 /** Admin: acceso completo */
 const adminItems: MenuItem[] = [
-  makeItem(<Link href="/tickets">Tickets</Link>, '/tickets', <CarOutlined />),
+  makeItem(<Link href="/sistema">Sistema</Link>, '/sistema', <CarOutlined />),
   makeItem(<Link href="/cash-register">Caja</Link>, '/cash-register', <DollarOutlined />),
   makeItem(<Link href="/clients">Clientes</Link>, '/clients', <UserOutlined />),
   makeItem(<Link href="/subscribers">Abonados</Link>, '/subscribers', <IdcardOutlined />),
   makeItem(<Link href="/reports">Reportes</Link>, '/reports', <BarChartOutlined />),
   makeItem(<Link href="/users">Usuarios</Link>, '/users', <TeamOutlined />),
   makeItem(<Link href="/roles">Roles</Link>, '/roles', <SafetyCertificateOutlined />),
+  makeItem(<Link href="/vehicles">Vehículos</Link>, '/vehicles', <TruckOutlined />),
   makeItem(<Link href="/attendance">Asistencia</Link>, '/attendance', <CalendarOutlined />),
   makeItem(<Link href="/settings">Configuración</Link>, '/settings', <SettingOutlined />),
 ];

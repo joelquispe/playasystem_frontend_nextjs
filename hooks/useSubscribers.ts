@@ -77,3 +77,12 @@ export function useCancelSubscriber() {
     },
   });
 }
+
+export function useActiveSubscriberByPlate(plate: string) {
+  return useQuery({
+    queryKey: ['subscribers', 'plate', plate.toUpperCase()],
+    queryFn: () => subscribersService.getActiveByPlate(plate),
+    enabled: plate.trim().length >= 3,
+    staleTime: 0,
+  });
+}

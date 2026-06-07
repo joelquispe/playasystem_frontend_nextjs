@@ -11,12 +11,13 @@ import { usePathname } from 'next/navigation';
 const { Content } = Layout;
 
 const PAGE_TITLES: Record<string, string> = {
-  '/tickets': 'Tickets',
+  '/sistema': 'Sistema',
   '/cash-register': 'Caja',
   '/clients': 'Clientes',
   '/reports': 'Reportes',
   '/users': 'Usuarios',
   '/roles': 'Roles',
+  '/vehicles': 'Tipos de Vehículo',
   '/attendance': 'Asistencia',
   '/settings': 'Configuración',
   '/subscribers': 'Abonados',
@@ -26,6 +27,7 @@ const ADMIN_ROUTES = [
   '/reports',
   '/users',
   '/roles',
+  '/vehicles',
   '/attendance',
   '/settings',
   '/subscribers',
@@ -49,7 +51,7 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
       if (ADMIN_ROUTES.includes(pathname)) {
-        router.replace('/tickets');
+        router.replace('/sistema');
       }
     }
   }, [isLoading, isAuthenticated, isAdmin, pathname, router]);
