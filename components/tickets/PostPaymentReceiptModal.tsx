@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Form, Input, Modal, Select, Space, Spin, Typography } from 'antd';
 import { Ticket } from '@/types/api';
 import { usePostPaymentReceipt } from '@/hooks/useTickets';
-import { nubefactService } from '@/services/nubefact.service';
+import { useTaxpayer, usePersonByDni } from '@/hooks/useNubefact';
 import { nestedPanelStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -47,7 +47,6 @@ export function PostPaymentReceiptModal({
   onClose,
 }: PostPaymentReceiptModalProps) {
   const postReceipt = usePostPaymentReceipt();
-  const [rucLoading, setRucLoading] = useState(false);
 
   const {
     control,
@@ -62,17 +61,24 @@ export function PostPaymentReceiptModal({
   });
 
   const receiptType = watch('receiptType');
-  const ruc = watch('customerRuc');
+  const ruc = watch('customerRuc') ?? '';
+  const dni = watch('customerDni') ?? '';
+
+  const { data: taxpayer, isFetching: rucLoading } = useTaxpayer(ruc);
+  const { data: person, isFetching: dniLoading } = usePersonByDni(dni);
 
   useEffect(() => {
-    if (receiptType !== 'factura' || !ruc || ruc.length !== 11) return;
-    setRucLoading(true);
-    nubefactService
-      .getTaxpayer(ruc)
-      .then((info) => setValue('customerBusinessName', info.businessName))
-      .catch(() => {})
-      .finally(() => setRucLoading(false));
-  }, [ruc, receiptType, setValue]);
+    if (taxpayer?.businessName) setValue('customerBusinessName', taxpayer.businessName);
+  }, [taxpayer, setValue]);
+
+  useEffect(() => {
+    if (!person) return;
+    const fullName = [person.nombres, person.apellidoPaterno, person.apellidoMaterno]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    if (fullName) setValue('customerBusinessName', fullName);
+  }, [person, setValue]);
 
   const onSubmit = async (data: FormData) => {
     if (!ticket) return;
@@ -143,7 +149,12 @@ export function PostPaymentReceiptModal({
                   name="customerDni"
                   control={control}
                   render={({ field }) => (
-                    <Input {...field} maxLength={8} placeholder="12345678" />
+                    <Input
+                      {...field}
+                      maxLength={8}
+                      placeholder="12345678"
+                      suffix={dniLoading ? <Spin size="small" /> : null}
+                    />
                   )}
                 />
               </Form.Item>

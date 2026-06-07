@@ -31,10 +31,10 @@ export function useCreateTicket() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateTicketDto) => ticketsService.createTicket(data),
-    onSuccess: () => {
+    onSuccess: (ticket) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PENDING_TICKETS });
-      message.success('Ticket creado correctamente');
+      return ticket;
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;

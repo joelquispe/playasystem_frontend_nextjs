@@ -15,6 +15,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import {
   KeyOutlined,
+  PrinterOutlined,
   PlusOutlined,
   ReloadOutlined,
   RollbackOutlined,
@@ -52,6 +53,7 @@ interface SistemaTicketsTableProps {
   onCharge: (ticket: Ticket) => void;
   onReceipt: (ticket: Ticket) => void;
   onAddCharge: (ticket: Ticket) => void;
+  onPrint: (ticket: Ticket) => void;
 }
 
 export function SistemaTicketsTable({
@@ -62,6 +64,7 @@ export function SistemaTicketsTable({
   onCharge,
   onReceipt,
   onAddCharge,
+  onPrint,
 }: SistemaTicketsTableProps) {
   const [filter, setFilter] = useState<'all' | 'pending'>('pending');
   const { data: clients = [] } = useClients();
@@ -239,6 +242,23 @@ export function SistemaTicketsTable({
         >
           <KeyOutlined />
         </Checkbox>
+      ),
+    },
+    {
+      title: 'Ticket',
+      key: 'print',
+      width: 80,
+      align: 'center' as const,
+      render: (_: unknown, r: Ticket) => (
+        <Tooltip title="Ver / Reimprimir ticket">
+          <Button
+            size="small"
+            type="text"
+            icon={<PrinterOutlined />}
+            onClick={() => onPrint(r)}
+            style={{ color: colors.primary }}
+          />
+        </Tooltip>
       ),
     },
     {

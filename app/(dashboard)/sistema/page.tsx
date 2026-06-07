@@ -11,6 +11,7 @@ import { ChargeTicketModal } from '@/components/tickets/ChargeTicketModal';
 import { AdditionalChargeModal } from '@/components/tickets/AdditionalChargeModal';
 import { ManualTicketModal } from '@/components/tickets/ManualTicketModal';
 import { PostPaymentReceiptModal } from '@/components/tickets/PostPaymentReceiptModal';
+import { TicketPrintModal } from '@/components/tickets/TicketPrintModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function SistemaPage() {
@@ -20,6 +21,7 @@ export default function SistemaPage() {
   const [addChargeTicket, setAddChargeTicket] = useState<Ticket | null>(null);
   const [manualModalOpen, setManualModalOpen] = useState(false);
   const [receiptTicket, setReceiptTicket] = useState<Ticket | null>(null);
+  const [printTicket, setPrintTicket] = useState<Ticket | null>(null);
 
   return (
     <>
@@ -43,6 +45,7 @@ export default function SistemaPage() {
         onCharge={setChargeTicket}
         onReceipt={setReceiptTicket}
         onAddCharge={setAddChargeTicket}
+        onPrint={setPrintTicket}
       />
 
       <ChargeTicketModal
@@ -63,6 +66,12 @@ export default function SistemaPage() {
         ticket={receiptTicket}
         open={!!receiptTicket}
         onClose={() => setReceiptTicket(null)}
+      />
+
+      <TicketPrintModal
+        ticket={printTicket}
+        open={!!printTicket}
+        onClose={() => setPrintTicket(null)}
       />
     </>
   );

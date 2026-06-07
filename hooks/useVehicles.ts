@@ -68,16 +68,17 @@ export function useSetVehicleDefaultRate() {
   return useMutation({
     mutationFn: ({ vehicleTypeId, rateId }: { vehicleTypeId: string; rateId: string }) =>
       vehiclesService.setDefaultRate(vehicleTypeId, rateId),
-    onSuccess: (updatedVehicle) => {
+    onSuccess: (updatedVehicle, { vehicleTypeId }) => {
       qc.setQueryData(QUERY_KEYS.VEHICLES, (current: VehicleType[] | undefined) => {
         if (!current) return [updatedVehicle];
         return current.map((vehicle) =>
           vehicle.id === updatedVehicle.id ? updatedVehicle : vehicle,
         );
       });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.VEHICLES });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.VEHICLES_MANAGE });
-      qc.invalidateQueries({ queryKey: ['rates'] });
+
+      const hourRates =
+        updatedVehicle.rates?.filter((rate) => rate.rateType === 'hour_fraction') ?? [];
+      qc.setQueryData(QUERY_KEYS.RATES(vehicleTypeId, 'hour_fraction'), hourRates);
     },
     onError: (err: unknown) => {
       message.error(getErrorMessage(err) ?? 'No se pudo guardar la tarifa del vehículo');
