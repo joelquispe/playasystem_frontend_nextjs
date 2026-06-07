@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import { useCloseShift } from '@/hooks/useCashRegister';
 import { CashRegister } from '@/types/api';
+import { nestedPanelStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -76,15 +77,14 @@ export function CloseShiftModal({ open, onClose, shift }: CloseShiftModalProps) 
       {shift && (
         <div
           style={{
-            background: '#111',
-            borderRadius: 8,
+            ...nestedPanelStyle,
             padding: '12px 16px',
             marginBottom: 16,
             display: 'flex',
             justifyContent: 'space-between',
           }}
         >
-          <Text style={{ color: '#888' }}>Total en sistema:</Text>
+          <Text style={{ color: colors.textMuted }}>Total en sistema:</Text>
           <Text strong style={{ color: '#db2777', fontSize: 18 }}>
             s/. {parseFloat(shift.totalAmount).toFixed(2)}
           </Text>

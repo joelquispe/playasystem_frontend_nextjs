@@ -2,6 +2,7 @@
 
 import { ConfigProvider, theme } from 'antd';
 import esES from 'antd/locale/es_ES';
+import { colors } from '@/lib/theme';
 
 export function AntdProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -10,21 +11,21 @@ export function AntdProvider({ children }: { children: React.ReactNode }) {
       theme={{
         algorithm: theme.defaultAlgorithm,
         token: {
-          colorPrimary: '#2f6d73',
+          colorPrimary: colors.primary,
           colorPrimaryHover: '#3e7f86',
           colorPrimaryActive: '#255a5f',
-          colorBgBase: '#f3eee8',
-          colorBgContainer: '#fbf7f2',
-          colorBgElevated: '#fffdfb',
-          colorBgLayout: '#f3eee8',
-          colorBorder: '#d9cfc4',
-          colorBorderSecondary: '#e8dfd6',
+          colorBgBase: colors.contentBg,
+          colorBgContainer: colors.cardBg,
+          colorBgElevated: colors.contentBg,
+          colorBgLayout: colors.contentBg,
+          colorBorder: colors.cardBorder,
+          colorBorderSecondary: colors.divider,
           borderRadius: 10,
           fontFamily:
             'var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
           fontSize: 14,
-          colorText: '#2f3639',
-          colorTextSecondary: '#65767d',
+          colorText: colors.text,
+          colorTextSecondary: colors.textMuted,
           colorTextDisabled: '#99a6ab',
           colorSuccess: '#4c8f5a',
           colorWarning: '#d39a3f',
@@ -33,54 +34,61 @@ export function AntdProvider({ children }: { children: React.ReactNode }) {
         },
         components: {
           Layout: {
-            siderBg: '#fbf7f2',
-            headerBg: '#fbf7f2',
-            bodyBg: '#f3eee8',
+            siderBg: colors.sidebarBg,
+            headerBg: colors.sidebarBg,
+            bodyBg: colors.contentBg,
           },
           Menu: {
-            itemBg: '#fbf7f2',
+            itemBg: colors.sidebarBg,
             itemColor: '#3f4c52',
             itemSelectedBg: '#dde9e9',
             itemSelectedColor: '#255a5f',
             itemHoverBg: '#edf2ee',
-            itemHoverColor: '#2f6d73',
-            subMenuItemBg: '#f7f1eb',
+            itemHoverColor: colors.primary,
+            subMenuItemBg: colors.cardBg,
           },
           Card: {
-            colorBgContainer: '#fffdfb',
-            colorBorderSecondary: '#e8dfd6',
+            colorBgContainer: colors.cardBg,
+            colorBorderSecondary: colors.divider,
           },
           Table: {
-            headerBg: '#f4ede5',
+            headerBg: colors.nestedBgMuted,
             rowHoverBg: '#f5f8f6',
+            colorBgContainer: colors.cardBg,
           },
           Modal: {
-            contentBg: '#fffdfb',
-            headerBg: '#fffdfb',
+            contentBg: colors.contentBg,
+            headerBg: colors.contentBg,
           },
           Drawer: {
-            colorBgElevated: '#fffdfb',
+            colorBgElevated: colors.contentBg,
           },
           Input: {
-            colorBgContainer: '#fffdfb',
-            colorBorder: '#d9cfc4',
-            activeBorderColor: '#2f6d73',
+            colorBgContainer: colors.contentBg,
+            colorBorder: colors.cardBorder,
+            activeBorderColor: colors.primary,
             hoverBorderColor: '#7ea0a5',
           },
           Select: {
-            colorBgContainer: '#fffdfb',
-            colorBorder: '#d9cfc4',
+            colorBgContainer: colors.contentBg,
+            colorBorder: colors.cardBorder,
           },
           Button: {
-            colorPrimary: '#2f6d73',
+            colorPrimary: colors.primary,
             colorPrimaryHover: '#3e7f86',
             colorPrimaryActive: '#255a5f',
+            defaultBg: colors.cardBg,
+            defaultBorderColor: colors.cardBorder,
           },
           Tag: {
-            colorBgContainer: '#edf3f1',
+            colorBgContainer: colors.iconBg,
           },
           Statistic: {
-            colorTextDescription: '#65767d',
+            colorTextDescription: colors.textMuted,
+          },
+          Skeleton: {
+            colorFill: colors.nestedBgMuted,
+            colorFillContent: colors.divider,
           },
         },
       }}

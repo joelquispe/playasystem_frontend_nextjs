@@ -23,6 +23,7 @@ import { Ticket } from '@/types/api';
 import { useChargeTicket } from '@/hooks/useTickets';
 import { usePlateEvents } from '@/hooks/usePlateEvents';
 import { nubefactService } from '@/services/nubefact.service';
+import { nestedPanelStyle, colors } from '@/lib/theme';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 
 const { Text } = Typography;
@@ -147,8 +148,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
       {/* Summary */}
       <div
         style={{
-          background: '#111',
-          borderRadius: 8,
+          ...nestedPanelStyle,
           padding: '12px 16px',
           marginBottom: 16,
           display: 'grid',
@@ -157,26 +157,26 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
         }}
       >
         <div>
-          <Text style={{ fontSize: 11, color: '#666' }}>Entrada</Text>
-          <div style={{ color: '#e0e0e0', fontWeight: 600 }}>
+          <Text style={{ fontSize: 11, color: colors.textMuted }}>Entrada</Text>
+          <div style={{ color: colors.text, fontWeight: 600 }}>
             {entryTime.format('HH:mm')}
           </div>
         </div>
         <div>
-          <Text style={{ fontSize: 11, color: '#666' }}>Tiempo</Text>
-          <div style={{ color: '#e0e0e0', fontWeight: 600 }}>
+          <Text style={{ fontSize: 11, color: colors.textMuted }}>Tiempo</Text>
+          <div style={{ color: colors.text, fontWeight: 600 }}>
             {elapsedH > 0 ? `${elapsedH}h ` : ''}{elapsedM}m
           </div>
         </div>
         <div>
-          <Text style={{ fontSize: 11, color: '#666' }}>Tarifa</Text>
+          <Text style={{ fontSize: 11, color: colors.textMuted }}>Tarifa</Text>
           <div style={{ color: '#db2777', fontWeight: 600 }}>
             s/. {parseFloat(ticket.rateAmount).toFixed(2)}
           </div>
         </div>
         {additionalTotal > 0 && (
           <div>
-            <Text style={{ fontSize: 11, color: '#666' }}>Cargos extra</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>Cargos extra</Text>
             <div style={{ color: '#f59e0b', fontWeight: 600 }}>
               + s/. {additionalTotal.toFixed(2)}
             </div>
@@ -293,17 +293,16 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
         {plateEvents.length > 0 && (
           <div
             style={{
-              background: '#111',
-              borderRadius: 8,
+              ...nestedPanelStyle,
               padding: '8px 12px',
               marginBottom: 12,
               maxHeight: 100,
               overflow: 'auto',
             }}
           >
-            <Text style={{ fontSize: 11, color: '#666' }}>Historial de eventos</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>Historial de eventos</Text>
             {plateEvents.slice(0, 5).map((ev) => (
-              <div key={ev.id} style={{ fontSize: 12, color: '#aaa', marginTop: 4 }}>
+              <div key={ev.id} style={{ fontSize: 12, color: colors.textSubtle, marginTop: 4 }}>
                 · {ev.observation}
               </div>
             ))}

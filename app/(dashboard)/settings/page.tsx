@@ -20,6 +20,7 @@ import dayjs from 'dayjs';
 import { useSystemConfig, useUpsertConfig } from '@/hooks/useSystemConfig';
 import { SystemConfig } from '@/types/api';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { cardStyle, colors, nestedPanelStyle } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -95,11 +96,11 @@ export default function SettingsPage() {
       key: 'configKey',
       render: (v: string) => (
         <Space direction="vertical" size={0}>
-          <Text strong style={{ color: '#e0e0e0', fontFamily: 'monospace', fontSize: 13 }}>
+          <Text strong style={{ color: colors.text, fontFamily: 'monospace', fontSize: 13 }}>
             {v}
           </Text>
           {CONFIG_DESCRIPTIONS[v] && (
-            <Text style={{ color: '#666', fontSize: 11 }}>{CONFIG_DESCRIPTIONS[v]}</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11 }}>{CONFIG_DESCRIPTIONS[v]}</Text>
           )}
         </Space>
       ),
@@ -118,16 +119,16 @@ export default function SettingsPage() {
                 {...field}
                 size="small"
                 status={editErrors.configValue ? 'error' : ''}
-                style={{ background: '#111', borderColor: '#2d2d2d', width: 220 }}
+                style={{ width: 220 }}
               />
             )}
           />
         ) : (
           <Tag
             style={{
-              background: '#111',
-              border: '1px solid #2d2d2d',
-              color: '#db2777',
+              background: colors.nestedBgMuted,
+              border: `1px solid ${colors.cardBorder}`,
+              color: colors.accent,
               fontFamily: 'monospace',
               fontSize: 13,
             }}
@@ -141,7 +142,7 @@ export default function SettingsPage() {
       dataIndex: 'updatedAt',
       key: 'updatedAt',
       render: (v: string) => (
-        <Text style={{ color: '#666', fontSize: 12 }}>{dayjs(v).format('DD/MM/YYYY HH:mm')}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 12 }}>{dayjs(v).format('DD/MM/YYYY HH:mm')}</Text>
       ),
     },
     {
@@ -191,16 +192,8 @@ export default function SettingsPage() {
 
       {/* Add form */}
       {addOpen && (
-        <div
-          style={{
-            background: '#1a1a1a',
-            border: '1px solid #2d2d2d',
-            borderRadius: 10,
-            padding: 20,
-            marginBottom: 20,
-          }}
-        >
-          <Text strong style={{ color: '#e0e0e0', display: 'block', marginBottom: 12 }}>
+        <div style={{ ...cardStyle, padding: 20, marginBottom: 20 }}>
+          <Text strong style={{ color: colors.text, display: 'block', marginBottom: 12 }}>
             Agregar clave de configuración
           </Text>
           <Form layout="inline" onFinish={handleAdd(onAdd)}>
@@ -215,7 +208,7 @@ export default function SettingsPage() {
                   <Input
                     {...field}
                     placeholder="Clave (ej. parking_name)"
-                    style={{ background: '#111', borderColor: '#2d2d2d', width: 220 }}
+                    style={{ width: 220 }}
                   />
                 )}
               />
@@ -231,7 +224,7 @@ export default function SettingsPage() {
                   <Input
                     {...field}
                     placeholder="Valor"
-                    style={{ background: '#111', borderColor: '#2d2d2d', width: 200 }}
+                    style={{ width: 200 }}
                   />
                 )}
               />
@@ -244,7 +237,7 @@ export default function SettingsPage() {
                   <Input
                     {...field}
                     placeholder="Descripción (opcional)"
-                    style={{ background: '#111', borderColor: '#2d2d2d', width: 200 }}
+                    style={{ width: 200 }}
                   />
                 )}
               />
@@ -277,7 +270,7 @@ export default function SettingsPage() {
           columns={columns}
           rowKey="id"
           pagination={false}
-          style={{ background: '#1a1a1a', borderRadius: 12 }}
+          style={cardStyle}
         />
       )}
     </>

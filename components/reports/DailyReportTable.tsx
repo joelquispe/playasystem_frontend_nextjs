@@ -4,11 +4,11 @@ import { Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { Ticket } from '@/types/api';
-import {
-  PAYMENT_METHOD_LABELS,
+import { PAYMENT_METHOD_LABELS,
   RATE_TYPE_LABELS,
   TICKET_STATUS_LABELS,
 } from '@/lib/constants';
+import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -24,7 +24,7 @@ export function DailyReportTable({ tickets, loading }: DailyReportTableProps) {
       dataIndex: 'plate',
       key: 'plate',
       render: (v: string) => (
-        <Text strong style={{ fontFamily: 'monospace', color: '#e0e0e0' }}>
+        <Text strong style={{ fontFamily: 'monospace', color: colors.text }}>
           {v}
         </Text>
       ),
@@ -94,7 +94,7 @@ export function DailyReportTable({ tickets, loading }: DailyReportTableProps) {
   return (
     <>
       <div style={{ marginBottom: 12 }}>
-        <Text style={{ color: '#888' }}>
+        <Text style={{ color: colors.textMuted }}>
           {tickets.length} tickets · Total:{' '}
           <Text strong style={{ color: '#db2777' }}>
             s/. {total.toFixed(2)}
@@ -109,7 +109,7 @@ export function DailyReportTable({ tickets, loading }: DailyReportTableProps) {
         pagination={{ pageSize: 15 }}
         size="small"
         scroll={{ x: 900 }}
-        style={{ background: '#1a1a1a', borderRadius: 12 }}
+        style={cardStyle}
       />
     </>
   );

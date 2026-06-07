@@ -4,6 +4,7 @@ import { Avatar, Button, Dropdown, Layout, Space, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { useAuth } from '@/providers/AuthProvider';
+import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -60,10 +61,10 @@ export function AppHeader({ title }: AppHeaderProps) {
 
       <Space>
         <Tag
-          color={user?.role === 'admin' ? 'volcano' : 'geekblue'}
+          color={user && getUserRoleSlug(user) === 'admin' ? 'volcano' : 'geekblue'}
           style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}
         >
-          {user?.role}
+          {user ? getUserRoleName(user) : ''}
         </Tag>
 
         <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>

@@ -5,6 +5,8 @@ import type { ColumnsType } from 'antd/es/table';
 import { EditOutlined, KeyOutlined, StopOutlined } from '@ant-design/icons';
 import { User } from '@/types/api';
 import { useDeleteUser, useUpdateUser } from '@/hooks/useUsers';
+import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
+import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -25,30 +27,32 @@ export function UserTable({ data, loading, onEdit, onResetPassword }: UserTableP
       key: 'username',
       render: (_, record: User) => (
         <Space direction="vertical" size={0}>
-          <Text style={{ color: '#e0e0e0', fontFamily: 'monospace', fontWeight: 600 }}>
+          <Text style={{ color: colors.text, fontFamily: 'monospace', fontWeight: 600 }}>
             {record.username}
           </Text>
-          <Text style={{ fontSize: 12, color: '#888' }}>{record.fullName}</Text>
+          <Text style={{ fontSize: 12, color: colors.textMuted }}>{record.fullName}</Text>
         </Space>
       ),
     },
     {
       title: 'Rol',
-      dataIndex: 'role',
       key: 'role',
-      width: 90,
-      render: (role: string) => (
-        <Tag color={role === 'admin' ? 'volcano' : 'geekblue'}>
-          {role.toUpperCase()}
-        </Tag>
-      ),
+      width: 130,
+      render: (_, record: User) => {
+        const slug = getUserRoleSlug(record);
+        return (
+          <Tag color={slug === 'admin' ? 'volcano' : 'geekblue'}>
+            {getUserRoleName(record)}
+          </Tag>
+        );
+      },
     },
     {
       title: 'Horario',
       key: 'schedule',
       width: 130,
       render: (_, record: User) => (
-        <Text style={{ fontSize: 12, color: '#888' }}>
+        <Text style={{ fontSize: 12, color: colors.textMuted }}>
           {record.scheduleStart} – {record.scheduleEnd}
         </Text>
       ),
@@ -125,6 +129,7 @@ export function UserTable({ data, loading, onEdit, onResetPassword }: UserTableP
       loading={loading}
       size="middle"
       pagination={{ pageSize: 20, showSizeChanger: false }}
+      style={cardStyle}
     />
   );
 }

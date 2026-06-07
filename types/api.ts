@@ -1,6 +1,18 @@
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
-export type Role = 'admin' | 'cashier';
+export type RoleSlug = 'admin' | 'cashier';
+/** @deprecated Use RoleSlug — kept for backward compatibility */
+export type Role = RoleSlug;
+
+export interface RoleEntity {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 export type TicketStatus = 'pending' | 'paid' | 'cancelled' | 'manual';
 export type RateType = 'hour_fraction' | 'overnight' | 'flat' | 'subscriber';
 export type PaymentMethod = 'cash' | 'yape' | 'plin' | 'card';
@@ -31,9 +43,12 @@ export interface User {
   id: string;
   username: string;
   fullName: string;
-  role: Role;
-  scheduleStart: string;
-  scheduleEnd: string;
+  roleId: string;
+  /** Slug on login; nested RoleEntity on list/detail */
+  role: RoleSlug | RoleEntity;
+  roleDetail?: RoleEntity;
+  scheduleStart?: string;
+  scheduleEnd?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

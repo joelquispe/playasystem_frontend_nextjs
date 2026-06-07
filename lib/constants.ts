@@ -27,6 +27,8 @@ export const QUERY_KEYS = {
   PLATE_EVENTS: (plate: string) => ['events', plate] as const,
   SYSTEM_CONFIG: ['system-config'] as const,
   SUBSCRIBERS: (status?: string) => ['subscribers', status] as const,
+  ROLES: ['roles'] as const,
+  ROLE: (id: string) => ['roles', id] as const,
 } as const;
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {

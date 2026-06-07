@@ -4,23 +4,24 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button, Form, Input, Modal, Select, Switch, TimePicker } from 'antd';
-import dayjs from 'dayjs';
+import { Button, Form, Input, Modal, Select, Switch } from 'antd';
 import { User } from '@/types/api';
 import { useCreateUser, useUpdateUser } from '@/hooks/useUsers';
+import { useRoles } from '@/hooks/useRoles';
+import { getUserRoleId } from '@/lib/roles';
 
 const createSchema = z.object({
   username: z.string().min(1, 'Requerido'),
   fullName: z.string().min(1, 'Requerido'),
   password: z.string().min(6, 'Mínimo 6 caracteres'),
-  role: z.enum(['admin', 'cashier']).default('cashier'),
+  roleId: z.string().uuid('Selecciona un rol'),
   scheduleStart: z.string().optional(),
   scheduleEnd: z.string().optional(),
 });
 
 const editSchema = z.object({
   fullName: z.string().min(1, 'Requerido'),
-  role: z.enum(['admin', 'cashier']),
+  roleId: z.string().uuid('Selecciona un rol'),
   scheduleStart: z.string().optional(),
   scheduleEnd: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -38,6 +39,13 @@ interface UserFormModalProps {
 export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
+  const { data: roles = [] } = useRoles();
+
+  const roleOptions = roles
+    .filter((r) => r.isActive)
+    .map((r) => ({ value: r.id, label: `${r.name} (${r.slug})` }));
+
+  const defaultCashierRoleId = roles.find((r) => r.slug === 'cashier' && r.isActive)?.id ?? '';
 
   const {
     control,
@@ -46,22 +54,22 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
     formState: { errors },
   } = useForm<CreateFormData | EditFormData>({
     resolver: zodResolver(editing ? editSchema : createSchema) as never,
-    defaultValues: { role: 'cashier', isActive: true },
+    defaultValues: { roleId: defaultCashierRoleId, isActive: true },
   });
 
   useEffect(() => {
     if (editing) {
       reset({
         fullName: editing.fullName,
-        role: editing.role,
+        roleId: getUserRoleId(editing) || defaultCashierRoleId,
         scheduleStart: editing.scheduleStart,
         scheduleEnd: editing.scheduleEnd,
         isActive: editing.isActive,
       });
-    } else {
-      reset({ role: 'cashier', isActive: true });
+    } else if (defaultCashierRoleId) {
+      reset({ roleId: defaultCashierRoleId, isActive: true });
     }
-  }, [editing, reset]);
+  }, [editing, reset, defaultCashierRoleId]);
 
   const onSubmit = async (data: CreateFormData | EditFormData) => {
     if (editing) {
@@ -79,7 +87,10 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
     <Modal
       title={editing ? 'Editar Usuario' : 'Nuevo Usuario'}
       open={open}
-      onCancel={() => { reset(); onClose(); }}
+      onCancel={() => {
+        reset();
+        onClose();
+      }}
       footer={null}
       width={460}
     >
@@ -96,7 +107,9 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
               render={({ field }) => (
                 <Input
                   {...field}
-                  onChange={(e) => (field as { onChange: (v: string) => void }).onChange(e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    (field as { onChange: (v: string) => void }).onChange(e.target.value.toUpperCase())
+                  }
                   placeholder="CAJERO1"
                   style={{ fontFamily: 'monospace' }}
                 />
@@ -133,17 +146,20 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
           </Form.Item>
         )}
 
-        <Form.Item label="Rol">
+        <Form.Item
+          label="Rol"
+          validateStatus={errors.roleId ? 'error' : ''}
+          help={errors.roleId?.message}
+        >
           <Controller
-            name="role"
+            name="roleId"
             control={control as never}
             render={({ field }) => (
               <Select
                 {...field}
-                options={[
-                  { value: 'cashier', label: 'Cajero' },
-                  { value: 'admin', label: 'Administrador' },
-                ]}
+                options={roleOptions}
+                placeholder="Seleccionar rol"
+                loading={!roles.length}
               />
             )}
           />
@@ -189,7 +205,14 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
       </Form>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <Button onClick={() => { reset(); onClose(); }}>Cancelar</Button>
+        <Button
+          onClick={() => {
+            reset();
+            onClose();
+          }}
+        >
+          Cancelar
+        </Button>
         <Button
           type="primary"
           loading={isLoading}

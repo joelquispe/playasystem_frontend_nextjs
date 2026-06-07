@@ -5,6 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { CashRegister } from '@/types/api';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
+import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -98,7 +99,7 @@ export function MonthlyReportTable({ shifts, loading }: MonthlyReportTableProps)
   return (
     <>
       <div style={{ marginBottom: 12 }}>
-        <Text style={{ color: '#888' }}>
+        <Text style={{ color: colors.textMuted }}>
           {shifts.length} turnos cerrados · Total:{' '}
           <Text strong style={{ color: '#db2777' }}>
             s/. {total.toFixed(2)}
@@ -113,7 +114,7 @@ export function MonthlyReportTable({ shifts, loading }: MonthlyReportTableProps)
         pagination={{ pageSize: 15 }}
         size="small"
         scroll={{ x: 1100 }}
-        style={{ background: '#1a1a1a', borderRadius: 12 }}
+        style={cardStyle}
       />
     </>
   );

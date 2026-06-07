@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body style={{ margin: 0, padding: 0, background: '#f3eee8' }}>
+      <body style={{ margin: 0, padding: 0, background: '#ffffff' }}>
         <AntdRegistry>
           <QueryProvider>
             <AntdProvider>

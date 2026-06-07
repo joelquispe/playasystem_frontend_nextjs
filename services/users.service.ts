@@ -1,18 +1,18 @@
 import { apiClient } from '@/lib/axios';
-import { ApiResponse, Role, User } from '@/types/api';
+import { ApiResponse, User } from '@/types/api';
 
 export interface CreateUserDto {
   username: string;
   fullName: string;
   password: string;
-  role?: Role;
+  roleId?: string;
   scheduleStart?: string;
   scheduleEnd?: string;
 }
 
 export interface UpdateUserDto {
   fullName?: string;
-  role?: Role;
+  roleId?: string;
   scheduleStart?: string;
   scheduleEnd?: string;
   isActive?: boolean;

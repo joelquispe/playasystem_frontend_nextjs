@@ -3,19 +3,19 @@
 import { useState } from 'react';
 import { Button, Space } from 'antd';
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons';
-import { useClients } from '@/hooks/useClients';
-import { Client } from '@/types/api';
-import { ClientTable } from '@/components/clients/ClientTable';
-import { ClientFormModal } from '@/components/clients/ClientFormModal';
+import { useRoles } from '@/hooks/useRoles';
+import { RoleEntity } from '@/types/api';
+import { RoleTable } from '@/components/roles/RoleTable';
+import { RoleFormModal } from '@/components/roles/RoleFormModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 
-export default function ClientsPage() {
-  const { data: clients = [], isLoading, isFetching, refetch } = useClients();
-  const [editing, setEditing] = useState<Client | null>(null);
+export default function RolesPage() {
+  const { data: roles = [], isLoading, isFetching, refetch } = useRoles();
+  const [editing, setEditing] = useState<RoleEntity | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  const handleEdit = (client: Client) => {
-    setEditing(client);
+  const handleEdit = (role: RoleEntity) => {
+    setEditing(role);
     setFormOpen(true);
   };
 
@@ -27,8 +27,8 @@ export default function ClientsPage() {
   return (
     <>
       <PageHeader
-        title="Clientes"
-        subtitle={`${clients.length} registros`}
+        title="Roles"
+        subtitle={`${roles.length} roles registrados`}
         extra={
           <Space>
             <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()}>
@@ -40,15 +40,15 @@ export default function ClientsPage() {
               onClick={() => setFormOpen(true)}
               style={{ background: '#db2777', borderColor: '#db2777' }}
             >
-              Nuevo cliente
+              Nuevo rol
             </Button>
           </Space>
         }
       />
 
-      <ClientTable data={clients} loading={isLoading} onEdit={handleEdit} />
+      <RoleTable data={roles} loading={isLoading} onEdit={handleEdit} />
 
-      <ClientFormModal open={formOpen} editing={editing} onClose={handleClose} />
+      <RoleFormModal open={formOpen} editing={editing} onClose={handleClose} />
     </>
   );
 }

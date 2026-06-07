@@ -33,11 +33,7 @@ export default function UsersPage() {
         subtitle={`${users.length} usuarios registrados`}
         extra={
           <Space>
-            <Button
-              icon={<ReloadOutlined spin={isFetching} />}
-              onClick={() => refetch()}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
-            >
+            <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()}>
               Actualizar
             </Button>
             <Button

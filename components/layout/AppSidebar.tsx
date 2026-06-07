@@ -9,10 +9,10 @@ import {
   BarChartOutlined,
   CalendarOutlined,
   CarOutlined,
-  CloseOutlined,
   DollarOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
   UserOutlined,
@@ -32,37 +32,24 @@ function makeItem(
   return { key, icon, label };
 }
 
+/** Cajero: solo operaciones (tickets → cobro → caja) y clientes */
 const cashierItems: MenuItem[] = [
   makeItem(<Link href="/tickets">Tickets</Link>, '/tickets', <CarOutlined />),
-  makeItem(
-    <Link href="/cash-register">Caja</Link>,
-    '/cash-register',
-    <DollarOutlined />,
-  ),
+  makeItem(<Link href="/cash-register">Caja</Link>, '/cash-register', <DollarOutlined />),
   makeItem(<Link href="/clients">Clientes</Link>, '/clients', <UserOutlined />),
 ];
 
+/** Admin: acceso completo */
 const adminItems: MenuItem[] = [
-  // makeItem(<Link href="/reports">Dashboard</Link>, '/reports', <BarChartOutlined />),
   makeItem(<Link href="/tickets">Tickets</Link>, '/tickets', <CarOutlined />),
-  makeItem(
-    <Link href="/cash-register">Caja</Link>,
-    '/cash-register',
-    <DollarOutlined />,
-  ),
+  makeItem(<Link href="/cash-register">Caja</Link>, '/cash-register', <DollarOutlined />),
   makeItem(<Link href="/clients">Clientes</Link>, '/clients', <UserOutlined />),
   makeItem(<Link href="/subscribers">Abonados</Link>, '/subscribers', <IdcardOutlined />),
+  makeItem(<Link href="/reports">Reportes</Link>, '/reports', <BarChartOutlined />),
   makeItem(<Link href="/users">Usuarios</Link>, '/users', <TeamOutlined />),
-  makeItem(
-    <Link href="/attendance">Asistencia</Link>,
-    '/attendance',
-    <CalendarOutlined />,
-  ),
-  makeItem(
-    <Link href="/settings">Configuración</Link>,
-    '/settings',
-    <SettingOutlined />,
-  ),
+  makeItem(<Link href="/roles">Roles</Link>, '/roles', <SafetyCertificateOutlined />),
+  makeItem(<Link href="/attendance">Asistencia</Link>, '/attendance', <CalendarOutlined />),
+  makeItem(<Link href="/settings">Configuración</Link>, '/settings', <SettingOutlined />),
 ];
 
 export function AppSidebar() {
@@ -91,7 +78,6 @@ export function AppSidebar() {
         borderRight: '1px solid #d9cfc4',
       }}
     >
-      {/* Logo */}
       <div
         style={{
           height: 56,
@@ -127,7 +113,6 @@ export function AppSidebar() {
         )}
       </div>
 
-      {/* Collapse toggle */}
       <div
         onClick={() => setCollapsed(!collapsed)}
         style={{

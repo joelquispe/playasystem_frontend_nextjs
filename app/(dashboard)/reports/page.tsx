@@ -12,6 +12,7 @@ import { RevenueChart } from '@/components/reports/RevenueChart';
 import { DailyReportTable } from '@/components/reports/DailyReportTable';
 import { MonthlyReportTable } from '@/components/reports/MonthlyReportTable';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -80,30 +81,18 @@ export default function ReportsPage() {
       children: (
         <div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
-            <Text style={{ color: '#888', fontSize: 13 }}>Mes:</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Mes:</Text>
             <DatePicker
               picker="month"
               value={dashboardMonth}
               onChange={(v) => v && setDashboardMonth(v)}
               format="MMMM YYYY"
-              style={{ background: '#1a1a1a', borderColor: '#2d2d2d' }}
               allowClear={false}
             />
-            <Button
-              icon={<ReloadOutlined spin={dashFetching} />}
-              onClick={() => refetchDash()}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
-              size="small"
-            >
+            <Button icon={<ReloadOutlined spin={dashFetching} />} onClick={() => refetchDash()} size="small">
               Actualizar
             </Button>
-            <Button
-              icon={<DownloadOutlined />}
-              loading={exporting}
-              onClick={handleExport}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
-              size="small"
-            >
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport} size="small">
               Exportar Excel
             </Button>
           </div>
@@ -120,7 +109,7 @@ export default function ReportsPage() {
               </Col>
             </Row>
           ) : (
-            <Text style={{ color: '#666' }}>Sin datos para este período</Text>
+            <Text style={{ color: colors.textMuted }}>Sin datos para este período</Text>
           )}
         </div>
       ),
@@ -131,21 +120,15 @@ export default function ReportsPage() {
       children: (
         <div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
-            <Text style={{ color: '#888', fontSize: 13 }}>Mes:</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Mes:</Text>
             <DatePicker
               picker="month"
               value={dashboardMonth}
               onChange={(v) => v && setDashboardMonth(v)}
               format="MMMM YYYY"
-              style={{ background: '#1a1a1a', borderColor: '#2d2d2d' }}
               allowClear={false}
             />
-            <Button
-              icon={<ReloadOutlined spin={monthlyFetching} />}
-              onClick={() => refetchMonthly()}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
-              size="small"
-            >
+            <Button icon={<ReloadOutlined spin={monthlyFetching} />} onClick={() => refetchMonthly()} size="small">
               Actualizar
             </Button>
           </div>
@@ -159,7 +142,7 @@ export default function ReportsPage() {
       children: (
         <div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
-            <Text style={{ color: '#888', fontSize: 13 }}>Cajero:</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Cajero:</Text>
             <Select
               value={dailyCashierId}
               onChange={setDailyCashierId}
@@ -168,19 +151,17 @@ export default function ReportsPage() {
               style={{ width: 220 }}
               allowClear
             />
-            <Text style={{ color: '#888', fontSize: 13 }}>Fecha:</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13 }}>Fecha:</Text>
             <DatePicker
               value={dailyDate}
               onChange={(v) => v && setDailyDate(v)}
               format="DD/MM/YYYY"
-              style={{ background: '#1a1a1a', borderColor: '#2d2d2d' }}
               allowClear={false}
             />
             <Button
               icon={<ReloadOutlined spin={dailyFetching} />}
               onClick={() => refetchDaily()}
               disabled={!dailyCashierId}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
               size="small"
             >
               Buscar
@@ -188,7 +169,7 @@ export default function ReportsPage() {
           </div>
 
           {!dailyCashierId ? (
-            <Text style={{ color: '#666' }}>Selecciona un cajero y fecha para ver el reporte</Text>
+            <Text style={{ color: colors.textMuted }}>Selecciona un cajero y fecha para ver el reporte</Text>
           ) : (
             <DailyReportTable tickets={daily} loading={dailyLoading} />
           )}
@@ -201,14 +182,7 @@ export default function ReportsPage() {
     <>
       <PageHeader title="Reportes" subtitle={dashboardMonth.format('MMMM YYYY')} />
 
-      <div
-        style={{
-          background: '#1a1a1a',
-          border: '1px solid #2d2d2d',
-          borderRadius: 12,
-          padding: '20px 24px',
-        }}
-      >
+      <div style={{ ...cardStyle, padding: '20px 24px' }}>
         <Tabs items={tabItems} defaultActiveKey="dashboard" />
       </div>
     </>

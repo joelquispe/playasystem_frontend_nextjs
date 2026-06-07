@@ -14,14 +14,22 @@ const PAGE_TITLES: Record<string, string> = {
   '/tickets': 'Tickets',
   '/cash-register': 'Caja',
   '/clients': 'Clientes',
-  '/reports': 'Dashboard',
+  '/reports': 'Reportes',
   '/users': 'Usuarios',
+  '/roles': 'Roles',
   '/attendance': 'Asistencia',
   '/settings': 'Configuración',
   '/subscribers': 'Abonados',
 };
 
-const ADMIN_ROUTES = ['/reports', '/users', '/attendance', '/settings', '/subscribers'];
+const ADMIN_ROUTES = [
+  '/reports',
+  '/users',
+  '/roles',
+  '/attendance',
+  '/settings',
+  '/subscribers',
+];
 
 export default function DashboardLayout({
   children,
@@ -51,7 +59,7 @@ export default function DashboardLayout({
       <div
         style={{
           minHeight: '100vh',
-          background: '#f3eee8',
+          background: '#ffffff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -67,14 +75,14 @@ export default function DashboardLayout({
   const title = PAGE_TITLES[pathname] ?? 'Playa ROSE';
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f3eee8' }}>
+    <Layout style={{ minHeight: '100vh', background: '#ffffff' }}>
       <AppSidebar />
-      <Layout style={{ background: '#f3eee8' }}>
+      <Layout style={{ background: '#ffffff' }}>
         <AppHeader title={title} />
         <Content
           style={{
             padding: '24px',
-            background: '#f3eee8',
+            background: '#ffffff',
             minHeight: 'calc(100vh - 56px)',
             overflow: 'auto',
           }}

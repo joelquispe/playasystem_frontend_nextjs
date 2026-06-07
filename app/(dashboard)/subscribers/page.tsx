@@ -10,6 +10,7 @@ import { Subscriber, SubscriberStatus } from '@/types/api';
 import { SUBSCRIBER_STATUS_LABELS } from '@/lib/constants';
 import { SubscriberFormModal } from '@/components/subscribers/SubscriberFormModal';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -33,7 +34,7 @@ export default function SubscribersPage() {
       dataIndex: 'plate',
       key: 'plate',
       render: (v: string) => (
-        <Text strong style={{ fontFamily: 'monospace', color: '#e0e0e0' }}>
+        <Text strong style={{ fontFamily: 'monospace', color: colors.text }}>
           {v}
         </Text>
       ),
@@ -105,11 +106,7 @@ export default function SubscribersPage() {
                 label: v,
               }))}
             />
-            <Button
-              icon={<ReloadOutlined spin={isFetching} />}
-              onClick={() => refetch()}
-              style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
-            >
+            <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()}>
               Actualizar
             </Button>
             <Button
@@ -130,7 +127,7 @@ export default function SubscribersPage() {
         rowKey="id"
         loading={isLoading}
         pagination={{ pageSize: 20 }}
-        style={{ background: '#1a1a1a', borderRadius: 12 }}
+        style={cardStyle}
       />
 
       <SubscriberFormModal

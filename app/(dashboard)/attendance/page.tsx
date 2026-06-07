@@ -22,6 +22,7 @@ import { useAttendance, useAttendanceSummary } from '@/hooks/useAttendance';
 import { useUsers } from '@/hooks/useUsers';
 import { Attendance, AttendanceStatus } from '@/types/api';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -66,7 +67,7 @@ export default function AttendancePage() {
       title: 'Usuario',
       key: 'user',
       render: (_: unknown, record: Attendance) => (
-        <Text style={{ color: '#e0e0e0' }}>{record.user?.fullName}</Text>
+        <Text style={{ color: colors.text }}>{record.user?.fullName}</Text>
       ),
     },
     {
@@ -79,7 +80,7 @@ export default function AttendancePage() {
       title: 'Salida',
       dataIndex: 'logoutTime',
       key: 'logoutTime',
-      render: (v: string | null) => (v ? dayjs(v).format('HH:mm') : <Text style={{ color: '#555' }}>—</Text>),
+      render: (v: string | null) => (v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>),
     },
     {
       title: 'Estado',
@@ -98,14 +99,14 @@ export default function AttendancePage() {
         v > 0 ? (
           <Text style={{ color: '#f59e0b' }}>{v} min</Text>
         ) : (
-          <Text style={{ color: '#555' }}>—</Text>
+          <Text style={{ color: colors.textSubtle }}>—</Text>
         ),
     },
     {
       title: 'Notas',
       dataIndex: 'notes',
       key: 'notes',
-      render: (v: string | null) => <Text style={{ color: '#888', fontSize: 12 }}>{v ?? '—'}</Text>,
+      render: (v: string | null) => <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v ?? '—'}</Text>,
     },
   ];
 
@@ -115,11 +116,7 @@ export default function AttendancePage() {
         title="Asistencia"
         subtitle={month.format('MMMM YYYY')}
         extra={
-          <Button
-            icon={<ReloadOutlined spin={isFetching} />}
-            onClick={() => refetch()}
-            style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
-          >
+          <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()}>
             Actualizar
           </Button>
         }
@@ -127,7 +124,7 @@ export default function AttendancePage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
-        <Text style={{ color: '#888', fontSize: 13 }}>Usuario:</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13 }}>Usuario:</Text>
         <Select
           value={selectedUser}
           onChange={setSelectedUser}
@@ -136,13 +133,12 @@ export default function AttendancePage() {
           style={{ width: 220 }}
           allowClear
         />
-        <Text style={{ color: '#888', fontSize: 13 }}>Mes:</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13 }}>Mes:</Text>
         <DatePicker
           picker="month"
           value={month}
           onChange={(v) => v && setMonth(v)}
           format="MMMM YYYY"
-          style={{ background: '#1a1a1a', borderColor: '#2d2d2d' }}
           allowClear={false}
         />
       </div>
@@ -160,16 +156,9 @@ export default function AttendancePage() {
             },
           ].map(({ label, value, color, suffix }) => (
             <Col key={label} xs={12} sm={6}>
-              <div
-                style={{
-                  background: '#1a1a1a',
-                  border: '1px solid #2d2d2d',
-                  borderRadius: 10,
-                  padding: '14px 18px',
-                }}
-              >
+              <div style={{ ...cardStyle, padding: '14px 18px' }}>
                 <Statistic
-                  title={<Text style={{ color: '#888', fontSize: 12 }}>{label}</Text>}
+                  title={<Text style={{ color: colors.textMuted, fontSize: 12 }}>{label}</Text>}
                   value={value}
                   suffix={suffix}
                   valueStyle={{ color, fontSize: 24, fontWeight: 700 }}
@@ -185,7 +174,7 @@ export default function AttendancePage() {
         <Skeleton active />
       ) : records.length === 0 ? (
         <Empty
-          description={<Text style={{ color: '#666' }}>No hay registros para este período</Text>}
+          description={<Text style={{ color: colors.textMuted }}>No hay registros para este período</Text>}
           style={{ marginTop: 60 }}
         />
       ) : (
@@ -194,7 +183,7 @@ export default function AttendancePage() {
           columns={columns}
           rowKey="id"
           pagination={{ pageSize: 20, showSizeChanger: false }}
-          style={{ background: '#1a1a1a', borderRadius: 12 }}
+          style={cardStyle}
         />
       )}
     </>

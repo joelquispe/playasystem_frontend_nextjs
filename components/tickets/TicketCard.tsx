@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Badge, Button, Card, Space, Tag, Tooltip, Typography } from 'antd';
+import { Button, Card, Space, Tag, Tooltip, Typography } from 'antd';
 import {
   CarOutlined,
   ClockCircleOutlined,
@@ -16,6 +16,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { Ticket } from '@/types/api';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
 import { useToggleKey } from '@/hooks/useTickets';
+import { cardStyle, colors, nestedPanelStyle } from '@/lib/theme';
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
@@ -61,77 +62,42 @@ export function TicketCard({ ticket, onCharge, onCancel, onAddCharge }: TicketCa
 
   const entryFormatted = dayjs(ticket.entryTime).format('HH:mm');
   const estimatedAmount =
-    parseFloat(ticket.rateAmount) > 0
-      ? `s/. ${parseFloat(ticket.rateAmount).toFixed(2)}`
-      : '—';
+    parseFloat(ticket.rateAmount) > 0 ? `s/. ${parseFloat(ticket.rateAmount).toFixed(2)}` : '—';
 
   const hasAdditionalCharges = ticket.charges && ticket.charges.length > 0;
   const additionalTotal = ticket.charges?.reduce((sum, c) => sum + parseFloat(c.amount), 0) ?? 0;
 
   return (
-    <Card
-      size="small"
-      style={{
-        background: '#1a1a1a',
-        border: '1px solid #2d2d2d',
-        borderRadius: 12,
-        transition: 'border-color 0.2s',
-      }}
-      styles={{ body: { padding: '12px 14px' } }}
-      hoverable
-    >
-      {/* Header row */}
+    <Card size="small" style={cardStyle} styles={{ body: { padding: '12px 14px' } }} hoverable>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <div>
-          <Text
-            strong
-            style={{ fontSize: 18, color: '#fff', letterSpacing: 1, fontFamily: 'monospace' }}
-          >
+          <Text strong style={{ fontSize: 18, color: colors.text, letterSpacing: 1, fontFamily: 'monospace' }}>
             {ticket.plate}
           </Text>
           <div style={{ marginTop: 2 }}>
-            <Tag
-              icon={<CarOutlined />}
-              style={{ fontSize: 11, background: '#242424', border: '1px solid #333', color: '#bbb' }}
-            >
-              {ticket.vehicleType?.name ?? '—'}
-            </Tag>
+            <Tag icon={<CarOutlined />}>{ticket.vehicleType?.name ?? '—'}</Tag>
             {ticket.hasKey && (
-              <Tag
-                icon={<KeyOutlined />}
-                style={{ fontSize: 11, background: '#1c1207', border: '1px solid #784c00', color: '#f59e0b' }}
-              >
+              <Tag icon={<KeyOutlined />} color="warning">
                 Llave
               </Tag>
             )}
           </div>
         </div>
 
-        {/* Elapsed time badge */}
         <div style={{ textAlign: 'right' }}>
-          <div
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              color: elapsedColor,
-              fontFamily: 'monospace',
-              lineHeight: 1,
-            }}
-          >
+          <div style={{ fontSize: 20, fontWeight: 700, color: elapsedColor, fontFamily: 'monospace', lineHeight: 1 }}>
             {elapsed}
           </div>
-          <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
             <ClockCircleOutlined style={{ marginRight: 3 }} />
             Entrada: {entryFormatted}
           </div>
         </div>
       </div>
 
-      {/* Rate info */}
       <div
         style={{
-          background: '#111',
-          borderRadius: 6,
+          ...nestedPanelStyle,
           padding: '6px 10px',
           marginBottom: 10,
           display: 'flex',
@@ -139,13 +105,11 @@ export function TicketCard({ ticket, onCharge, onCancel, onAddCharge }: TicketCa
           alignItems: 'center',
         }}
       >
-        <Text style={{ fontSize: 12, color: '#888' }}>
+        <Text style={{ fontSize: 12, color: colors.textMuted }}>
           {RATE_TYPE_LABELS[ticket.rateType] ?? ticket.rateType}
         </Text>
         <Space>
-          <Text style={{ fontSize: 13, color: '#db2777', fontWeight: 600 }}>
-            {estimatedAmount}
-          </Text>
+          <Text style={{ fontSize: 13, color: colors.accent, fontWeight: 600 }}>{estimatedAmount}</Text>
           {hasAdditionalCharges && (
             <Tag color="orange" style={{ fontSize: 11 }}>
               +s/. {additionalTotal.toFixed(2)} extra
@@ -154,35 +118,28 @@ export function TicketCard({ ticket, onCharge, onCancel, onAddCharge }: TicketCa
         </Space>
       </div>
 
-      {/* Ticket code */}
       <div style={{ marginBottom: 10 }}>
-        <Text style={{ fontSize: 11, color: '#555', fontFamily: 'monospace' }}>
+        <Text style={{ fontSize: 11, color: colors.textSubtle, fontFamily: 'monospace' }}>
           #{ticket.ticketCode}
         </Text>
-        <Text style={{ fontSize: 11, color: '#555', marginLeft: 8 }}>
+        <Text style={{ fontSize: 11, color: colors.textSubtle, marginLeft: 8 }}>
           · {ticket.cashier?.username}
         </Text>
       </div>
 
-      {/* Actions */}
       <div style={{ display: 'flex', gap: 6 }}>
         <Button
           type="primary"
           size="small"
           icon={<DollarOutlined />}
           onClick={() => onCharge(ticket)}
-          style={{ flex: 1, background: '#db2777', borderColor: '#db2777' }}
+          style={{ flex: 1, background: colors.accent, borderColor: colors.accent }}
         >
           Cobrar
         </Button>
 
         <Tooltip title="Agregar cargo">
-          <Button
-            size="small"
-            icon={<PlusCircleOutlined />}
-            onClick={() => onAddCharge(ticket)}
-            style={{ background: '#242424', border: '1px solid #333' }}
-          />
+          <Button size="small" icon={<PlusCircleOutlined />} onClick={() => onAddCharge(ticket)} />
         </Tooltip>
 
         <Tooltip title={ticket.hasKey ? 'Quitar llave' : 'Marcar con llave'}>
@@ -191,22 +148,13 @@ export function TicketCard({ ticket, onCharge, onCancel, onAddCharge }: TicketCa
             icon={<KeyOutlined />}
             loading={toggleKey.isPending}
             onClick={() => toggleKey.mutate(ticket.id)}
-            style={{
-              background: ticket.hasKey ? '#1c1207' : '#242424',
-              border: `1px solid ${ticket.hasKey ? '#784c00' : '#333'}`,
-              color: ticket.hasKey ? '#f59e0b' : '#888',
-            }}
+            type={ticket.hasKey ? 'primary' : 'default'}
+            style={ticket.hasKey ? { background: '#f59e0b', borderColor: '#f59e0b' } : undefined}
           />
         </Tooltip>
 
         <Tooltip title="Cancelar ticket">
-          <Button
-            size="small"
-            danger
-            icon={<MinusCircleOutlined />}
-            onClick={() => onCancel(ticket)}
-            style={{ background: '#2a0f0f', border: '1px solid #5c1717' }}
-          />
+          <Button size="small" danger icon={<MinusCircleOutlined />} onClick={() => onCancel(ticket)} />
         </Tooltip>
       </div>
     </Card>

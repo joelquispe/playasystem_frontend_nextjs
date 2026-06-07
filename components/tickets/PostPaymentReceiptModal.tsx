@@ -8,6 +8,7 @@ import { Button, Form, Input, Modal, Select, Space, Spin, Typography } from 'ant
 import { Ticket } from '@/types/api';
 import { usePostPaymentReceipt } from '@/hooks/useTickets';
 import { nubefactService } from '@/services/nubefact.service';
+import { nestedPanelStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
@@ -108,15 +109,8 @@ export function PostPaymentReceiptModal({
         </Text>
       ) : (
         <>
-          <div
-            style={{
-              background: '#111',
-              borderRadius: 8,
-              padding: '12px 16px',
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ color: '#888', fontSize: 12 }}>Monto cobrado</Text>
+          <div style={{ ...nestedPanelStyle, padding: '12px 16px', marginBottom: 16 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Monto cobrado</Text>
             <div style={{ fontSize: 22, fontWeight: 700, color: '#db2777' }}>
               s/. {parseFloat(ticket.finalAmount).toFixed(2)}
             </div>

@@ -1,13 +1,15 @@
 'use client';
 
-import { Alert, Button, Card, Input, Typography } from 'antd';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import Image from 'next/image';
+import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/providers/AuthProvider';
-
-const { Title, Text } = Typography;
+import { ElRoseLogo } from '@/components/auth/ElRoseLogo';
+import { ButtonCustom } from '@/components/ui/ButtonCustom';
+import { InputCustom } from '@/components/ui/InputCustom';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Ingresa tu usuario'),
@@ -18,6 +20,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     control,
@@ -41,156 +44,89 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f3eee8',
-        backgroundImage:
-          'linear-gradient(rgba(243, 238, 232, 0.74), rgba(243, 238, 232, 0.82)), url("/images/background_image.png")',
-        backgroundPosition: 'center bottom',
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 400 }}>
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              background: 'linear-gradient(145deg, #2f6d73, #6f8f94)',
-              margin: '0 auto 16px',
-              boxShadow: '0 12px 30px rgba(47, 109, 115, 0.28)',
-            }}
-          />
-          <Title level={3} style={{ color: '#2f3639', margin: 0 }}>
-            Playa <span style={{ color: '#2f6d73' }}>ROSE</span>
-          </Title>
-          <Text style={{ color: '#65767d', fontSize: 13 }}>Sistema de gestión de parqueo</Text>
-        </div>
-
-        <Card
-          style={{
-            background: 'rgba(255, 253, 251, 0.86)',
-            border: '1px solid #d9cfc4',
-            borderRadius: 16,
-            boxShadow: '0 20px 46px rgba(35, 45, 50, 0.14)',
-            backdropFilter: 'blur(6px)',
-          }}
-          styles={{ body: { padding: 32 } }}
-        >
-          <Title level={4} style={{ color: '#2f3639', marginBottom: 24, marginTop: 0 }}>
-            Iniciar sesión
-          </Title>
+    <div className="flex min-h-screen items-center justify-start bg-[#f3f0ea] px-6 py-12 md:px-32 lg:px-64">
+      <div className="flex w-full max-w-[920px] items-center justify-start gap-10 lg:gap-14">
+        <div className="w-full max-w-[380px] shrink-0">
+          <ElRoseLogo />
 
           {errors.root && (
-            <Alert
-              message={errors.root.message}
-              type="error"
-              showIcon
-              style={{ marginBottom: 20 }}
-            />
+            <div
+              className="mb-5 rounded-[10px] bg-red-50 px-3.5 py-3 text-sm font-medium text-red-700"
+              role="alert"
+            >
+              {errors.root.message}
+            </div>
           )}
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-          >
-            <div style={{ marginBottom: 20 }}>
-              <label
-                htmlFor="username"
-                style={{ color: '#65767d', fontSize: 13, display: 'block', marginBottom: 6 }}
-              >
-                Usuario
-              </label>
-              <Controller
-                name="username"
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    {...field}
-                    id="username"
-                    prefix={<UserOutlined style={{ color: '#8e9ba0' }} />}
-                    placeholder="Ingresa tu usuario"
-                    size="large"
-                    autoComplete="username"
-                    status={errors.username ? 'error' : ''}
-                    style={{
-                      background: '#fffdfb',
-                      borderColor: '#d9cfc4',
-                      color: '#2f3639',
-                      borderRadius: 10,
-                    }}
-                  />
-                )}
-              />
-              {errors.username?.message && (
-                <div style={{ color: '#c4605c', fontSize: 12, marginTop: 6 }}>
-                  {errors.username.message}
-                </div>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <Controller
+              name="username"
+              control={control}
+              render={({ field }) => (
+                <InputCustom
+                  {...field}
+                  id="username"
+                  label="Email"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="Correo electrónico"
+                  error={errors.username?.message}
+                  containerClassName="mb-[22px]"
+                />
               )}
-            </div>
+            />
 
-            <div style={{ marginBottom: 24 }}>
-              <label
-                htmlFor="password"
-                style={{ color: '#65767d', fontSize: 13, display: 'block', marginBottom: 6 }}
-              >
-                Contraseña
-              </label>
-              <Controller
-                name="password"
-                control={control}
-                render={({ field }) => (
-                  <Input.Password
-                    {...field}
-                    id="password"
-                    prefix={<LockOutlined style={{ color: '#8e9ba0' }} />}
-                    placeholder="Ingresa tu contraseña"
-                    size="large"
-                    autoComplete="current-password"
-                    status={errors.password ? 'error' : ''}
-                    style={{
-                      background: '#fffdfb',
-                      borderColor: '#d9cfc4',
-                      color: '#2f3639',
-                      borderRadius: 10,
-                    }}
-                  />
-                )}
-              />
-              {errors.password?.message && (
-                <div style={{ color: '#c4605c', fontSize: 12, marginTop: 6 }}>
-                  {errors.password.message}
-                </div>
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <InputCustom
+                  {...field}
+                  id="password"
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  placeholder="Contraseña"
+                  error={errors.password?.message}
+                  containerClassName="mb-[22px]"
+                  suffix={
+                    <button
+                      type="button"
+                      className="flex cursor-pointer items-center justify-center border-none bg-transparent p-1 text-gray-400"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    >
+                      {showPassword ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                    </button>
+                  }
+                />
               )}
-            </div>
+            />
 
-            <Button
-              type="primary"
-              htmlType="submit"
-              size="large"
-              block
-              loading={isSubmitting}
-              style={{
-                background: '#2f6d73',
-                borderColor: '#2f6d73',
-                height: 44,
-                fontWeight: 600,
-                borderRadius: 10,
-                boxShadow: '0 10px 22px rgba(47, 109, 115, 0.25)',
-              }}
+            <a
+              href="#"
+              className="mb-7 inline-block text-sm font-medium text-[#256c86] no-underline hover:underline"
+              onClick={(e) => e.preventDefault()}
             >
-              Ingresar
-            </Button>
+              ¿Has olvidado tu contraseña?
+            </a>
+
+            <ButtonCustom type="submit" fullWidth disabled={isSubmitting}>
+              {isSubmitting ? 'Ingresando...' : 'Ingresar'}
+            </ButtonCustom>
           </form>
-        </Card>
+        </div>
+
+        <div className="hidden w-full max-w-[420px] shrink-0 lg:block">
+          <Image
+            src="/images/login_image.jpeg"
+            alt="Login Illustration"
+            width={420}
+            height={420}
+            className="h-auto w-full"
+            priority
+          />
+        </div>
       </div>
     </div>
   );

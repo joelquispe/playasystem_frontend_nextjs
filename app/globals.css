@@ -2,7 +2,7 @@
 
 :root {
   color-scheme: light;
-  --app-bg: #f3eee8;
+  --app-bg: #ffffff;
   --app-surface: #fbf7f2;
   --app-border: #d9cfc4;
   --app-text: #2f3639;
@@ -27,7 +27,7 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #ebe1d6;
+  background: #f0f0f0;
 }
 ::-webkit-scrollbar-thumb {
   background: #b8aea4;
@@ -35,6 +35,18 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #9f958b;
+}
+
+/* Custom input — keep white background on autofill */
+.input-custom:-webkit-autofill,
+.input-custom:-webkit-autofill:hover,
+.input-custom:-webkit-autofill:focus,
+.input-custom:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #1f2937 !important;
+  caret-color: #1f2937;
+  transition: background-color 99999s ease-in-out 0s;
 }
 
 /* Ant Design layout fixes */

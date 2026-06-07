@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, Col, Row, Space, Statistic, Tag, Typography } from 'antd';
+import { Card, Col, Row, Space, Tag, Typography } from 'antd';
 import {
   BankOutlined,
   ClockCircleOutlined,
@@ -8,6 +8,7 @@ import {
   WalletOutlined,
 } from '@ant-design/icons';
 import { CashRegister } from '@/types/api';
+import { cardStyle, colors, highlightPanelStyle, nestedPanelStyle } from '@/lib/theme';
 
 const { Text, Title } = Typography;
 
@@ -27,21 +28,12 @@ function AmountStat({
   icon?: React.ReactNode;
 }) {
   return (
-    <div
-      style={{
-        background: '#111',
-        borderRadius: 8,
-        padding: '12px 14px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-      }}
-    >
-      <Space style={{ fontSize: 12, color: '#666' }}>
+    <div style={{ ...nestedPanelStyle, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <Space style={{ fontSize: 12, color: colors.textMuted }}>
         {icon}
         <span>{label}</span>
       </Space>
-      <span style={{ fontSize: 20, fontWeight: 700, color: color ?? '#e0e0e0' }}>
+      <span style={{ fontSize: 20, fontWeight: 700, color: color ?? colors.text }}>
         s/. {parseFloat(value).toFixed(2)}
       </span>
     </div>
@@ -55,7 +47,7 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
     <Card
       title={
         <Space>
-          <Title level={5} style={{ margin: 0, color: '#e0e0e0' }}>
+          <Title level={5} style={{ margin: 0, color: colors.text }}>
             Turno del día {shift.shiftDate}
           </Title>
           <Tag color={isOpen ? 'processing' : 'default'}>
@@ -63,14 +55,11 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
           </Tag>
         </Space>
       }
-      style={{ background: '#1a1a1a', border: '1px solid #2d2d2d' }}
+      style={cardStyle}
     >
-      {/* Total */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #1a0a10, #2d1020)',
-          border: '1px solid #5c1030',
-          borderRadius: 10,
+          ...highlightPanelStyle,
           padding: '16px 20px',
           marginBottom: 20,
           display: 'flex',
@@ -79,18 +68,17 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
         }}
       >
         <div>
-          <Text style={{ color: '#888', fontSize: 12 }}>TOTAL RECAUDADO</Text>
-          <div style={{ fontSize: 28, fontWeight: 800, color: '#db2777', marginTop: 2 }}>
+          <Text style={{ color: colors.textMuted, fontSize: 12 }}>TOTAL RECAUDADO</Text>
+          <div style={{ fontSize: 28, fontWeight: 800, color: colors.accent, marginTop: 2 }}>
             s/. {parseFloat(shift.totalAmount).toFixed(2)}
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <Text style={{ color: '#666', fontSize: 11 }}>Cajero</Text>
-          <div style={{ color: '#e0e0e0', fontWeight: 600 }}>{shift.cashier?.fullName}</div>
+          <Text style={{ color: colors.textMuted, fontSize: 11 }}>Cajero</Text>
+          <div style={{ color: colors.text, fontWeight: 600 }}>{shift.cashier?.fullName}</div>
         </div>
       </div>
 
-      {/* Payment breakdown */}
       <div
         style={{
           display: 'grid',
@@ -99,37 +87,16 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
           marginBottom: 16,
         }}
       >
-        <AmountStat
-          label="Efectivo"
-          value={shift.cashAmount}
-          color="#22c55e"
-          icon={<WalletOutlined />}
-        />
-        <AmountStat
-          label="Yape"
-          value={shift.yapeAmount}
-          color="#a855f7"
-          icon={<MobileOutlined />}
-        />
-        <AmountStat
-          label="Plin"
-          value={shift.plinAmount}
-          color="#3b82f6"
-          icon={<MobileOutlined />}
-        />
-        <AmountStat
-          label="Tarjeta"
-          value={shift.cardAmount}
-          color="#f59e0b"
-          icon={<BankOutlined />}
-        />
+        <AmountStat label="Efectivo" value={shift.cashAmount} color="#22c55e" icon={<WalletOutlined />} />
+        <AmountStat label="Yape" value={shift.yapeAmount} color="#a855f7" icon={<MobileOutlined />} />
+        <AmountStat label="Plin" value={shift.plinAmount} color="#3b82f6" icon={<MobileOutlined />} />
+        <AmountStat label="Tarjeta" value={shift.cardAmount} color="#f59e0b" icon={<BankOutlined />} />
       </div>
 
-      {/* Deductions */}
       <Row gutter={12}>
         <Col span={8}>
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <Text style={{ fontSize: 11, color: '#666' }}>Descuentos</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>Descuentos</Text>
             <div style={{ color: '#ef4444', fontWeight: 600 }}>
               - s/. {parseFloat(shift.discountsTotal).toFixed(2)}
             </div>
@@ -137,7 +104,7 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
         </Col>
         <Col span={8}>
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <Text style={{ fontSize: 11, color: '#666' }}>Cancelaciones</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>Cancelaciones</Text>
             <div style={{ color: '#ef4444', fontWeight: 600 }}>
               {shift.cancellationsCount} (s/. {parseFloat(shift.cancellationsTotal).toFixed(2)})
             </div>
@@ -145,7 +112,7 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
         </Col>
         <Col span={8}>
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <Text style={{ fontSize: 11, color: '#666' }}>Gastos extra</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>Gastos extra</Text>
             <div style={{ color: '#ef4444', fontWeight: 600 }}>
               - s/. {parseFloat(shift.extraExpenses).toFixed(2)}
             </div>
@@ -157,11 +124,10 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
         <div
           style={{
             marginTop: 12,
-            background: '#111',
-            borderRadius: 6,
+            ...nestedPanelStyle,
             padding: '8px 12px',
             fontSize: 12,
-            color: '#888',
+            color: colors.textMuted,
           }}
         >
           <ClockCircleOutlined style={{ marginRight: 6 }} />
@@ -173,8 +139,8 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
         <div
           style={{
             marginTop: 12,
-            background: '#0c1a0c',
-            border: '1px solid #1a4a1a',
+            background: '#edf7ed',
+            border: '1px solid #b7dfb9',
             borderRadius: 6,
             padding: '8px 12px',
           }}
@@ -184,7 +150,7 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
               {shift.balanceStatus === 'balanced' ? 'Cuadrado' : 'Descuadrado'}
             </Tag>
             {parseFloat(shift.differenceAmount) !== 0 && (
-              <Text style={{ fontSize: 12, color: '#888' }}>
+              <Text style={{ fontSize: 12, color: colors.textMuted }}>
                 Diferencia: s/. {parseFloat(shift.differenceAmount).toFixed(2)}
               </Text>
             )}
