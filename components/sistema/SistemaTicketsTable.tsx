@@ -14,6 +14,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
+  EyeOutlined,
   KeyOutlined,
   PrinterOutlined,
   PlusOutlined,
@@ -54,6 +55,7 @@ interface SistemaTicketsTableProps {
   onReceipt: (ticket: Ticket) => void;
   onAddCharge: (ticket: Ticket) => void;
   onPrint: (ticket: Ticket) => void;
+  onDetail: (ticket: Ticket) => void;
 }
 
 export function SistemaTicketsTable({
@@ -65,6 +67,7 @@ export function SistemaTicketsTable({
   onReceipt,
   onAddCharge,
   onPrint,
+  onDetail,
 }: SistemaTicketsTableProps) {
   const [filter, setFilter] = useState<'all' | 'pending'>('pending');
   const { data: clients = [] } = useClients();
@@ -80,24 +83,6 @@ export function SistemaTicketsTable({
   const filtered = filter === 'pending' ? tickets.filter((t) => t.status === 'pending') : tickets;
 
   const columns: ColumnsType<Ticket> = [
-    {
-      title: '',
-      key: 'revert',
-      width: 44,
-      fixed: 'left',
-      render: (_, record) =>
-        record.status === 'paid' ? (
-          <Tooltip title="Revertir cobro">
-            <Button
-              type="text"
-              size="small"
-              icon={<RollbackOutlined />}
-              loading={revertTicket.isPending}
-              onClick={() => revertTicket.mutate(record.id)}
-            />
-          </Tooltip>
-        ) : null,
-    },
     {
       title: 'Placa',
       dataIndex: 'plate',
@@ -221,13 +206,33 @@ export function SistemaTicketsTable({
     {
       title: 'Boleta/Factura',
       key: 'receipt',
-      width: 120,
-      render: (_, r) =>
-        r.status === 'paid' || r.status === 'manual' ? (
-          <Button size="small" style={{ background: '#4c8f5a', color: '#fff', borderColor: '#4c8f5a' }} onClick={() => onReceipt(r)}>
+      width: 140,
+      render: (_, r) => {
+        if (r.status !== 'paid' && r.status !== 'manual') return null;
+
+        if (r.nubefactPdfUrl) {
+          return (
+            <a href={r.nubefactPdfUrl} target="_blank" rel="noopener noreferrer">
+              <Button
+                size="small"
+                style={{ background: '#4c8f5a', color: '#fff', borderColor: '#4c8f5a' }}
+              >
+                Ver comprobante
+              </Button>
+            </a>
+          );
+        }
+
+        return (
+          <Button
+            size="small"
+            style={{ background: '#4c8f5a', color: '#fff', borderColor: '#4c8f5a' }}
+            onClick={() => onReceipt(r)}
+          >
             Comprobante
           </Button>
-        ) : null,
+        );
+      },
     },
     {
       title: 'Llave',
@@ -274,6 +279,38 @@ export function SistemaTicketsTable({
           <Tag color="orange">+{r.charges.length}</Tag>
         ) : null,
     },
+    {
+      title: 'Acciones',
+      key: 'actions',
+      width: 90,
+      fixed: 'right',
+      align: 'center',
+      render: (_, r) => (
+        <Space size={2}>
+          <Tooltip title="Ver detalle">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => onDetail(r)}
+              style={{ color: colors.primary }}
+            />
+          </Tooltip>
+          {r.status === 'paid' && (
+            <Tooltip title="Revertir cobro">
+              <Button
+                type="text"
+                size="small"
+                icon={<RollbackOutlined />}
+                loading={revertTicket.isPending}
+                onClick={() => revertTicket.mutate(r.id)}
+                style={{ color: colors.textMuted }}
+              />
+            </Tooltip>
+          )}
+        </Space>
+      ),
+    },
   ];
 
   return (
@@ -304,7 +341,7 @@ export function SistemaTicketsTable({
         dataSource={filtered}
         loading={loading}
         size="small"
-        scroll={{ x: 1500 }}
+        scroll={{ x: 1600 }}
         pagination={{ pageSize: 15, showSizeChanger: false }}
         expandable={{
           expandedRowRender: (record) =>

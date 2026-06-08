@@ -142,6 +142,14 @@ export interface Ticket {
   observation: string | null;
   cancelReason: string | null;
   nubefactId: string | null;
+  /** Main viewer link from NubeFact (enlace) */
+  nubefactEnlace: string | null;
+  nubefactPdfUrl: string | null;
+  nubefactXmlUrl: string | null;
+  nubefactCdrUrl: string | null;
+  /** QR code string (cadena_para_codigo_qr) */
+  nubefactQrCode: string | null;
+  nubefactHash: string | null;
   charges: TicketCharge[];
   createdAt: string;
   updatedAt: string;
