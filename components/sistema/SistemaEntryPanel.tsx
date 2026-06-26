@@ -150,13 +150,22 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
 
   const resolvedRateType: RateType | null = specialRateType ?? (selectedRate ? 'hour_fraction' : null);
 
+  /** Positive amount from client.specialRate, or null when absent / zero */
+  const clientSpecialAmount = useMemo((): number | null => {
+    if (specialRateType) return null; // special types override client rate
+    const val = parseFloat(foundClient?.specialRate ?? '0');
+    return val > 0 ? val : null;
+  }, [foundClient, specialRateType]);
+
   const resolvedAmount = useMemo(() => {
     if (specialRateType === 'subscriber' && foundSubscriber) {
       return parseFloat(foundSubscriber.monthlyAmount);
     }
+    // Client-level special rate takes priority over vehicle default
+    if (clientSpecialAmount !== null) return clientSpecialAmount;
     if (selectedRate) return parseFloat(selectedRate.amount);
     return 0;
-  }, [specialRateType, foundSubscriber, selectedRate]);
+  }, [specialRateType, foundSubscriber, selectedRate, clientSpecialAmount]);
 
   const canGenerate =
     !!normalizedPlate && !!selectedVehicleId && !!resolvedRateType && resolvedAmount > 0;
@@ -525,6 +534,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
             plate={normalizedPlate}
             amount={resolvedAmount}
             rateType={resolvedRateType}
+            isSpecialRate={clientSpecialAmount !== null}
             generating={createTicket.isPending}
             canGenerate={canGenerate}
             onGenerate={handleGenerate}
@@ -555,6 +565,7 @@ interface ClientInfoCardProps {
   plate: string;
   amount: number;
   rateType: RateType | null;
+  isSpecialRate: boolean;
   generating: boolean;
   canGenerate: boolean;
   onGenerate: () => void;
@@ -562,7 +573,7 @@ interface ClientInfoCardProps {
 }
 
 function ClientInfoCard({
-  client, subscriber, vehicle, plate, amount, rateType,
+  client, subscriber, vehicle, plate, amount, rateType, isSpecialRate,
   generating, canGenerate, onGenerate, onDismiss,
 }: ClientInfoCardProps) {
   const isSubscriber = !!subscriber;
@@ -574,8 +585,10 @@ function ClientInfoCard({
       style={{
         background: isSubscriber
           ? 'linear-gradient(135deg, #fefce8, #fef9c3)'
+          : isSpecialRate
+          ? 'linear-gradient(135deg, #f5f3ff, #ede9fe)'
           : 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
-        border: `2px solid ${isSubscriber ? '#ca8a04' : '#16a34a'}`,
+        border: `2px solid ${isSubscriber ? '#ca8a04' : isSpecialRate ? '#6d28d9' : '#16a34a'}`,
         borderRadius: 16,
         padding: 20,
         position: 'relative',
@@ -650,14 +663,24 @@ function ClientInfoCard({
 
       {/* Rate */}
       <div style={{ marginBottom: 16 }}>
-        <Text style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
-          Tarifa
-        </Text>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8, marginTop: 2,
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <Text style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Tarifa
+          </Text>
+          {isSpecialRate && (
+            <Tag
+              color="purple"
+              style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
+            >
+              Tarifa Especial
+            </Tag>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
-            fontSize: 28, fontWeight: 900, color: isSubscriber ? '#92400e' : '#065f46',
+            fontSize: 28,
+            fontWeight: 900,
+            color: isSubscriber ? '#92400e' : isSpecialRate ? '#6d28d9' : '#065f46',
           }}>
             s/. {amount.toFixed(2)}
           </span>
@@ -680,8 +703,8 @@ function ClientInfoCard({
           onClick={onGenerate}
           icon={<CheckCircleOutlined />}
           style={{
-            background: isSubscriber ? '#d97706' : '#16a34a',
-            borderColor: isSubscriber ? '#d97706' : '#16a34a',
+            background: isSubscriber ? '#d97706' : isSpecialRate ? '#6d28d9' : '#16a34a',
+            borderColor: isSubscriber ? '#d97706' : isSpecialRate ? '#6d28d9' : '#16a34a',
             fontWeight: 700,
             minWidth: 140,
           }}

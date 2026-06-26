@@ -11,7 +11,9 @@ import { DashboardStats } from '@/components/reports/DashboardStats';
 import { RevenueChart } from '@/components/reports/RevenueChart';
 import { DailyReportTable } from '@/components/reports/DailyReportTable';
 import { MonthlyReportTable } from '@/components/reports/MonthlyReportTable';
+import { TicketDetailModal } from '@/components/tickets/TicketDetailModal';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Ticket } from '@/types/api';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -22,6 +24,7 @@ export default function ReportsPage() {
   const [dailyCashierId, setDailyCashierId] = useState<string | undefined>(undefined);
   const [dailyDate, setDailyDate] = useState<Dayjs>(now);
   const [exporting, setExporting] = useState(false);
+  const [detailTicket, setDetailTicket] = useState<Ticket | null>(null);
 
   const year = dashboardMonth.year();
   const month = dashboardMonth.month() + 1;
@@ -92,9 +95,9 @@ export default function ReportsPage() {
             <Button icon={<ReloadOutlined spin={dashFetching} />} onClick={() => refetchDash()} size="small">
               Actualizar
             </Button>
-            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport} size="small">
+            {/* <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport} size="small">
               Exportar Excel
-            </Button>
+            </Button> */}
           </div>
 
           {dashLoading ? (
@@ -171,7 +174,7 @@ export default function ReportsPage() {
           {!dailyCashierId ? (
             <Text style={{ color: colors.textMuted }}>Selecciona un cajero y fecha para ver el reporte</Text>
           ) : (
-            <DailyReportTable tickets={daily} loading={dailyLoading} />
+            <DailyReportTable tickets={daily} loading={dailyLoading} onDetail={setDetailTicket} />
           )}
         </div>
       ),
@@ -185,6 +188,12 @@ export default function ReportsPage() {
       <div style={{ ...cardStyle, padding: '20px 24px' }}>
         <Tabs items={tabItems} defaultActiveKey="dashboard" />
       </div>
+
+      <TicketDetailModal
+        ticket={detailTicket}
+        open={!!detailTicket}
+        onClose={() => setDetailTicket(null)}
+      />
     </>
   );
 }
