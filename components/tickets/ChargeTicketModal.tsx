@@ -17,8 +17,6 @@ import {
   Select,
   Spin,
   Table,
-  Tag,
-  Tooltip,
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -53,10 +51,6 @@ const schema = z
   .refine((d) => d.discount === 0 || !!d.discountObservation?.trim(), {
     message: 'Explica el motivo del descuento',
     path: ['discountObservation'],
-  })
-  .refine((d) => d.receiptType !== 'boleta' || !!d.customerDni?.trim(), {
-    message: 'DNI requerido para boleta',
-    path: ['customerDni'],
   })
   .refine((d) => d.receiptType !== 'factura' || !!d.customerRuc?.trim(), {
     message: 'RUC requerido para factura',
@@ -237,14 +231,36 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
           </Col>
           <Col flex="auto" />
           <Col>
-            <Tooltip title={ticket.hasKey ? 'Dejó llave' : 'Sin llave'}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                borderRadius: 8,
+                border: `2px solid ${ticket.hasKey ? '#d97706' : '#d1d5db'}`,
+                background: ticket.hasKey ? '#fef3c7' : '#f3f4f6',
+                cursor: 'default',
+                userSelect: 'none',
+              }}
+            >
               <KeyOutlined
                 style={{
-                  fontSize: 24,
-                  color: ticket.hasKey ? '#d97706' : '#d1d5db',
+                  fontSize: 18,
+                  color: ticket.hasKey ? '#d97706' : '#9ca3af',
                 }}
               />
-            </Tooltip>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: ticket.hasKey ? '#92400e' : '#6b7280',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {ticket.hasKey ? 'Dejó llave' : 'Sin llave'}
+              </Text>
+            </div>
           </Col>
         </Row>
 
@@ -383,11 +399,18 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                 </Col>
               </Row>
 
-              {/* Boleta → DNI */}
+              {/* Boleta → DNI (opcional; sin DNI se emite como CLIENTE VARIOS) */}
               {receiptType === 'boleta' && (
                 <>
                   <Form.Item
-                    label="DNI del cliente"
+                    label={
+                      <span>
+                        DNI del cliente{' '}
+                        <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: 400 }}>
+                          (opcional — sin DNI se emite como CLIENTE VARIOS)
+                        </Text>
+                      </span>
+                    }
                     validateStatus={errors.customerDni ? 'error' : ''}
                     help={errors.customerDni?.message}
                   >
@@ -398,7 +421,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                         <Input
                           {...field}
                           maxLength={8}
-                          placeholder="12345678"
+                          placeholder="12345678  (dejar vacío para CLIENTE VARIOS)"
                           suffix={dniLoading ? <Spin size="small" /> : null}
                         />
                       )}
