@@ -307,7 +307,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     <Row gutter={[16, 16]}>
       {/* ── Main entry panel ─────────────────────────────────────────────── */}
       <Col xs={24} lg={showClientCard ? 16 : 24}>
-        <div style={{ ...cardStyle, padding: 20, marginBottom: 20 }}>
+        <div style={{ padding: '16px 0', marginBottom: 8 }}>
           {/* Plate input */}
           <Row gutter={[12, 0]} align="middle">
             <Col flex="none">
@@ -317,11 +317,22 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
               <Input
                 ref={plateInputRef}
                 size="large"
+                variant="borderless"
                 placeholder="Ingrese placa"
                 value={plate}
                 onChange={handlePlateChange}
                 onKeyDown={handleKeyDown}
-                style={{ fontFamily: 'monospace', letterSpacing: 2, fontWeight: 700, fontSize: 20 }}
+                style={{
+                  fontFamily: 'monospace',
+                  letterSpacing: 3,
+                  fontWeight: 800,
+                  fontSize: 22,
+                  background: 'transparent',
+                  borderBottom: `2px solid ${isPlateReady ? colors.primary : colors.cardBorder}`,
+                  borderRadius: 0,
+                  paddingLeft: 4,
+                  transition: 'border-color 0.2s',
+                }}
                 autoFocus
               />
             </Col>
@@ -351,152 +362,209 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
             </Text>
           )}
 
-          {/* Vehicle type cards */}
-          <Row gutter={[10, 10]} style={{ marginTop: 20 }}>
-            {vehicles.map((vehicle) => {
-              const selected = selectedVehicleId === vehicle.id && !specialRateType;
-              const defaultRate = getDefaultHourRate(vehicle);
-              const hourRates = selected ? vehicleHourRates : getVehicleRates(vehicle, 'hour_fraction');
+          {/* ── Vehicle types + Special rates ────────────────────────────────── */}
+          <div style={{ display: 'flex', gap: 20, marginTop: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
-              return (
-                <Col key={vehicle.id} xs={12} sm={8} md={6} lg={5}>
-                  <Card
-                    size="small"
-                    hoverable
-                    onClick={(e) => selectVehicle(vehicle, e as unknown as React.MouseEvent)}
-                    style={{
-                      ...cardStyle,
-                      border: selected ? `2px solid ${colors.primary}` : cardStyle.border,
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                    }}
-                    styles={{ body: { padding: '10px 8px' } }}
-                  >
-                    <div style={{ fontSize: 26, color: colors.primary, marginBottom: 6 }}>
-                      {VEHICLE_ICONS[vehicle.iconName] ?? <CarOutlined />}
+            {/* ── Left: Vehicle type cards (2 columns) ─────────────────────── */}
+            <div style={{ flex: '1 1 0', minWidth: 300 }}>
+              <Text style={{
+                fontSize: 9, color: colors.textSubtle, textTransform: 'uppercase',
+                letterSpacing: 1.5, display: 'block', marginBottom: 10, fontWeight: 600,
+              }}>
+                Tipo de vehículo
+              </Text>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {vehicles.map((vehicle) => {
+                  const selected = selectedVehicleId === vehicle.id && !specialRateType;
+                  const defaultRate = getDefaultHourRate(vehicle);
+                  const hourRates = selected ? vehicleHourRates : getVehicleRates(vehicle, 'hour_fraction');
+
+                  return (
+                    <button
+                      key={vehicle.id}
+                      type="button"
+                      onClick={(e) => selectVehicle(vehicle, e as unknown as React.MouseEvent)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '10px 14px',
+                        background: selected ? '#e6f4f4' : 'transparent',
+                        border: selected
+                          ? `2px solid ${colors.primary}`
+                          : `1.5px solid ${colors.cardBorder}`,
+                        borderRadius: 12,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        textAlign: 'left',
+                        width: '100%',
+                        outline: 'none',
+                      }}
+                    >
+                      <span style={{
+                        fontSize: 22,
+                        color: selected ? colors.primary : colors.textMuted,
+                        lineHeight: 1,
+                        flexShrink: 0,
+                      }}>
+                        {VEHICLE_ICONS[vehicle.iconName] ?? <CarOutlined />}
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{
+                          display: 'block',
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: selected ? colors.primary : colors.text,
+                          lineHeight: 1.2,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}>
+                          {vehicle.name}
+                        </span>
+                        {defaultRate && !selected && (
+                          <span style={{ fontSize: 11, color: colors.textMuted, display: 'block', marginTop: 2 }}>
+                            s/. {parseFloat(defaultRate.amount).toFixed(2)}
+                          </span>
+                        )}
+                        {selected && hourRates.length > 0 && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            style={{ marginTop: 6 }}
+                          >
+                            <Select
+                              size="small"
+                              placeholder="Tarifa"
+                              value={selectedRateId}
+                              onChange={handleHourRateChange}
+                              options={rateOptions(hourRates)}
+                              style={{ width: '100%' }}
+                              popupMatchSelectWidth={false}
+                            />
+                          </div>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Divider ───────────────────────────────────────────────────── */}
+            <div style={{
+              width: 1,
+              alignSelf: 'stretch',
+              background: colors.divider,
+              flexShrink: 0,
+              marginTop: 24,
+            }} />
+
+            {/* ── Right: Special rates (stacked) ───────────────────────────── */}
+            <div style={{ flex: '1 1 220px', maxWidth: 340 }}>
+              <Text style={{
+                fontSize: 9, color: colors.textSubtle, textTransform: 'uppercase',
+                letterSpacing: 1.5, display: 'block', marginBottom: 10, fontWeight: 600,
+              }}>
+                Tarifas especiales
+              </Text>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+                {[
+                  {
+                    type: 'overnight' as const,
+                    label: 'Amanecida',
+                    sub: 'Hasta 09:00 am',
+                    rates: overnightRates,
+                  },
+                  {
+                    type: 'flat' as const,
+                    label: 'Tarifa Plana',
+                    sub: 'Hasta 09:00 pm',
+                    rates: flatRates,
+                  },
+                  {
+                    type: 'subscriber' as const,
+                    label: 'Abonados',
+                    sub: 'Tarifa mensual',
+                    rates: subscriberRates,
+                  },
+                ].map(({ type, label, sub, rates }) => {
+                  const active = specialRateType === type;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => selectSpecial(type)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '14px 18px',
+                        background: active ? '#e6f4f4' : 'transparent',
+                        border: active
+                          ? `2px solid ${colors.primary}`
+                          : `1.5px solid ${colors.cardBorder}`,
+                        borderRadius: 12,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        textAlign: 'left',
+                        width: '100%',
+                        outline: 'none',
+                      }}
+                    >
+                      <span>
+                        <span style={{
+                          display: 'block',
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: active ? colors.primary : colors.text,
+                        }}>
+                          {label}
+                        </span>
+                        <span style={{ fontSize: 11, color: colors.textMuted }}>
+                          {sub}
+                        </span>
+                      </span>
+                      {active && (
+                        <span style={{
+                          width: 8, height: 8, borderRadius: '50%',
+                          background: colors.primary, flexShrink: 0,
+                        }} />
+                      )}
+                    </button>
+                  );
+                })}
+
+                {/* Inline rate selector for active special type */}
+                {specialRateType && (() => {
+                  const pool =
+                    specialRateType === 'overnight' ? overnightRates
+                    : specialRateType === 'flat' ? flatRates
+                    : subscriberRates;
+                  if (pool.length === 0) return null;
+                  return (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseDown={(e) => e.stopPropagation()}
+                    >
+                      <Select
+                        size="small"
+                        placeholder="Tarifa"
+                        value={selectedRateId}
+                        onChange={(id) => setSelectedRateId(id)}
+                        options={rateOptions(pool)}
+                        style={{ width: '100%' }}
+                        popupMatchSelectWidth={false}
+                      />
                     </div>
-                    <Text strong style={{ fontSize: 11, color: colors.text, display: 'block' }}>
-                      {vehicle.name.toUpperCase()}
-                    </Text>
-                    {defaultRate && !selected && (
-                      <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block', marginTop: 2 }}>
-                        s/. {parseFloat(defaultRate.amount).toFixed(2)}
-                      </Text>
-                    )}
-                    {selected && hourRates.length > 0 && (
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                      >
-                        <Select
-                          size="small"
-                          placeholder="Tarifa"
-                          value={selectedRateId}
-                          onChange={handleHourRateChange}
-                          options={rateOptions(hourRates)}
-                          style={{ width: '100%', marginTop: 6 }}
-                          popupMatchSelectWidth={false}
-                        />
-                      </div>
-                    )}
-                  </Card>
-                </Col>
-              );
-            })}
+                  );
+                })()}
 
-            {/* Amanecida */}
-            <Col xs={12} sm={8} md={6} lg={5}>
-              <Card
-                size="small"
-                hoverable
-                onClick={() => selectSpecial('overnight')}
-                style={{
-                  ...cardStyle,
-                  border: specialRateType === 'overnight' ? `2px solid ${colors.primary}` : cardStyle.border,
-                  cursor: 'pointer',
-                }}
-                styles={{ body: { padding: '10px 8px' } }}
-              >
-                <Text strong style={{ fontSize: 12, color: colors.text, display: 'block' }}>Amanecida</Text>
-                <Text style={{ fontSize: 10, color: colors.textMuted }}>Hasta 09:00 am</Text>
-                {specialRateType === 'overnight' && overnightRates.length > 0 && (
-                  <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-                    <Select
-                      size="small"
-                      placeholder="Tarifa"
-                      value={selectedRateId}
-                      onChange={(id) => setSelectedRateId(id)}
-                      options={rateOptions(overnightRates)}
-                      style={{ width: '100%', marginTop: 6 }}
-                      popupMatchSelectWidth={false}
-                    />
-                  </div>
-                )}
-              </Card>
-            </Col>
+              </div>
+            </div>
 
-            {/* Tarifa Plana */}
-            <Col xs={12} sm={8} md={6} lg={5}>
-              <Card
-                size="small"
-                hoverable
-                onClick={() => selectSpecial('flat')}
-                style={{
-                  ...cardStyle,
-                  border: specialRateType === 'flat' ? `2px solid ${colors.primary}` : cardStyle.border,
-                  cursor: 'pointer',
-                }}
-                styles={{ body: { padding: '10px 8px' } }}
-              >
-                <Text strong style={{ fontSize: 12, color: colors.text, display: 'block' }}>Tarifa Plana</Text>
-                <Text style={{ fontSize: 10, color: colors.textMuted }}>Hasta 09:00 pm</Text>
-                {specialRateType === 'flat' && flatRates.length > 0 && (
-                  <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-                    <Select
-                      size="small"
-                      placeholder="Tarifa"
-                      value={selectedRateId}
-                      onChange={(id) => setSelectedRateId(id)}
-                      options={rateOptions(flatRates)}
-                      style={{ width: '100%', marginTop: 6 }}
-                      popupMatchSelectWidth={false}
-                    />
-                  </div>
-                )}
-              </Card>
-            </Col>
-
-            {/* Abonados */}
-            <Col xs={12} sm={8} md={6} lg={5}>
-              <Card
-                size="small"
-                hoverable
-                onClick={() => selectSpecial('subscriber')}
-                style={{
-                  ...cardStyle,
-                  border: specialRateType === 'subscriber' ? `2px solid ${colors.primary}` : cardStyle.border,
-                  cursor: 'pointer',
-                }}
-                styles={{ body: { padding: '10px 8px' } }}
-              >
-                <Text strong style={{ fontSize: 12, color: colors.text, display: 'block' }}>Abonados</Text>
-                <Text style={{ fontSize: 10, color: colors.textMuted }}>Tarifa mensual</Text>
-                {specialRateType === 'subscriber' && subscriberRates.length > 0 && (
-                  <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
-                    <Select
-                      size="small"
-                      placeholder="Tarifa"
-                      value={selectedRateId}
-                      onChange={(id) => setSelectedRateId(id)}
-                      options={rateOptions(subscriberRates)}
-                      style={{ width: '100%', marginTop: 6 }}
-                      popupMatchSelectWidth={false}
-                    />
-                  </div>
-                )}
-              </Card>
-            </Col>
-          </Row>
+          </div>
 
           {/* Generate button */}
           <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
