@@ -69,6 +69,7 @@ export function useCancelTicket() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PENDING_TICKETS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.CASH_REGISTER_CURRENT });
       message.success('Ticket cancelado');
     },
     onError: (err: unknown) => {
@@ -85,6 +86,7 @@ export function useRevertTicket() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PENDING_TICKETS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.CASH_REGISTER_CURRENT });
       message.success('Ticket revertido a pendiente');
     },
     onError: (err: unknown) => {
