@@ -4,7 +4,8 @@ export const USER_KEY = 'user';
 export const QUERY_KEYS = {
   TICKETS: ['tickets'] as const,
   TICKET: (id: string) => ['tickets', id] as const,
-  PENDING_TICKETS: ['tickets', 'pending'] as const,
+  PENDING_TICKETS: ['tickets', 'status', 'pending'] as const,
+  TICKETS_BY_STATUS: (status: string) => ['tickets', 'status', status] as const,
   CLIENTS: ['clients'] as const,
   CLIENT: (id: string) => ['clients', id] as const,
   VEHICLES: ['vehicles'] as const,

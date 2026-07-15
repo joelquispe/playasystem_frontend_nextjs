@@ -28,7 +28,7 @@ import { useChargeTicket, useCancelTicket } from '@/hooks/useTickets';
 import { usePlateEvents } from '@/hooks/usePlateEvents';
 import { useTaxpayer, usePersonByDni } from '@/hooks/useNubefact';
 import { formatDniDisplayName } from '@/services/identity.service';
-import { TicketPrintModal } from '@/components/tickets/TicketPrintModal';
+import { printTicketDirectly } from '@/lib/print-ticket';
 import { nestedPanelStyle, colors } from '@/lib/theme';
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
 
@@ -77,7 +77,6 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
 
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
-  const [printTicket, setPrintTicket] = useState<Ticket | null>(null);
 
   const {
     control,
@@ -158,7 +157,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
     const charged = await chargeTicket.mutateAsync({ id: ticket.id, data: buildPayload(data) });
     reset();
     onClose();
-    setPrintTicket(charged);
+    printTicketDirectly(charged);
   });
 
   const handleCancel = async () => {
@@ -191,8 +190,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
   ];
 
   return (
-    <>
-      <Modal
+    <Modal
         title={
           <Text strong style={{ fontSize: 16 }}>
             Cobro de Ticket
@@ -201,8 +199,8 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
         open={open}
         onCancel={() => { reset(); onClose(); }}
         footer={null}
-        width={680}
-        styles={{ body: { padding: '16px 20px' } }}
+        width={960}
+        styles={{ body: { padding: '16px 24px' } }}
       >
         {/* ── Header: Placa / Vehículo / Llave ─────────────────────────────── */}
         <Row gutter={12} align="middle" style={{ marginBottom: 12 }}>
@@ -352,7 +350,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
         {/* ── Main form row: left (payment) | right (events) ───────────────── */}
         <Row gutter={16}>
           {/* Left: payment form */}
-          <Col xs={24} md={plateEvents.length > 0 ? 13 : 24}>
+          <Col xs={24} md={plateEvents.length > 0 ? 14 : 24}>
             <Form layout="vertical" requiredMark={false} size="small">
               <Row gutter={10}>
                 <Col span={12}>
@@ -511,7 +509,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
 
           {/* Right: event history */}
           {plateEvents.length > 0 && (
-            <Col xs={24} md={11}>
+            <Col xs={24} md={10}>
               <Text style={{ fontSize: 12, fontWeight: 600, color: colors.text }}>
                 Historial de Eventos
               </Text>
@@ -521,7 +519,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                 rowKey="id"
                 size="small"
                 pagination={false}
-                scroll={{ y: 180 }}
+                scroll={{ y: 260 }}
                 style={{ marginTop: 6, fontSize: 11 }}
               />
             </Col>
@@ -612,14 +610,6 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
             </Row>
           </Col>
         </Row>
-      </Modal>
-
-      {/* ── Print modal ─────────────────────────────────────────────────────── */}
-      <TicketPrintModal
-        ticket={printTicket}
-        open={!!printTicket}
-        onClose={() => setPrintTicket(null)}
-      />
-    </>
+    </Modal>
   );
 }

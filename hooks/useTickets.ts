@@ -11,10 +11,10 @@ import {
   PostPaymentReceiptDto,
 } from '@/services/tickets.service';
 
-export function useTickets(pending?: boolean) {
+export function useTickets(status?: string) {
   return useQuery({
-    queryKey: pending ? QUERY_KEYS.PENDING_TICKETS : QUERY_KEYS.TICKETS,
-    queryFn: () => ticketsService.getTickets(pending),
+    queryKey: status ? QUERY_KEYS.TICKETS_BY_STATUS(status) : QUERY_KEYS.TICKETS_BY_STATUS('all'),
+    queryFn: () => ticketsService.getTickets(status),
     refetchInterval: 30_000,
   });
 }

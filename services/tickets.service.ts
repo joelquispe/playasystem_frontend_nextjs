@@ -55,8 +55,8 @@ export interface PostPaymentReceiptDto {
 }
 
 export const ticketsService = {
-  getTickets: async (pending?: boolean): Promise<Ticket[]> => {
-    const params = pending ? { pending: true } : {};
+  getTickets: async (status?: string): Promise<Ticket[]> => {
+    const params = status ? { status } : {};
     const res = await apiClient.get<ApiResponse<Ticket[]>>('/tickets', { params });
     return res.data.data;
   },

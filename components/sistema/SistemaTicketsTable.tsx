@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import {
   Button,
@@ -50,6 +50,8 @@ interface SistemaTicketsTableProps {
   tickets: Ticket[];
   loading: boolean;
   isFetching: boolean;
+  statusFilter: string;
+  onStatusFilterChange: (status: string) => void;
   onRefresh: () => void;
   onCharge: (ticket: Ticket) => void;
   onReceipt: (ticket: Ticket) => void;
@@ -62,6 +64,8 @@ export function SistemaTicketsTable({
   tickets,
   loading,
   isFetching,
+  statusFilter,
+  onStatusFilterChange,
   onRefresh,
   onCharge,
   onReceipt,
@@ -69,7 +73,6 @@ export function SistemaTicketsTable({
   onPrint,
   onDetail,
 }: SistemaTicketsTableProps) {
-  const [filter, setFilter] = useState<'all' | 'pending'>('pending');
   const { data: clients = [] } = useClients();
   const revertTicket = useRevertTicket();
   const toggleKey = useToggleKey();
@@ -79,8 +82,6 @@ export function SistemaTicketsTable({
     clients.forEach((c) => map.set(c.plate.toUpperCase(), c));
     return map;
   }, [clients]);
-
-  const filtered = filter === 'pending' ? tickets.filter((t) => t.status === 'pending') : tickets;
 
   const columns: ColumnsType<Ticket> = [
     {
@@ -321,12 +322,13 @@ export function SistemaTicketsTable({
         </Text>
         <Space>
           <Select
-            value={filter}
-            onChange={setFilter}
-            style={{ width: 180 }}
+            value={statusFilter}
+            onChange={onStatusFilterChange}
+            style={{ width: 200 }}
             options={[
-              { value: 'all', label: 'Todos' },
               { value: 'pending', label: 'Pendientes por cobrar' },
+              { value: 'paid', label: 'Pagados hoy' },
+              { value: 'cancelled', label: 'Cancelados hoy' },
             ]}
           />
           <Button icon={<ReloadOutlined spin={isFetching} />} onClick={onRefresh}>
@@ -338,7 +340,7 @@ export function SistemaTicketsTable({
       <Table
         rowKey="id"
         columns={columns}
-        dataSource={filtered}
+        dataSource={tickets}
         loading={loading}
         size="small"
         scroll={{ x: 1600 }}

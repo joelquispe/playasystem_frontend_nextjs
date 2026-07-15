@@ -17,7 +17,8 @@ import { TicketDetailModal } from '@/components/tickets/TicketDetailModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function SistemaPage() {
-  const { data: tickets = [], isLoading, isFetching, refetch } = useTickets();
+  const [statusFilter, setStatusFilter] = useState<string>('pending');
+  const { data: tickets = [], isLoading, isFetching, refetch } = useTickets(statusFilter);
 
   const [chargeTicket, setChargeTicket] = useState<Ticket | null>(null);
   const [addChargeTicket, setAddChargeTicket] = useState<Ticket | null>(null);
@@ -59,6 +60,8 @@ export default function SistemaPage() {
         tickets={tickets}
         loading={isLoading}
         isFetching={isFetching}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
         onRefresh={() => refetch()}
         onCharge={setChargeTicket}
         onReceipt={setReceiptTicket}
