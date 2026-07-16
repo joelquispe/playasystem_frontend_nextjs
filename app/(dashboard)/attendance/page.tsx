@@ -9,7 +9,6 @@ import {
   Row,
   Select,
   Skeleton,
-  Space,
   Statistic,
   Table,
   Tag,
@@ -20,18 +19,27 @@ import { ReloadOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { useAttendance, useAttendanceSummary } from '@/hooks/useAttendance';
 import { useUsers } from '@/hooks/useUsers';
-import { Attendance, AttendanceStatus } from '@/types/api';
+import { AttendanceRecord, AttendanceStatus } from '@/types/api';
+import { ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
 
-const STATUS_MAP: Record<AttendanceStatus, { label: string; color: string }> = {
-  on_time: { label: 'A tiempo', color: 'success' },
-  late: { label: 'Tardanza', color: 'warning' },
-  absent: { label: 'Ausente', color: 'error' },
+const STATUS_COLOR: Partial<Record<AttendanceStatus, string>> = {
+  PRESENT: 'success',
+  LATE: 'warning',
+  ABSENT: 'error',
+  INCOMPLETE: 'orange',
+  PENDING: 'default',
+  JUSTIFIED: 'blue',
+  DAY_OFF: 'default',
 };
 
+/**
+ * Admin attendance list — field mapping updated for AttendanceRecord API.
+ * Full UX redesign deferred; only keeps the page compiling against the new hooks.
+ */
 export default function AttendancePage() {
   const now = dayjs();
   const [selectedUser, setSelectedUser] = useState<string | undefined>(undefined);
@@ -56,45 +64,48 @@ export default function AttendancePage() {
     .filter((u) => u.isActive)
     .map((u) => ({ label: u.fullName, value: u.id }));
 
-  const columns: ColumnsType<Attendance> = [
+  const columns: ColumnsType<AttendanceRecord> = [
     {
       title: 'Fecha',
-      dataIndex: 'date',
-      key: 'date',
+      dataIndex: 'attendanceDate',
+      key: 'attendanceDate',
       render: (v: string) => dayjs(v).format('DD/MM/YYYY'),
     },
     {
       title: 'Usuario',
       key: 'user',
-      render: (_: unknown, record: Attendance) => (
-        <Text style={{ color: colors.text }}>{record.user?.fullName}</Text>
+      render: (_: unknown, record: AttendanceRecord) => (
+        <Text style={{ color: colors.text }}>{record.user?.fullName ?? '—'}</Text>
       ),
     },
     {
       title: 'Entrada',
-      dataIndex: 'loginTime',
-      key: 'loginTime',
-      render: (v: string) => dayjs(v).format('HH:mm'),
+      dataIndex: 'checkedInAt',
+      key: 'checkedInAt',
+      render: (v: string | null) =>
+        v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
     },
     {
       title: 'Salida',
-      dataIndex: 'logoutTime',
-      key: 'logoutTime',
-      render: (v: string | null) => (v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>),
+      dataIndex: 'checkedOutAt',
+      key: 'checkedOutAt',
+      render: (v: string | null) =>
+        v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
     },
     {
       title: 'Estado',
       dataIndex: 'status',
       key: 'status',
-      render: (v: AttendanceStatus) => {
-        const { label, color } = STATUS_MAP[v] ?? { label: v, color: 'default' };
-        return <Tag color={color}>{label}</Tag>;
-      },
+      render: (v: AttendanceStatus) => (
+        <Tag color={STATUS_COLOR[v] ?? 'default'}>
+          {ATTENDANCE_STATUS_LABELS[v] ?? v}
+        </Tag>
+      ),
     },
     {
       title: 'Tardanza',
-      dataIndex: 'tardinessMinutes',
-      key: 'tardinessMinutes',
+      dataIndex: 'lateMinutes',
+      key: 'lateMinutes',
       render: (v: number) =>
         v > 0 ? (
           <Text style={{ color: '#f59e0b' }}>{v} min</Text>
@@ -106,7 +117,9 @@ export default function AttendancePage() {
       title: 'Notas',
       dataIndex: 'notes',
       key: 'notes',
-      render: (v: string | null) => <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v ?? '—'}</Text>,
+      render: (v: string | null) => (
+        <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v ?? '—'}</Text>
+      ),
     },
   ];
 
@@ -122,8 +135,15 @@ export default function AttendancePage() {
         }
       />
 
-      {/* Filters */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 12,
+          alignItems: 'center',
+          marginBottom: 20,
+          flexWrap: 'wrap',
+        }}
+      >
         <Text style={{ color: colors.textMuted, fontSize: 13 }}>Usuario:</Text>
         <Select
           value={selectedUser}
@@ -143,14 +163,13 @@ export default function AttendancePage() {
         />
       </div>
 
-      {/* Summary row */}
       {summary && selectedUser && (
         <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
           {[
             { label: 'Días con tardanza', value: summary.lateCount, color: '#f59e0b' },
             {
               label: 'Minutos de tardanza',
-              value: summary.totalTardinessMinutes,
+              value: summary.totalLateMinutes,
               color: '#ef4444',
               suffix: ' min',
             },
@@ -169,12 +188,13 @@ export default function AttendancePage() {
         </Row>
       )}
 
-      {/* Table */}
       {isLoading ? (
         <Skeleton active />
       ) : records.length === 0 ? (
         <Empty
-          description={<Text style={{ color: colors.textMuted }}>No hay registros para este período</Text>}
+          description={
+            <Text style={{ color: colors.textMuted }}>No hay registros para este período</Text>
+          }
           style={{ marginTop: 60 }}
         />
       ) : (

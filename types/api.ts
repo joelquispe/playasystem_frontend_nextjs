@@ -18,7 +18,14 @@ export type RateType = 'hour_fraction' | 'overnight' | 'flat' | 'subscriber';
 export type PaymentMethod = 'cash' | 'yape' | 'plin' | 'card';
 export type ReceiptType = 'vale' | 'boleta' | 'factura';
 export type EventColor = 'white' | 'green' | 'red';
-export type AttendanceStatus = 'on_time' | 'late' | 'absent';
+export type AttendanceStatus =
+  | 'PENDING'
+  | 'PRESENT'
+  | 'LATE'
+  | 'ABSENT'
+  | 'INCOMPLETE'
+  | 'JUSTIFIED'
+  | 'DAY_OFF';
 export type BalanceStatus = 'balanced' | 'unbalanced';
 export type SubscriberStatus = 'active' | 'expired' | 'cancelled';
 
@@ -170,6 +177,12 @@ export interface CashRegister {
   id: string;
   cashierId: string;
   cashier: Pick<User, 'id' | 'username' | 'fullName'>;
+  /** Optional link to attendance for the same day (reports) */
+  attendanceId: string | null;
+  attendance?: Pick<
+    AttendanceRecord,
+    'id' | 'status' | 'lateMinutes' | 'checkedInAt' | 'checkedOutAt' | 'workedMinutes' | 'attendanceDate'
+  > | null;
   shiftDate: string;
   cashAmount: string;
   yapeAmount: string;
@@ -189,6 +202,7 @@ export interface CashRegister {
   updatedAt: string;
 }
 
+/** @deprecated Prefer AttendanceRecord — legacy shape kept for gradual migration */
 export interface Attendance {
   id: string;
   userId: string;
@@ -201,9 +215,50 @@ export interface Attendance {
   notes: string | null;
 }
 
+export interface AttendanceRecord {
+  id: string;
+  userId: string;
+  branchId: string | null;
+  scheduleId: string | null;
+  attendanceDate: string;
+  expectedEntryAt: string | null;
+  expectedExitAt: string | null;
+  checkedInAt: string | null;
+  checkedOutAt: string | null;
+  status: AttendanceStatus;
+  lateMinutes: number;
+  workedMinutes: number;
+  notes: string | null;
+  schedule?: {
+    id: string;
+    name: string;
+    startTime: string;
+    endTime: string;
+    toleranceMinutes: number;
+  } | null;
+  user?: Pick<User, 'id' | 'username' | 'fullName'>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AttendanceSummary {
-  totalTardinessMinutes: number;
+  totalLateMinutes: number;
   lateCount: number;
+}
+
+export interface WorkSchedule {
+  id: string;
+  branchId: string | null;
+  name: string;
+  startTime: string;
+  endTime: string;
+  breakMinutes: number;
+  toleranceMinutes: number;
+  crossesMidnight: boolean;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Subscriber {
@@ -234,6 +289,12 @@ export interface SystemConfig {
 }
 
 export interface DashboardData {
+  /** Ingreso neto del mes (alias de totalRevenue) */
+  ingresos: number;
+  /** Dinero que salió de caja en el mes (alias de totalExpenses / gastos de caja) */
+  egresos: number;
+  /** ingresos - egresos */
+  ganancia: number;
   totalRevenue: number;
   totalTickets: number;
   totalCancelled: number;
@@ -251,6 +312,70 @@ export interface DashboardData {
   }>;
 }
 
+// ─── Reports (paginated) ──────────────────────────────────────────────────────
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+/** Tardanza acumulada, desglosada en horas/minutos/segundos */
+export interface AccumulatedLateTime {
+  totalMinutes: number;
+  totalSeconds: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  /** HH:MM:SS */
+  formatted: string;
+}
+
+export interface AttendanceReportResult {
+  items: AttendanceRecord[];
+  meta: PaginationMeta;
+  accumulatedLateTime: AccumulatedLateTime;
+}
+
+/** Fila del reporte de caja — turno enriquecido con tickets procesados */
+export interface CashRegisterReportItem extends CashRegister {
+  ticketsCount: number;
+}
+
+export interface CashRegisterReportSummary {
+  totalRevenue: number;
+  totalDiscounts: number;
+  totalCancellationsAmount: number;
+  totalCancellationsCount: number;
+  totalExpenses: number;
+  totalTicketsCount: number;
+}
+
+export interface CashRegisterReportResult {
+  items: CashRegisterReportItem[];
+  meta: PaginationMeta;
+  summary: CashRegisterReportSummary;
+}
+
+export interface DailySummaryTotals {
+  /** Ingreso del día — suma de finalAmount de tickets pagados */
+  totalRevenue: number;
+  /** Tickets anulados — conteo */
+  totalCancelled: number;
+  /** Descuentos del día */
+  totalDiscounts: number;
+  /** Gastos de caja del día */
+  totalExpenses: number;
+}
+
+export interface DailySummaryReportResult {
+  items: Ticket[];
+  meta: PaginationMeta;
+  date: string;
+  summary: DailySummaryTotals;
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface LoginRequest {
@@ -260,5 +385,8 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   accessToken: string;
+  refreshToken: string;
   user: User;
+  /** Cashier only — null for admin */
+  attendance: AttendanceRecord | null;
 }

@@ -1,10 +1,11 @@
 'use client';
 
-import { Avatar, Button, Dropdown, Layout, Space, Tag, Typography } from 'antd';
+import { Avatar, Button, Dropdown, Layout, Modal, Space, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, UserOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
+import { useCheckOut, useTodayAttendance } from '@/hooks/useAttendance';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -14,7 +15,28 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ title }: AppHeaderProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
+  const isCashier = !!user && !isAdmin && getUserRoleSlug(user) === 'cashier';
+
+  const { data: todayAttendance } = useTodayAttendance(isCashier);
+  const checkOut = useCheckOut();
+
+  const canEndShift =
+    isCashier &&
+    !!todayAttendance?.checkedInAt &&
+    !todayAttendance?.checkedOutAt;
+
+  const handleEndShift = () => {
+    Modal.confirm({
+      title: '¿Terminar turno?',
+      content:
+        'Se registrará tu hora de salida de asistencia. Esta acción no cierra la caja ni la sesión.',
+      okText: 'Terminar turno',
+      cancelText: 'Cancelar',
+      okButtonProps: { danger: true },
+      onOk: () => checkOut.mutateAsync(undefined),
+    });
+  };
 
   const menuItems: MenuProps['items'] = [
     {
@@ -60,6 +82,17 @@ export function AppHeader({ title }: AppHeaderProps) {
       </Text>
 
       <Space>
+        {canEndShift && (
+          <Button
+            danger
+            icon={<ClockCircleOutlined />}
+            loading={checkOut.isPending}
+            onClick={handleEndShift}
+          >
+            Terminar turno
+          </Button>
+        )}
+
         <Tag
           color={user && getUserRoleSlug(user) === 'admin' ? 'volcano' : 'geekblue'}
           style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase' }}

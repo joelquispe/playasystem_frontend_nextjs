@@ -1,4 +1,5 @@
 export const AUTH_TOKEN_KEY = 'access_token';
+export const REFRESH_TOKEN_KEY = 'refresh_token';
 export const USER_KEY = 'user';
 
 export const QUERY_KEYS = {
@@ -21,12 +22,24 @@ export const QUERY_KEYS = {
     ['reports', 'monthly', year, month] as const,
   REPORTS_DAILY: (cashierId: string, date: string) =>
     ['reports', 'daily', cashierId, date] as const,
+  REPORTS_ATTENDANCE: (params: Record<string, unknown>) =>
+    ['reports', 'attendance', params] as const,
+  REPORTS_CASH_REGISTER: (params: Record<string, unknown>) =>
+    ['reports', 'cash-register', params] as const,
+  REPORTS_DAILY_SUMMARY: (params: Record<string, unknown>) =>
+    ['reports', 'daily-summary', params] as const,
   USERS: ['users'] as const,
   USER: (id: string) => ['users', id] as const,
+  ATTENDANCE_TODAY: ['attendance', 'me', 'today'] as const,
+  ATTENDANCE_HISTORY: (params: Record<string, unknown>) =>
+    ['attendance', 'me', 'history', params] as const,
   ATTENDANCE: (params: Record<string, unknown>) =>
-    ['attendance', params] as const,
+    ['attendance', 'list', params] as const,
   ATTENDANCE_SUMMARY: (params: Record<string, unknown>) =>
     ['attendance', 'summary', params] as const,
+  ATTENDANCE_SCHEDULES: ['attendance', 'schedules'] as const,
+  ATTENDANCE_SCHEDULE: (id: string) => ['attendance', 'schedules', id] as const,
+  ATTENDANCE_DETAIL: (id: string) => ['attendance', id] as const,
   PLATE_EVENTS: (plate: string) => ['events', plate] as const,
   SYSTEM_CONFIG: ['system-config'] as const,
   SUBSCRIBERS: (status?: string) => ['subscribers', status] as const,
@@ -53,6 +66,16 @@ export const TICKET_STATUS_LABELS: Record<string, string> = {
   paid: 'Pagado',
   cancelled: 'Cancelado',
   manual: 'Manual',
+};
+
+export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendiente',
+  PRESENT: 'A tiempo',
+  LATE: 'Tarde',
+  ABSENT: 'Ausente',
+  INCOMPLETE: 'Sin salida',
+  JUSTIFIED: 'Justificado',
+  DAY_OFF: 'Día libre',
 };
 
 export const RECEIPT_TYPE_LABELS: Record<string, string> = {

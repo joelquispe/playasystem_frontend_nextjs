@@ -1,10 +1,12 @@
 'use client';
 
-import { Card, Col, Row, Statistic, Typography } from 'antd';
+import { Card, Col, Row, Typography } from 'antd';
 import {
+  ArrowDownOutlined,
   ArrowUpOutlined,
   CloseCircleOutlined,
   DollarOutlined,
+  RiseOutlined,
   TagOutlined,
 } from '@ant-design/icons';
 import { DashboardData } from '@/types/api';
@@ -63,6 +65,16 @@ function StatCard({
 export function DashboardStats({ data }: DashboardStatsProps) {
   return (
     <Row gutter={[16, 16]}>
+      <Col xs={24} sm={8}>
+        <StatCard title="Ingresos" value={data.ingresos.toFixed(2)} prefix="s/. " color="#16a34a" icon={<ArrowUpOutlined />} />
+      </Col>
+      <Col xs={24} sm={8}>
+        <StatCard title="Egresos" value={data.egresos.toFixed(2)} prefix="s/. " color="#ef4444" icon={<ArrowDownOutlined />} />
+      </Col>
+      <Col xs={24} sm={8}>
+        <StatCard title="Ganancia" value={data.ganancia.toFixed(2)} prefix="s/. " color={colors.accent} icon={<RiseOutlined />} />
+      </Col>
+
       <Col xs={24} sm={12} xl={6}>
         <StatCard title="Ingresos totales" value={data.totalRevenue.toFixed(2)} prefix="s/. " color={colors.accent} icon={<DollarOutlined />} />
       </Col>

@@ -9,6 +9,7 @@ import {
   BarChartOutlined,
   CalendarOutlined,
   CarOutlined,
+  DashboardOutlined,
   DollarOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -33,6 +34,18 @@ function makeItem(
   return { key, icon, label };
 }
 
+/** Submenu "Reportes" — Dashboard / Cajeros (mes + día) / Asistencia */
+const reportsSubmenu: MenuItem = {
+  key: '/reports',
+  icon: <BarChartOutlined />,
+  label: 'Reportes',
+  children: [
+    makeItem(<Link href="/reports/dashboard">Dashboard</Link>, '/reports/dashboard', <DashboardOutlined />),
+    makeItem(<Link href="/reports/cajeros">Cajeros</Link>, '/reports/cajeros', <DollarOutlined />),
+    makeItem(<Link href="/reports/asistencia">Asistencia</Link>, '/reports/asistencia', <CalendarOutlined />),
+  ],
+};
+
 /** Cajero: solo operaciones (tickets → cobro → caja) y clientes */
 const cashierItems: MenuItem[] = [
   makeItem(<Link href="/sistema">Sistema</Link>, '/sistema', <CarOutlined />),
@@ -46,7 +59,7 @@ const adminItems: MenuItem[] = [
   makeItem(<Link href="/cash-register">Caja</Link>, '/cash-register', <DollarOutlined />),
   makeItem(<Link href="/clients">Clientes</Link>, '/clients', <UserOutlined />),
   makeItem(<Link href="/subscribers">Abonados</Link>, '/subscribers', <IdcardOutlined />),
-  makeItem(<Link href="/reports">Reportes</Link>, '/reports', <BarChartOutlined />),
+  reportsSubmenu,
   makeItem(<Link href="/users">Usuarios</Link>, '/users', <TeamOutlined />),
   makeItem(<Link href="/roles">Roles</Link>, '/roles', <SafetyCertificateOutlined />),
   makeItem(<Link href="/vehicles">Vehículos</Link>, '/vehicles', <TruckOutlined />),
@@ -61,6 +74,7 @@ export function AppSidebar() {
 
   const items = isAdmin ? adminItems : cashierItems;
   const selectedKey = pathname;
+  const defaultOpenKeys = pathname.startsWith('/reports') ? ['/reports'] : [];
 
   return (
     <Sider
@@ -135,6 +149,7 @@ export function AppSidebar() {
         theme="light"
         mode="inline"
         selectedKeys={[selectedKey]}
+        defaultOpenKeys={defaultOpenKeys}
         items={items}
         style={{ background: '#fbf7f2', border: 'none', marginTop: 8 }}
       />

@@ -2,7 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/constants';
 import {
   reportsService,
+  AttendanceReportParams,
+  CashRegisterReportParams,
   DailyReportParams,
+  DailySummaryReportParams,
   DashboardParams,
   MonthlyReportParams,
 } from '@/services/reports.service';
@@ -30,5 +33,29 @@ export function useDailyReport(params?: DailyReportParams) {
     queryKey: QUERY_KEYS.REPORTS_DAILY(params?.cashierId ?? '', params?.date ?? ''),
     queryFn: () => reportsService.getDailyReport(params),
     enabled: !!(params?.cashierId && params?.date),
+  });
+}
+
+/** Reporte de asistencia — paginado, filtrable por cajero (opcional) y fecha/período */
+export function useAttendanceReport(params: AttendanceReportParams) {
+  return useQuery({
+    queryKey: QUERY_KEYS.REPORTS_ATTENDANCE({ ...params }),
+    queryFn: () => reportsService.getAttendanceReport(params),
+  });
+}
+
+/** Reporte de caja (cajeros) — resumen del mes/período, paginado */
+export function useCashRegisterReport(params: CashRegisterReportParams) {
+  return useQuery({
+    queryKey: QUERY_KEYS.REPORTS_CASH_REGISTER({ ...params }),
+    queryFn: () => reportsService.getCashRegisterReport(params),
+  });
+}
+
+/** Reporte de caja (cajeros) — resumen del día, paginado */
+export function useDailySummaryReport(params: DailySummaryReportParams) {
+  return useQuery({
+    queryKey: QUERY_KEYS.REPORTS_DAILY_SUMMARY({ ...params }),
+    queryFn: () => reportsService.getDailySummaryReport(params),
   });
 }

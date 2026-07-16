@@ -15,6 +15,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/cash-register': 'Caja',
   '/clients': 'Clientes',
   '/reports': 'Reportes',
+  '/reports/dashboard': 'Reportes · Dashboard',
+  '/reports/cajeros': 'Reportes · Cajeros',
+  '/reports/asistencia': 'Reportes · Asistencia',
   '/users': 'Usuarios',
   '/roles': 'Roles',
   '/vehicles': 'Tipos de Vehículo',
@@ -23,6 +26,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/subscribers': 'Abonados',
 };
 
+/** Route prefixes only accessible to admins — matched with `startsWith` to also guard nested routes */
 const ADMIN_ROUTES = [
   '/reports',
   '/users',
@@ -50,7 +54,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !isAdmin) {
-      if (ADMIN_ROUTES.includes(pathname)) {
+      if (ADMIN_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
         router.replace('/sistema');
       }
     }

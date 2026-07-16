@@ -4,7 +4,7 @@ import { Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { CashRegister } from '@/types/api';
-import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
+import { PAYMENT_METHOD_LABELS, ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -26,6 +26,37 @@ export function MonthlyReportTable({ shifts, loading }: MonthlyReportTableProps)
       title: 'Cajero',
       key: 'cashier',
       render: (_: unknown, r: CashRegister) => r.cashier?.fullName ?? '—',
+    },
+    {
+      title: 'Asistencia',
+      key: 'attendance',
+      width: 110,
+      render: (_: unknown, r: CashRegister) => {
+        const status = r.attendance?.status;
+        if (!status) return <Tag>Sin marca</Tag>;
+        const color =
+          status === 'PRESENT'
+            ? 'success'
+            : status === 'LATE'
+              ? 'warning'
+              : status === 'ABSENT' || status === 'INCOMPLETE'
+                ? 'error'
+                : 'default';
+        return <Tag color={color}>{ATTENDANCE_STATUS_LABELS[status] ?? status}</Tag>;
+      },
+    },
+    {
+      title: 'Tardanza',
+      key: 'lateMinutes',
+      width: 90,
+      render: (_: unknown, r: CashRegister) => {
+        const mins = r.attendance?.lateMinutes ?? 0;
+        return mins > 0 ? (
+          <Text type="danger">{mins} min</Text>
+        ) : (
+          <Text type="secondary">0</Text>
+        );
+      },
     },
     {
       title: 'Efectivo',
