@@ -8,6 +8,7 @@ import {
   DollarOutlined,
   RiseOutlined,
   TagOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import { DashboardData } from '@/types/api';
 import { cardStyle, colors } from '@/lib/theme';
@@ -75,17 +76,20 @@ export function DashboardStats({ data }: DashboardStatsProps) {
         <StatCard title="Ganancia" value={data.ganancia.toFixed(2)} prefix="s/. " color={colors.accent} icon={<RiseOutlined />} />
       </Col>
 
-      <Col xs={24} sm={12} xl={6}>
-        <StatCard title="Ingresos totales" value={data.totalRevenue.toFixed(2)} prefix="s/. " color={colors.accent} icon={<DollarOutlined />} />
-      </Col>
-      <Col xs={24} sm={12} xl={6}>
-        <StatCard title="Tickets cobrados" value={data.totalTickets} color="#3b82f6" icon={<ArrowUpOutlined />} />
-      </Col>
-      <Col xs={24} sm={12} xl={6}>
-        <StatCard title="Cancelaciones" value={data.totalCancelled} color="#ef4444" icon={<CloseCircleOutlined />} />
-      </Col>
-      <Col xs={24} sm={12} xl={6}>
-        <StatCard title="Descuentos" value={data.totalDiscounts.toFixed(2)} prefix="s/. " color="#f59e0b" icon={<TagOutlined />} />
+      <Col xs={24}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 16,
+          }}
+        >
+          <StatCard title="Ingresos totales" value={data.totalRevenue.toFixed(2)} prefix="s/. " color={colors.accent} icon={<DollarOutlined />} />
+          <StatCard title="Tickets cobrados" value={data.totalTickets} color="#3b82f6" icon={<ArrowUpOutlined />} />
+          <StatCard title="Cancelaciones" value={data.totalCancelled} color="#ef4444" icon={<CloseCircleOutlined />} />
+          <StatCard title="Descuentos" value={data.totalDiscounts.toFixed(2)} prefix="s/. " color="#f59e0b" icon={<TagOutlined />} />
+          <StatCard title="Gastos de Caja" value={data.gastosCaja.toFixed(2)} prefix="s/. " color="#ef4444" icon={<WalletOutlined />} />
+        </div>
       </Col>
 
       <Col xs={24}>

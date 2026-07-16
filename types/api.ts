@@ -295,6 +295,8 @@ export interface DashboardData {
   egresos: number;
   /** ingresos - egresos */
   ganancia: number;
+  /** Gastos de caja del mes — suma de `extraExpenses` registrados en cada turno cerrado */
+  gastosCaja: number;
   totalRevenue: number;
   totalTickets: number;
   totalCancelled: number;

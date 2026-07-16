@@ -2,7 +2,14 @@
 
 import { ConfigProvider, theme } from 'antd';
 import esES from 'antd/locale/es_ES';
+import dayjs from 'dayjs';
+import 'dayjs/locale/es';
 import { colors } from '@/lib/theme';
+
+// dayjs is a global singleton — antd's DatePicker/Calendar render month & day
+// names through it, so its locale must be set explicitly (ConfigProvider's
+// `locale` prop only translates antd's own UI strings, not dayjs formatting).
+dayjs.locale('es');
 
 export function AntdProvider({ children }: { children: React.ReactNode }) {
   return (
