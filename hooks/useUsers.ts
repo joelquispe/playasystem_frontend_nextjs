@@ -46,6 +46,7 @@ export function useUpdateUser() {
   });
 }
 
+/** Change password with current password (own account or admin targeting a user) */
 export function useChangePassword() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: ChangePasswordDto }) =>
@@ -75,16 +76,17 @@ export function useDeleteUser() {
   });
 }
 
+/** [Admin] Set a new password for any user — no current password required */
 export function useAdminResetPassword() {
   return useMutation({
     mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
       usersService.adminResetPassword(id, newPassword),
     onSuccess: () => {
-      message.success('Contraseña restablecida');
+      message.success('Contraseña actualizada correctamente');
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      message.error(msg ?? 'Error al restablecer contraseña');
+      message.error(msg ?? 'Error al cambiar contraseña');
     },
   });
 }

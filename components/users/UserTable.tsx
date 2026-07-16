@@ -77,7 +77,7 @@ export function UserTable({ data, loading, onEdit, onResetPassword }: UserTableP
     {
       title: 'Acciones',
       key: 'actions',
-      width: 100,
+      width: 140,
       render: (_, record: User) => (
         <Space>
           <Tooltip title="Editar">
@@ -89,7 +89,7 @@ export function UserTable({ data, loading, onEdit, onResetPassword }: UserTableP
             />
           </Tooltip>
           {onResetPassword && (
-            <Tooltip title="Restablecer contraseña">
+            <Tooltip title="Cambiar contraseña">
               <Button
                 type="text"
                 size="small"

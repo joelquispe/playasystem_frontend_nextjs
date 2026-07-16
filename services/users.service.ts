@@ -44,9 +44,8 @@ export const usersService = {
     return res.data.data;
   },
 
-  changePassword: async (id: string, data: ChangePasswordDto): Promise<User> => {
-    const res = await apiClient.patch<ApiResponse<User>>(`/users/${id}/password`, data);
-    return res.data.data;
+  changePassword: async (id: string, data: ChangePasswordDto): Promise<void> => {
+    await apiClient.patch(`/users/${id}/password`, data);
   },
 
   deleteUser: async (id: string): Promise<User> => {

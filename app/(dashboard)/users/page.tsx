@@ -14,14 +14,14 @@ export default function UsersPage() {
   const { data: users = [], isLoading, isFetching, refetch } = useUsers();
   const [editing, setEditing] = useState<User | null>(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [resetUser, setResetUser] = useState<User | null>(null);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
 
   const handleEdit = (user: User) => {
     setEditing(user);
     setFormOpen(true);
   };
 
-  const handleClose = () => {
+  const handleCloseForm = () => {
     setEditing(null);
     setFormOpen(false);
   };
@@ -39,7 +39,10 @@ export default function UsersPage() {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => setFormOpen(true)}
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
               style={{ background: '#db2777', borderColor: '#db2777' }}
             >
               Nuevo usuario
@@ -52,15 +55,15 @@ export default function UsersPage() {
         data={users}
         loading={isLoading}
         onEdit={handleEdit}
-        onResetPassword={setResetUser}
+        onResetPassword={setPasswordUser}
       />
 
-      <UserFormModal open={formOpen} editing={editing} onClose={handleClose} />
+      <UserFormModal open={formOpen} editing={editing} onClose={handleCloseForm} />
 
       <ResetPasswordModal
-        user={resetUser}
-        open={!!resetUser}
-        onClose={() => setResetUser(null)}
+        user={passwordUser}
+        open={!!passwordUser}
+        onClose={() => setPasswordUser(null)}
       />
     </>
   );
