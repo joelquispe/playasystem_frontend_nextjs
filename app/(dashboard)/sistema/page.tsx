@@ -6,7 +6,10 @@ import { FileAddOutlined } from '@ant-design/icons';
 import { Ticket } from '@/types/api';
 import { useTickets } from '@/hooks/useTickets';
 import { SistemaEntryPanel } from '@/components/sistema/SistemaEntryPanel';
-import { SistemaTicketsTable } from '@/components/sistema/SistemaTicketsTable';
+import {
+  SistemaTicketsTable,
+  CreateClientFromTicketPayload,
+} from '@/components/sistema/SistemaTicketsTable';
 import { ScanTicketBar } from '@/components/tickets/ScanTicketBar';
 import { ChargeTicketModal } from '@/components/tickets/ChargeTicketModal';
 import { AdditionalChargeModal } from '@/components/tickets/AdditionalChargeModal';
@@ -14,6 +17,7 @@ import { ManualTicketModal } from '@/components/tickets/ManualTicketModal';
 import { PostPaymentReceiptModal } from '@/components/tickets/PostPaymentReceiptModal';
 import { TicketPrintModal } from '@/components/tickets/TicketPrintModal';
 import { TicketDetailModal } from '@/components/tickets/TicketDetailModal';
+import { ClientFormModal } from '@/components/clients/ClientFormModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function SistemaPage() {
@@ -26,6 +30,8 @@ export default function SistemaPage() {
   const [receiptTicket, setReceiptTicket] = useState<Ticket | null>(null);
   const [printTicket, setPrintTicket] = useState<Ticket | null>(null);
   const [detailTicket, setDetailTicket] = useState<Ticket | null>(null);
+  const [clientFormOpen, setClientFormOpen] = useState(false);
+  const [clientDefaults, setClientDefaults] = useState<CreateClientFromTicketPayload | null>(null);
 
   /** Handles the ticket resolved by the scanner bar. */
   const handleScanResult = useCallback(
@@ -38,6 +44,16 @@ export default function SistemaPage() {
     },
     [],
   );
+
+  const handleCreateClient = useCallback((payload: CreateClientFromTicketPayload) => {
+    setClientDefaults(payload);
+    setClientFormOpen(true);
+  }, []);
+
+  const handleCloseClientForm = useCallback(() => {
+    setClientFormOpen(false);
+    setClientDefaults(null);
+  }, []);
 
   return (
     <>
@@ -68,6 +84,7 @@ export default function SistemaPage() {
         onAddCharge={setAddChargeTicket}
         onPrint={setPrintTicket}
         onDetail={setDetailTicket}
+        onCreateClient={handleCreateClient}
       />
 
       <ChargeTicketModal
@@ -100,6 +117,13 @@ export default function SistemaPage() {
         ticket={detailTicket}
         open={!!detailTicket}
         onClose={() => setDetailTicket(null)}
+      />
+
+      <ClientFormModal
+        open={clientFormOpen}
+        editing={null}
+        defaults={clientDefaults}
+        onClose={handleCloseClientForm}
       />
     </>
   );

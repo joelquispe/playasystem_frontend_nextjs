@@ -435,8 +435,8 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
-                  gap: 10,
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                  gap: 14,
                 }}
               >
                 {vehicles.map((vehicle) => {
@@ -445,24 +445,25 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                   const hourRates = selected ? vehicleHourRates : getVehicleRates(vehicle, 'hour_fraction');
 
                   return (
-                    <div key={vehicle.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div key={vehicle.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <button
                         type="button"
                         onClick={(e) => selectVehicle(vehicle, e as unknown as React.MouseEvent)}
                         style={{
                           aspectRatio: '1 / 1',
                           width: '100%',
+                          minHeight: 140,
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: 8,
-                          padding: 10,
+                          gap: 10,
+                          padding: 16,
                           background: selected ? '#e6f4f4' : 'transparent',
                           border: selected
                             ? `2px solid ${colors.primary}`
                             : `1.5px solid ${colors.cardBorder}`,
-                          borderRadius: 12,
+                          borderRadius: 14,
                           cursor: 'pointer',
                           transition: 'all 0.15s',
                           outline: 'none',
@@ -470,7 +471,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                       >
                         <span
                           style={{
-                            fontSize: 28,
+                            fontSize: 42,
                             color: selected ? colors.primary : colors.textMuted,
                             lineHeight: 1,
                           }}
@@ -479,21 +480,22 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                         </span>
                         <span
                           style={{
-                            fontSize: 12,
+                            fontSize: 14,
                             fontWeight: 700,
                             color: selected ? colors.primary : colors.text,
-                            lineHeight: 1.2,
+                            lineHeight: 1.25,
                             textAlign: 'center',
                             maxWidth: '100%',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
                           }}
                         >
                           {vehicle.name}
                         </span>
                         {defaultRate && !selected && (
-                          <span style={{ fontSize: 11, color: colors.textMuted, lineHeight: 1 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: colors.textMuted, lineHeight: 1 }}>
                             s/. {parseFloat(defaultRate.amount).toFixed(2)}
                           </span>
                         )}
@@ -505,7 +507,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                           onMouseDown={(e) => e.stopPropagation()}
                         >
                           <Select
-                            size="small"
+                            size="middle"
                             placeholder="Tarifa"
                             value={selectedRateId}
                             onChange={handleHourRateChange}

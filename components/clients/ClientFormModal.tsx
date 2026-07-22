@@ -28,9 +28,14 @@ interface ClientFormModalProps {
   open: boolean;
   editing: Client | null;
   onClose: () => void;
+  /** Prefill when creating a new client (e.g. from a ticket row). Ignored when editing. */
+  defaults?: {
+    plate?: string;
+    vehicleTypeId?: string;
+  } | null;
 }
 
-export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps) {
+export function ClientFormModal({ open, editing, onClose, defaults }: ClientFormModalProps) {
   const { data: vehicles = [] } = useVehicles();
   const createClient = useCreateClient();
   const updateClient = useUpdateClient();
@@ -74,9 +79,19 @@ export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps
         isActive: editing.isActive,
       });
     } else {
-      reset({ specialRate: 0, eventColor: 'white', isActive: true });
+      reset({
+        plate: defaults?.plate ? normalizePlate(defaults.plate) : '',
+        vehicleTypeId: defaults?.vehicleTypeId ?? undefined,
+        fullName: '',
+        phone: '',
+        dni: '',
+        specialRate: 0,
+        eventColor: 'white',
+        notes: '',
+        isActive: true,
+      });
     }
-  }, [editing, reset, open]);
+  }, [editing, defaults, reset, open]);
 
   useEffect(() => {
     if (!shouldCheckPlate) {

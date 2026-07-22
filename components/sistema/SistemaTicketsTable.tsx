@@ -29,6 +29,7 @@ import { useRevertTicket, useToggleKey } from '@/hooks/useTickets';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
 import { cardStyle, colors } from '@/lib/theme';
 import { formatDurationMinutes } from '@/lib/ticket-calculation';
+import { normalizePlate } from '@/lib/plate';
 
 dayjs.extend(duration);
 
@@ -44,6 +45,11 @@ function formatElapsed(entryTime: string): string {
   return formatDurationMinutes(dayjs().diff(dayjs(entryTime), 'minute'));
 }
 
+export interface CreateClientFromTicketPayload {
+  plate: string;
+  vehicleTypeId?: string;
+}
+
 interface SistemaTicketsTableProps {
   tickets: Ticket[];
   loading: boolean;
@@ -56,6 +62,7 @@ interface SistemaTicketsTableProps {
   onAddCharge: (ticket: Ticket) => void;
   onPrint: (ticket: Ticket) => void;
   onDetail: (ticket: Ticket) => void;
+  onCreateClient: (payload: CreateClientFromTicketPayload) => void;
 }
 
 export function SistemaTicketsTable({
@@ -70,6 +77,7 @@ export function SistemaTicketsTable({
   onAddCharge,
   onPrint,
   onDetail,
+  onCreateClient,
 }: SistemaTicketsTableProps) {
   const { data: clients = [] } = useClients();
   const revertTicket = useRevertTicket();
@@ -77,7 +85,7 @@ export function SistemaTicketsTable({
 
   const clientByPlate = useMemo(() => {
     const map = new Map<string, Client>();
-    clients.forEach((c) => map.set(c.plate.toUpperCase(), c));
+    clients.forEach((c) => map.set(normalizePlate(c.plate), c));
     return map;
   }, [clients]);
 
@@ -155,8 +163,31 @@ export function SistemaTicketsTable({
     {
       title: 'Cliente',
       key: 'client',
-      width: 120,
-      render: (_, r) => clientByPlate.get(r.plate.toUpperCase())?.fullName ?? '—',
+      width: 130,
+      render: (_, r) => {
+        const client = clientByPlate.get(normalizePlate(r.plate));
+        if (client) {
+          return (
+            <Text style={{ color: colors.text, fontSize: 13 }}>{client.fullName}</Text>
+          );
+        }
+        return (
+          <Tooltip title="Registrar como cliente">
+            <Button
+              type="dashed"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={() =>
+                onCreateClient({
+                  plate: r.plate,
+                  vehicleTypeId: r.vehicleTypeId ?? r.vehicleType?.id,
+                })
+              }
+              style={{ color: colors.primary, borderColor: colors.primary }}
+            />
+          </Tooltip>
+        );
+      },
     },
     {
       title: 'Eventos',
@@ -164,7 +195,7 @@ export function SistemaTicketsTable({
       width: 70,
       align: 'center',
       render: (_, r) => {
-        const color = clientByPlate.get(r.plate.toUpperCase())?.eventColor ?? 'white';
+        const color = clientByPlate.get(normalizePlate(r.plate))?.eventColor ?? 'white';
         return (
           <span
             style={{
@@ -184,7 +215,7 @@ export function SistemaTicketsTable({
       key: 'records',
       width: 100,
       render: (_, r) => {
-        const client = clientByPlate.get(r.plate.toUpperCase());
+        const client = clientByPlate.get(normalizePlate(r.plate));
         return client ? (
           <Link href={`/clients?plate=${r.plate}`}>
             <Button size="small" type="link">
