@@ -28,6 +28,7 @@ import { useClients } from '@/hooks/useClients';
 import { useRevertTicket, useToggleKey } from '@/hooks/useTickets';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
 import { cardStyle, colors } from '@/lib/theme';
+import { formatDurationMinutes } from '@/lib/ticket-calculation';
 
 dayjs.extend(duration);
 
@@ -38,17 +39,6 @@ const EVENT_DOT: Record<EventColor, string> = {
   green: '#4c8f5a',
   red: '#c4605c',
 };
-
-/** Formats a duration in minutes as "Xd Xh Xm", omitting days when 0. */
-function formatDurationMinutes(totalMins: number): string {
-  const mins = Math.max(0, Math.floor(totalMins));
-  const d = Math.floor(mins / (60 * 24));
-  const h = Math.floor((mins % (60 * 24)) / 60);
-  const m = mins % 60;
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
 
 function formatElapsed(entryTime: string): string {
   return formatDurationMinutes(dayjs().diff(dayjs(entryTime), 'minute'));

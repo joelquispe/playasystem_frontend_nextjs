@@ -104,6 +104,13 @@ export const ticketsService = {
     return res.data.data;
   },
 
+  removeAdditionalCharge: async (id: string, chargeId: string): Promise<Ticket> => {
+    const res = await apiClient.delete<ApiResponse<Ticket>>(
+      `/tickets/${id}/charge/additional/${chargeId}`,
+    );
+    return res.data.data;
+  },
+
   toggleKey: async (id: string): Promise<Ticket> => {
     const res = await apiClient.post<ApiResponse<Ticket>>(`/tickets/${id}/key`);
     return res.data.data;

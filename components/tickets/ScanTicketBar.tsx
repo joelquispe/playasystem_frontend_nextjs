@@ -29,6 +29,7 @@ import { useScanTicket } from '@/hooks/useTickets';
 import { ticketsService } from '@/services/tickets.service';
 import { RATE_TYPE_LABELS, TICKET_STATUS_LABELS } from '@/lib/constants';
 import { cardStyle, colors } from '@/lib/theme';
+import { formatDurationMinutes } from '@/lib/ticket-calculation';
 
 const { Text } = Typography;
 
@@ -48,11 +49,7 @@ function resolveScanStatus(ticket: Ticket): ScanStatus {
 }
 
 function formatElapsed(entryTime: string): string {
-  const mins = dayjs().diff(dayjs(entryTime), 'minute');
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h === 0) return `${m} min`;
-  return `${h}h ${m}m`;
+  return formatDurationMinutes(dayjs().diff(dayjs(entryTime), 'minute'));
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────

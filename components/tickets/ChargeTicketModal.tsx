@@ -13,6 +13,7 @@ import {
   Input,
   InputNumber,
   Modal,
+  Popconfirm,
   Row,
   Select,
   Spin,
@@ -20,21 +21,42 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { KeyOutlined, PrinterOutlined, StopOutlined } from '@ant-design/icons';
+import {
+  CloseCircleOutlined,
+  KeyOutlined,
+  PrinterOutlined,
+  StopOutlined,
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import { PlateEvent, Ticket } from '@/types/api';
-import { useChargeTicket, useCancelTicket } from '@/hooks/useTickets';
+import {
+  useChargeTicket,
+  useCancelTicket,
+  useRemoveAdditionalCharge,
+} from '@/hooks/useTickets';
 import { usePlateEvents } from '@/hooks/usePlateEvents';
 import { useTaxpayer, usePersonByDni } from '@/hooks/useNubefact';
 import { formatDniDisplayName } from '@/services/identity.service';
 import { printTicketDirectly } from '@/lib/print-ticket';
 import { nestedPanelStyle, colors } from '@/lib/theme';
-import { PAYMENT_METHOD_LABELS } from '@/lib/constants';
+import { PAYMENT_METHOD_LABELS, RATE_TYPE_LABELS } from '@/lib/constants';
+import {
+  calculateHourFractionAmount,
+  formatDurationMinutes,
+} from '@/lib/ticket-calculation';
 
 dayjs.extend(duration);
 
 const { Text } = Typography;
+
+/**
+ * If an "amanecida" (overnight) charge was applied less than this many
+ * minutes ago, the cashier gets a warning before combining it with hours —
+ * the customer may have just returned and not actually used the overnight
+ * service (see business rule: cashier should confirm before charging both).
+ */
+const RECENT_OVERNIGHT_WARNING_MINUTES = 60;
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 const schema = z
@@ -73,10 +95,21 @@ interface ChargeTicketModalProps {
 export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalProps) {
   const chargeTicket = useChargeTicket();
   const cancelTicket = useCancelTicket();
+  const removeCharge = useRemoveAdditionalCharge();
   const { data: plateEvents = [] } = usePlateEvents(ticket?.plate ?? '');
 
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+
+  // Live "now" — ticks while the modal is open so the previewed amount
+  // stays accurate as time passes (e.g. crossing an hour/tolerance boundary
+  // while the cashier is filling out the form).
+  const [now, setNow] = useState(() => dayjs());
+  useEffect(() => {
+    if (!open) return;
+    const id = setInterval(() => setNow(dayjs()), 15_000);
+    return () => clearInterval(id);
+  }, [open]);
 
   const {
     control,
@@ -122,17 +155,32 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
 
   // ── Time calculations ───────────────────────────────────────────────────────
   const entryTime = dayjs(ticket.entryTime);
-  const exitTime = dayjs();
-  const elapsedMins = exitTime.diff(entryTime, 'minute');
-  const elapsedH = Math.floor(elapsedMins / 60);
-  const elapsedM = elapsedMins % 60;
-  const elapsedStr = `${String(elapsedH).padStart(2, '0')}:${String(elapsedM).padStart(2, '0')}:00`;
+  const exitTime = now;
+  const elapsedMins = Math.max(0, exitTime.diff(entryTime, 'minute'));
+  const elapsedStr = formatDurationMinutes(elapsedMins);
 
-  const additionalTotal = ticket.charges?.reduce((s, c) => s + parseFloat(c.amount), 0) ?? 0;
-  const baseAmount = parseFloat(ticket.rateAmount);
-  const grossAmount = baseAmount + additionalTotal;
+  // ── Charge breakdown ─────────────────────────────────────────────────────────
+  // "Horas consumidas" is computed from the actual elapsed time + tolerance
+  // rule (NOT the flat per-hour rate) — this is what the cashier will
+  // actually be charged, matching the server's authoritative calculation.
+  const ratePerHour = parseFloat(ticket.rateAmount);
+  const { chargeableHours, amount: hourAmount } = calculateHourFractionAmount(
+    elapsedMins,
+    ratePerHour,
+  );
+
+  const additionalCharges = ticket.charges ?? [];
+  const additionalTotal = additionalCharges.reduce((s, c) => s + parseFloat(c.amount), 0);
+  const grossAmount = hourAmount + additionalTotal;
   const discountSafe = Math.min(discount, grossAmount);
   const total = Math.max(0, grossAmount - discountSafe);
+
+  // ── "Amanecida" applied too recently — warn before combining with hours ────
+  const recentOvernightCharges = additionalCharges.filter(
+    (c) =>
+      c.chargeType === 'overnight' &&
+      now.diff(dayjs(c.appliedAt), 'minute') < RECENT_OVERNIGHT_WARNING_MINUTES,
+  );
 
   // ── Submit (accept only) ────────────────────────────────────────────────────
   const buildPayload = (data: FormData) => ({
@@ -167,7 +215,11 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
     onClose();
   };
 
-  const isPending = chargeTicket.isPending || cancelTicket.isPending;
+  const handleRemoveCharge = (chargeId: string) => {
+    removeCharge.mutate({ id: ticket.id, chargeId });
+  };
+
+  const isPending = chargeTicket.isPending || cancelTicket.isPending || removeCharge.isPending;
   const noPaymentMethod = !paymentMethod;
 
   // ── Event history columns ───────────────────────────────────────────────────
@@ -275,8 +327,23 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
             {[
               { label: 'H. Ingreso', value: entryTime.format('DD/MM/YY\nHH:mm:ss') },
               { label: 'H. Salida', value: exitTime.format('DD/MM/YY\nHH:mm:ss') },
-              { label: 'Tarifa', value: `s/. ${baseAmount.toFixed(2)}` },
               { label: 'Tiempo', value: elapsedStr },
+              {
+                label: 'Horas cobradas',
+                value: `${chargeableHours}h × s/.${ratePerHour.toFixed(2)}`,
+              },
+              {
+                label: 'Monto Horas',
+                value: `s/. ${hourAmount.toFixed(2)}`,
+              },
+              ...(additionalTotal > 0
+                ? [
+                    {
+                      label: 'Cargos Adic.',
+                      value: `s/. ${additionalTotal.toFixed(2)}`,
+                    },
+                  ]
+                : []),
               {
                 label: 'Monto',
                 value: `s/. ${grossAmount.toFixed(2)}`,
@@ -336,6 +403,75 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
             </Col>
           </Row>
         </div>
+
+        {/* ── Additional charges breakdown (amanecida, hora/fracción extra) ──── */}
+        {additionalCharges.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <Text style={{ fontSize: 12, fontWeight: 600, color: colors.text }}>
+              Cargos Adicionales
+            </Text>
+            <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {additionalCharges.map((c) => (
+                <div
+                  key={c.id}
+                  style={{
+                    ...nestedPanelStyle,
+                    padding: '6px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 600 }}>
+                      {RATE_TYPE_LABELS[c.chargeType] ?? c.chargeType}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 8 }}>
+                      aplicado {dayjs(c.appliedAt).format('DD/MM HH:mm')}
+                    </Text>
+                    {c.notes && (
+                      <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 8 }}>
+                        · {c.notes}
+                      </Text>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 13, fontWeight: 700, color: colors.accent }}>
+                      s/. {parseFloat(c.amount).toFixed(2)}
+                    </Text>
+                    {!cancelMode && (
+                      <Popconfirm
+                        title="¿Quitar este cargo adicional?"
+                        okText="Sí, quitar"
+                        cancelText="No"
+                        onConfirm={() => handleRemoveCharge(c.id)}
+                      >
+                        <Button
+                          size="small"
+                          type="text"
+                          danger
+                          icon={<CloseCircleOutlined />}
+                          loading={removeCharge.isPending}
+                        />
+                      </Popconfirm>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Recent "amanecida" warning ──────────────────────────────────────── */}
+        {recentOvernightCharges.length > 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message="Cargo de amanecida aplicado hace poco"
+            description="El vehículo salió a los pocos minutos de activarse la amanecida. Si el cliente no llegó a usar el servicio de toda la noche, considere quitar el cargo (arriba) y cobrar únicamente las horas consumidas."
+          />
+        )}
 
         {/* ── No payment method warning ─────────────────────────────────────── */}
         {noPaymentMethod && (

@@ -1,6 +1,35 @@
 import { User } from '@/types/api';
 import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from './constants';
 
+/** Fallback cookie lifetime (seconds) when the token has no readable `exp` claim. */
+const DEFAULT_COOKIE_MAX_AGE_SECONDS = 8 * 60 * 60;
+
+/**
+ * Decodes a JWT's `exp` claim (seconds since epoch) without verifying the
+ * signature — used only to size the client-side auth cookie so it doesn't
+ * expire before (or long after) the actual access token. The backend is
+ * always the source of truth for validating the token itself.
+ */
+function decodeJwtExpSeconds(token: string): number | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const { exp } = JSON.parse(json) as { exp?: number };
+    return typeof exp === 'number' ? exp : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Seconds remaining until the token's `exp`, clamped to a sane minimum. */
+function cookieMaxAgeFor(token: string): number {
+  const exp = decodeJwtExpSeconds(token);
+  if (!exp) return DEFAULT_COOKIE_MAX_AGE_SECONDS;
+  const remaining = exp - Math.floor(Date.now() / 1000);
+  return remaining > 0 ? remaining : DEFAULT_COOKIE_MAX_AGE_SECONDS;
+}
+
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem(AUTH_TOKEN_KEY);
@@ -28,8 +57,21 @@ export function setAuth(token: string, user: User, refreshToken?: string): void 
   if (refreshToken) {
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
   }
-  // Cookie for middleware — expires in 8 h
-  document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; max-age=${8 * 60 * 60}; SameSite=Lax`;
+  // Cookie for middleware — sized to match the access token's real
+  // expiration (decoded from its `exp` claim) instead of a hardcoded value,
+  // so it never expires before/after the token itself regardless of the
+  // backend's JWT_EXPIRES_IN configuration.
+  document.cookie = `${AUTH_TOKEN_KEY}=${token}; path=/; max-age=${cookieMaxAgeFor(token)}; SameSite=Lax`;
+}
+
+/**
+ * Updates only the tokens after a silent refresh (keeps the previously
+ * stored user in localStorage untouched).
+ */
+export function setTokens(accessToken: string, refreshToken: string): void {
+  localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  document.cookie = `${AUTH_TOKEN_KEY}=${accessToken}; path=/; max-age=${cookieMaxAgeFor(accessToken)}; SameSite=Lax`;
 }
 
 export function clearAuth(): void {

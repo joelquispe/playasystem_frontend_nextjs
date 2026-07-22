@@ -128,6 +128,23 @@ export function useAdditionalCharge() {
   });
 }
 
+export function useRemoveAdditionalCharge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, chargeId }: { id: string; chargeId: string }) =>
+      ticketsService.removeAdditionalCharge(id, chargeId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.PENDING_TICKETS });
+      message.success('Cargo adicional eliminado');
+    },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      message.error(msg ?? 'Error al quitar el cargo');
+    },
+  });
+}
+
 export function useManualTicket() {
   const qc = useQueryClient();
   return useMutation({
