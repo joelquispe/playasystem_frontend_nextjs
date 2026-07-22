@@ -4,6 +4,7 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AntdProvider } from '@/providers/AntdProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
+import { BlurOnBlankClick } from '@/components/ui/BlurOnBlankClick';
 import './globals.css';
 
 const geistSans = Geist({
@@ -32,7 +33,10 @@ export default function RootLayout({
         <AntdRegistry>
           <QueryProvider>
             <AntdProvider>
-              <AuthProvider>{children}</AuthProvider>
+              <AuthProvider>
+                <BlurOnBlankClick />
+                {children}
+              </AuthProvider>
             </AntdProvider>
           </QueryProvider>
         </AntdRegistry>

@@ -57,3 +57,26 @@ body {
 .ant-layout-sider {
   background: var(--app-surface) !important;
 }
+
+/*
+ * Mouse clicks leave :focus on buttons, which looks like they stay "selected".
+ * Keep the ring only for keyboard navigation (:focus-visible).
+ */
+.ant-btn:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.ant-btn-default:focus:not(:focus-visible),
+.ant-btn-dashed:focus:not(:focus-visible),
+.ant-btn-text:focus:not(:focus-visible),
+.ant-btn-link:focus:not(:focus-visible) {
+  border-color: var(--app-border) !important;
+  color: inherit;
+}
+
+.ant-btn-primary:focus:not(:focus-visible),
+.ant-btn-variant-solid:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}

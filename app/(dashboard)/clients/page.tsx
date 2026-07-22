@@ -7,19 +7,21 @@ import { useClients } from '@/hooks/useClients';
 import { Client } from '@/types/api';
 import { ClientTable } from '@/components/clients/ClientTable';
 import { ClientFormModal } from '@/components/clients/ClientFormModal';
+import { ClientDetailModal } from '@/components/clients/ClientDetailModal';
 import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function ClientsPage() {
   const { data: clients = [], isLoading, isFetching, refetch } = useClients();
   const [editing, setEditing] = useState<Client | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const handleEdit = (client: Client) => {
     setEditing(client);
     setFormOpen(true);
   };
 
-  const handleClose = () => {
+  const handleCloseForm = () => {
     setEditing(null);
     setFormOpen(false);
   };
@@ -37,7 +39,10 @@ export default function ClientsPage() {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => setFormOpen(true)}
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
               style={{ background: '#db2777', borderColor: '#db2777' }}
             >
               Nuevo cliente
@@ -46,9 +51,20 @@ export default function ClientsPage() {
         }
       />
 
-      <ClientTable data={clients} loading={isLoading} onEdit={handleEdit} />
+      <ClientTable
+        data={clients}
+        loading={isLoading}
+        onEdit={handleEdit}
+        onDetail={(c) => setDetailId(c.id)}
+      />
 
-      <ClientFormModal open={formOpen} editing={editing} onClose={handleClose} />
+      <ClientFormModal open={formOpen} editing={editing} onClose={handleCloseForm} />
+
+      <ClientDetailModal
+        clientId={detailId}
+        open={!!detailId}
+        onClose={() => setDetailId(null)}
+      />
     </>
   );
 }

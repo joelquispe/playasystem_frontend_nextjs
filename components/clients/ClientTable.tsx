@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button, Input, Popconfirm, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, SearchOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, EyeOutlined, SearchOutlined } from '@ant-design/icons';
 import { Client } from '@/types/api';
 import { useDeleteClient } from '@/hooks/useClients';
 import { cardStyle, colors } from '@/lib/theme';
@@ -20,9 +20,10 @@ interface ClientTableProps {
   data: Client[];
   loading: boolean;
   onEdit: (client: Client) => void;
+  onDetail: (client: Client) => void;
 }
 
-export function ClientTable({ data, loading, onEdit }: ClientTableProps) {
+export function ClientTable({ data, loading, onEdit, onDetail }: ClientTableProps) {
   const [search, setSearch] = useState('');
   const deleteClient = useDeleteClient();
 
@@ -89,9 +90,18 @@ export function ClientTable({ data, loading, onEdit }: ClientTableProps) {
     {
       title: 'Acciones',
       key: 'actions',
-      width: 90,
+      width: 120,
       render: (_, record: Client) => (
         <Space>
+          <Tooltip title="Ver detalle">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => onDetail(record)}
+              style={{ color: colors.primary }}
+            />
+          </Tooltip>
           <Tooltip title="Editar">
             <Button
               type="text"

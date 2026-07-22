@@ -346,20 +346,17 @@ export function SistemaTicketsTable({
         scroll={{ x: 1600 }}
         pagination={{ pageSize: 15, showSizeChanger: false }}
         expandable={{
-          expandedRowRender: (record) =>
-            record.charges?.length ? (
-              <div style={{ padding: '8px 0' }}>
-                {record.charges.map((c) => (
-                  <div key={c.id} style={{ fontSize: 12, color: colors.textMuted }}>
-                    · {c.chargeType}: s/. {parseFloat(c.amount).toFixed(2)}
-                    {c.notes ? ` — ${c.notes}` : ''}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>Sin cargos adicionales</Text>
-            ),
-          rowExpandable: (record) => (record.charges?.length ?? 0) > 0 || record.status === 'pending',
+          expandedRowRender: (record) => (
+            <div style={{ padding: '8px 0' }}>
+              {record.charges.map((c) => (
+                <div key={c.id} style={{ fontSize: 12, color: colors.textMuted }}>
+                  · {RATE_TYPE_LABELS[c.chargeType] ?? c.chargeType}: s/. {parseFloat(c.amount).toFixed(2)}
+                  {c.notes ? ` — ${c.notes}` : ''}
+                </div>
+              ))}
+            </div>
+          ),
+          rowExpandable: (record) => (record.charges?.length ?? 0) > 0,
         }}
       />
     </div>

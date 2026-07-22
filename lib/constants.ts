@@ -9,6 +9,8 @@ export const QUERY_KEYS = {
   TICKETS_BY_STATUS: (status: string) => ['tickets', 'status', status] as const,
   CLIENTS: ['clients'] as const,
   CLIENT: (id: string) => ['clients', id] as const,
+  CLIENT_EVENTS: (id: string, filters?: { date?: string; eventColor?: string }) =>
+    ['clients', id, 'events', filters?.date ?? 'all', filters?.eventColor ?? 'all'] as const,
   VEHICLES: ['vehicles'] as const,
   VEHICLES_MANAGE: ['vehicles', 'manage'] as const,
   VEHICLE: (id: string) => ['vehicles', id] as const,

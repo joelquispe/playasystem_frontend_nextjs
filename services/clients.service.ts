@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/axios';
-import { ApiResponse, Client, EventColor } from '@/types/api';
+import { ApiResponse, Client, EventColor, PlateEvent } from '@/types/api';
 
 export interface CreateClientDto {
   plate: string;
@@ -14,6 +14,13 @@ export interface CreateClientDto {
 
 export interface UpdateClientDto extends Partial<CreateClientDto> {
   isActive?: boolean;
+}
+
+export interface ClientEventsParams {
+  /** YYYY-MM-DD — omit to return all dates */
+  date?: string;
+  /** Event status (white | green | red) — omit to return all */
+  eventColor?: EventColor;
 }
 
 export const clientsService = {
@@ -43,8 +50,13 @@ export const clientsService = {
     return res.data.data;
   },
 
-  getClientEvents: async (id: string) => {
-    const res = await apiClient.get(`/clients/${id}/events`);
+  getClientEvents: async (
+    id: string,
+    params?: ClientEventsParams,
+  ): Promise<PlateEvent[]> => {
+    const res = await apiClient.get<ApiResponse<PlateEvent[]>>(`/clients/${id}/events`, {
+      params,
+    });
     return res.data.data;
   },
 

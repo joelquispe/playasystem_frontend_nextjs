@@ -82,7 +82,7 @@ export function useActiveSubscriberByPlate(plate: string) {
   return useQuery({
     queryKey: ['subscribers', 'plate', plate.toUpperCase()],
     queryFn: () => subscribersService.getActiveByPlate(plate),
-    enabled: plate.trim().length >= 3,
+    enabled: plate.trim().length >= 6,
     staleTime: 0,
   });
 }

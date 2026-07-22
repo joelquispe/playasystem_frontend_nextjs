@@ -3,6 +3,7 @@ import { message } from 'antd';
 import { QUERY_KEYS } from '@/lib/constants';
 import {
   clientsService,
+  ClientEventsParams,
   CreateClientDto,
   UpdateClientDto,
 } from '@/services/clients.service';
@@ -14,11 +15,30 @@ export function useClients() {
   });
 }
 
+export function useClient(id: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.CLIENT(id ?? ''),
+    queryFn: () => clientsService.getClientById(id!),
+    enabled: !!id,
+  });
+}
+
+export function useClientEvents(id: string | undefined, params?: ClientEventsParams) {
+  return useQuery({
+    queryKey: QUERY_KEYS.CLIENT_EVENTS(id ?? '', {
+      date: params?.date,
+      eventColor: params?.eventColor,
+    }),
+    queryFn: () => clientsService.getClientEvents(id!, params),
+    enabled: !!id,
+  });
+}
+
 export function useClientByPlate(plate: string) {
   return useQuery({
     queryKey: ['clients', 'plate', plate],
     queryFn: () => clientsService.getClientByPlate(plate),
-    enabled: plate.length >= 3,
+    enabled: plate.length >= 6,
     staleTime: 0,
   });
 }

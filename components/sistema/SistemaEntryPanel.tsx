@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { InputRef } from 'antd';
 import {
   Button,
-  Card,
   Col,
   Input,
+  message,
   Row,
   Select,
   Tag,
@@ -28,8 +28,7 @@ import { useRates } from '@/hooks/useRates';
 import { useCreateTicket } from '@/hooks/useTickets';
 import { useClientByPlate } from '@/hooks/useClients';
 import { useActiveSubscriberByPlate } from '@/hooks/useSubscribers';
-import { Client, Rate, RateType, Subscriber, Ticket, VehicleType } from '@/types/api';
-import { TicketPrintModal } from '@/components/tickets/TicketPrintModal';
+import { Client, Rate, RateType, Subscriber, VehicleType } from '@/types/api';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
 import {
   formatRateOption,
@@ -76,11 +75,14 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedRateId, setSelectedRateId] = useState<string | undefined>();
   const [specialRateType, setSpecialRateType] = useState<RateType | null>(null);
-  const [printTicket, setPrintTicket] = useState<Ticket | null>(null);
+  /** User dismissed the auto client/subscriber card for the current plate */
+  const [cardDismissed, setCardDismissed] = useState(false);
   const plateInputRef = useRef<InputRef>(null);
 
   const normalizedPlate = plate.trim().toUpperCase();
   const isPlateReady = normalizedPlate.length >= 3;
+  /** Auto-detect client / subscriber (and show side card) from this length */
+  const isLookupReady = normalizedPlate.length >= 6;
 
   // ── Background queries (auto-fetch while typing) ──────────────────────────
   const { data: foundClient, isFetching: fetchingClient } = useClientByPlate(normalizedPlate);
@@ -219,7 +221,29 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     setSpecialRateType(specialType);
     setSelectedRateId(rateId);
     setStep('ready');
+    setCardDismissed(false);
   }, [isPlateReady, isFetching, getAutoSelection]);
+
+  /**
+   * Auto-detect: when plate has ≥ 6 chars and a client/subscriber is found,
+   * apply selection and show the side card without requiring Enter.
+   */
+  useEffect(() => {
+    if (!isLookupReady || isFetching) return;
+    if (!foundClient && !foundSubscriber) return;
+
+    const { vehicleId, rateId, specialType } = getAutoSelection();
+    setSelectedVehicleId(vehicleId);
+    setSpecialRateType(specialType);
+    setSelectedRateId(rateId);
+    setStep('ready');
+  }, [
+    isLookupReady,
+    isFetching,
+    foundClient,
+    foundSubscriber,
+    getAutoSelection,
+  ]);
 
   // ── Handle generate ticket (second Enter / button) ────────────────────────
   const handleGenerate = useCallback(async () => {
@@ -233,8 +257,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
       hasKey: false,
     });
 
-    // Show print modal with created ticket
-    setPrintTicket(created);
+    message.success(`Ticket generado — ${created.plate} (${created.ticketCode})`);
 
     // Reset panel
     setPlate('');
@@ -242,7 +265,9 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     setSelectedVehicleId(null);
     setSelectedRateId(undefined);
     setSpecialRateType(null);
+    setCardDismissed(false);
     onTicketCreated?.();
+    setTimeout(() => plateInputRef.current?.focus?.(), 100);
   }, [canGenerate, createTicket, normalizedPlate, selectedVehicleId, resolvedRateType, resolvedAmount, onTicketCreated]);
 
   // ── Enter key dispatcher ──────────────────────────────────────────────────
@@ -256,13 +281,20 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     }
   };
 
-  // ── Plate change resets step ──────────────────────────────────────────────
+  // ── Plate change ──────────────────────────────────────────────────────────
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPlate(e.target.value.toUpperCase());
-    setStep('idle');
-    setSelectedVehicleId(null);
-    setSelectedRateId(undefined);
-    setSpecialRateType(null);
+    const next = e.target.value.toUpperCase();
+    setPlate(next);
+    setCardDismissed(false);
+
+    const nextNorm = next.trim().toUpperCase();
+    // Below lookup length: clear selection / card. At ≥ 6, auto-detect effect takes over.
+    if (nextNorm.length < 6) {
+      setStep('idle');
+      setSelectedVehicleId(null);
+      setSelectedRateId(undefined);
+      setSpecialRateType(null);
+    }
   };
 
   // ── Vehicle card select ───────────────────────────────────────────────────
@@ -298,8 +330,12 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
 
   const rateOptions = (rates: Rate[]) => rates.map(formatRateOption);
 
-  // ── Client / subscriber card shown after search ───────────────────────────
-  const showClientCard = step === 'ready' && (!!foundClient || !!foundSubscriber);
+  // ── Client / subscriber card: auto when plate ≥ 6 and match found ─────────
+  const showClientCard =
+    isLookupReady &&
+    !cardDismissed &&
+    !isFetching &&
+    (!!foundClient || !!foundSubscriber);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -351,9 +387,19 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
           </Row>
 
           {/* Step hint */}
-          {step === 'idle' && isPlateReady && !isFetching && (
+          {step === 'idle' && isPlateReady && !isLookupReady && !isFetching && (
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6, display: 'block' }}>
+              Continúa escribiendo la placa (mín. 6) o presiona <strong>Enter</strong> / <strong>Buscar</strong>
+            </Text>
+          )}
+          {step === 'idle' && isLookupReady && !isFetching && !foundClient && !foundSubscriber && (
             <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6, display: 'block' }}>
               Presiona <strong>Enter</strong> o <strong>Buscar</strong> para confirmar
+            </Text>
+          )}
+          {isLookupReady && isFetching && (
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 6, display: 'block' }}>
+              Buscando cliente / abonado…
             </Text>
           )}
           {step === 'ready' && !showClientCard && (
@@ -361,91 +407,107 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
               <CheckCircleOutlined /> Vehículo seleccionado · Presiona <strong>Enter</strong> o <strong>Generar Ticket</strong>
             </Text>
           )}
+          {showClientCard && (
+            <Text style={{ fontSize: 11, color: '#16a34a', marginTop: 6, display: 'block' }}>
+              <CheckCircleOutlined /> Cliente detectado · Presiona <strong>Enter</strong> o <strong>Generar Ticket</strong>
+            </Text>
+          )}
 
           {/* ── Vehicle types + Special rates ────────────────────────────────── */}
           <div style={{ display: 'flex', gap: 20, marginTop: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
-            {/* ── Left: Vehicle type cards (2 columns) ─────────────────────── */}
-            <div style={{ flex: '1 1 0', minWidth: 300 }}>
+            {/* ── Left: Vehicle type cards (square, easy to tap) ───────────── */}
+            <div style={{ flex: '1 1 0', minWidth: 280 }}>
               <Text style={{
                 fontSize: 9, color: colors.textSubtle, textTransform: 'uppercase',
                 letterSpacing: 1.5, display: 'block', marginBottom: 10, fontWeight: 600,
               }}>
                 Tipo de vehículo
               </Text>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))',
+                  gap: 10,
+                }}
+              >
                 {vehicles.map((vehicle) => {
                   const selected = selectedVehicleId === vehicle.id && !specialRateType;
                   const defaultRate = getDefaultHourRate(vehicle);
                   const hourRates = selected ? vehicleHourRates : getVehicleRates(vehicle, 'hour_fraction');
 
                   return (
-                    <button
-                      key={vehicle.id}
-                      type="button"
-                      onClick={(e) => selectVehicle(vehicle, e as unknown as React.MouseEvent)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        padding: '10px 14px',
-                        background: selected ? '#e6f4f4' : 'transparent',
-                        border: selected
-                          ? `2px solid ${colors.primary}`
-                          : `1.5px solid ${colors.cardBorder}`,
-                        borderRadius: 12,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                        textAlign: 'left',
-                        width: '100%',
-                        outline: 'none',
-                      }}
-                    >
-                      <span style={{
-                        fontSize: 22,
-                        color: selected ? colors.primary : colors.textMuted,
-                        lineHeight: 1,
-                        flexShrink: 0,
-                      }}>
-                        {VEHICLE_ICONS[vehicle.iconName] ?? <CarOutlined />}
-                      </span>
-                      <span style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{
-                          display: 'block',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          color: selected ? colors.primary : colors.text,
-                          lineHeight: 1.2,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}>
+                    <div key={vehicle.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <button
+                        type="button"
+                        onClick={(e) => selectVehicle(vehicle, e as unknown as React.MouseEvent)}
+                        style={{
+                          aspectRatio: '1 / 1',
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          padding: 10,
+                          background: selected ? '#e6f4f4' : 'transparent',
+                          border: selected
+                            ? `2px solid ${colors.primary}`
+                            : `1.5px solid ${colors.cardBorder}`,
+                          borderRadius: 12,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          outline: 'none',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 28,
+                            color: selected ? colors.primary : colors.textMuted,
+                            lineHeight: 1,
+                          }}
+                        >
+                          {VEHICLE_ICONS[vehicle.iconName] ?? <CarOutlined />}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: selected ? colors.primary : colors.text,
+                            lineHeight: 1.2,
+                            textAlign: 'center',
+                            maxWidth: '100%',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {vehicle.name}
                         </span>
                         {defaultRate && !selected && (
-                          <span style={{ fontSize: 11, color: colors.textMuted, display: 'block', marginTop: 2 }}>
+                          <span style={{ fontSize: 11, color: colors.textMuted, lineHeight: 1 }}>
                             s/. {parseFloat(defaultRate.amount).toFixed(2)}
                           </span>
                         )}
-                        {selected && hourRates.length > 0 && (
-                          <div
-                            onClick={(e) => e.stopPropagation()}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            style={{ marginTop: 6 }}
-                          >
-                            <Select
-                              size="small"
-                              placeholder="Tarifa"
-                              value={selectedRateId}
-                              onChange={handleHourRateChange}
-                              options={rateOptions(hourRates)}
-                              style={{ width: '100%' }}
-                              popupMatchSelectWidth={false}
-                            />
-                          </div>
-                        )}
-                      </span>
-                    </button>
+                      </button>
+
+                      {selected && hourRates.length > 0 && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <Select
+                            size="small"
+                            placeholder="Tarifa"
+                            value={selectedRateId}
+                            onChange={handleHourRateChange}
+                            options={rateOptions(hourRates)}
+                            style={{ width: '100%' }}
+                            popupMatchSelectWidth={false}
+                          />
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -606,21 +668,11 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
             generating={createTicket.isPending}
             canGenerate={canGenerate}
             onGenerate={handleGenerate}
-            onDismiss={() => setStep('idle')}
+            onDismiss={() => setCardDismissed(true)}
           />
         </Col>
       )}
     </Row>
-
-    {/* ── Print modal ──────────────────────────────────────────────────────── */}
-    <TicketPrintModal
-      ticket={printTicket}
-      open={!!printTicket}
-      onClose={() => {
-        setPrintTicket(null);
-        setTimeout(() => plateInputRef.current?.focus?.(), 100);
-      }}
-    />
     </>
   );
 }
