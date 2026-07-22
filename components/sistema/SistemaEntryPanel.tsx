@@ -330,12 +330,20 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
 
   const rateOptions = (rates: Rate[]) => rates.map(formatRateOption);
 
-  // ── Client / subscriber card: auto when plate ≥ 6 and match found ─────────
+  // ── Client / subscriber card ───────────────────────────────────────────────
+  // "Es cliente" only when tarifa especial > 0 AND eventColor is green
+  // (Frecuente / Amable). Normal (white) or Alerta (red) with rate 0 → no card.
+  // Active subscribers always get the "Abonado" card.
+  const isSpecialFrequentClient =
+    !!foundClient &&
+    parseFloat(foundClient.specialRate ?? '0') > 0 &&
+    foundClient.eventColor === 'green';
+
   const showClientCard =
     isLookupReady &&
     !cardDismissed &&
     !isFetching &&
-    (!!foundClient || !!foundSubscriber);
+    (!!foundSubscriber || isSpecialFrequentClient);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (

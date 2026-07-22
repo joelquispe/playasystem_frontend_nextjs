@@ -83,7 +83,7 @@ export function useDeleteClient() {
     mutationFn: (id: string) => clientsService.deleteClient(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.CLIENTS });
-      message.success('Cliente eliminado');
+      message.success('Cliente eliminado permanentemente');
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
