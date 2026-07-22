@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Form, Input, InputNumber, Modal, Select, Switch } from 'antd';
 import { Client } from '@/types/api';
-import { useCreateClient, useUpdateClient } from '@/hooks/useClients';
+import { useClientByPlate, useCreateClient, useUpdateClient } from '@/hooks/useClients';
 import { useVehicles } from '@/hooks/useVehicles';
+import { normalizePlate } from '@/lib/plate';
 
 const schema = z.object({
   plate: z.string().min(1).max(20),
@@ -38,11 +39,26 @@ export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps
     control,
     handleSubmit,
     reset,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema) as never,
     defaultValues: { specialRate: 0, eventColor: 'white', isActive: true },
   });
+
+  const plateValue = useWatch({ control, name: 'plate' }) ?? '';
+  const vehicleTypeId = useWatch({ control, name: 'vehicleTypeId' });
+  const normalizedPlate = normalizePlate(plateValue);
+  const shouldCheckPlate =
+    open && !editing && !!vehicleTypeId && normalizedPlate.length >= 6;
+
+  const { data: existingClient, isFetching: checkingPlate } = useClientByPlate(
+    normalizedPlate,
+    { enabled: shouldCheckPlate },
+  );
+
+  const plateAlreadyExists = shouldCheckPlate && !checkingPlate && !!existingClient;
 
   useEffect(() => {
     if (editing) {
@@ -60,14 +76,39 @@ export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps
     } else {
       reset({ specialRate: 0, eventColor: 'white', isActive: true });
     }
-  }, [editing, reset]);
+  }, [editing, reset, open]);
+
+  useEffect(() => {
+    if (!shouldCheckPlate) {
+      clearErrors('plate');
+      return;
+    }
+    if (checkingPlate) return;
+
+    if (existingClient) {
+      setError('plate', {
+        type: 'manual',
+        message: `La placa ya está registrada (${existingClient.fullName})`,
+      });
+    } else {
+      clearErrors('plate');
+    }
+  }, [
+    shouldCheckPlate,
+    checkingPlate,
+    existingClient,
+    setError,
+    clearErrors,
+  ]);
 
   const onSubmit = async (data: FormData) => {
+    if (plateAlreadyExists) return;
+
     if (editing) {
       await updateClient.mutateAsync({ id: editing.id, data });
     } else {
       await createClient.mutateAsync({
-        plate: data.plate.toUpperCase(),
+        plate: normalizePlate(data.plate),
         vehicleTypeId: data.vehicleTypeId,
         fullName: data.fullName,
         phone: data.phone,
@@ -95,8 +136,11 @@ export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <Form.Item
             label="Placa"
-            validateStatus={errors.plate ? 'error' : ''}
-            help={errors.plate?.message}
+            validateStatus={errors.plate ? 'error' : checkingPlate && shouldCheckPlate ? 'validating' : ''}
+            help={
+              errors.plate?.message ??
+              (checkingPlate && shouldCheckPlate ? 'Verificando placa...' : undefined)
+            }
           >
             <Controller
               name="plate"
@@ -106,6 +150,7 @@ export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps
                   {...field}
                   onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                   disabled={!!editing}
+                  placeholder="ABC-123"
                   style={{ fontFamily: 'monospace', fontWeight: 700 }}
                 />
               )}
@@ -120,6 +165,7 @@ export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps
                 <Select
                   {...field}
                   allowClear
+                  placeholder="Seleccionar"
                   options={vehicles.map((v) => ({ value: v.id, label: v.name }))}
                 />
               )}
@@ -217,6 +263,7 @@ export function ClientFormModal({ open, editing, onClose }: ClientFormModalProps
         <Button
           type="primary"
           loading={isLoading}
+          disabled={plateAlreadyExists || checkingPlate}
           onClick={handleSubmit(onSubmit)}
           style={{ background: '#db2777', borderColor: '#db2777' }}
         >

@@ -34,11 +34,14 @@ export function useClientEvents(id: string | undefined, params?: ClientEventsPar
   });
 }
 
-export function useClientByPlate(plate: string) {
+export function useClientByPlate(plate: string, options?: { enabled?: boolean }) {
+  const normalized = plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  const enabled = (options?.enabled ?? true) && normalized.length >= 6;
+
   return useQuery({
-    queryKey: ['clients', 'plate', plate],
-    queryFn: () => clientsService.getClientByPlate(plate),
-    enabled: plate.length >= 6,
+    queryKey: QUERY_KEYS.CLIENT_BY_PLATE(normalized),
+    queryFn: () => clientsService.getClientByPlate(normalized),
+    enabled,
     staleTime: 0,
   });
 }

@@ -38,8 +38,10 @@ export const clientsService = {
 
   getClientByPlate: async (plate: string): Promise<Client | null> => {
     try {
-      const res = await apiClient.get<ApiResponse<Client>>(`/clients/plate/${plate}`);
-      return res.data.data;
+      const res = await apiClient.get<ApiResponse<Client>>(
+        `/clients/plate/${encodeURIComponent(plate)}`,
+      );
+      return res.data.data ?? null;
     } catch {
       return null;
     }
