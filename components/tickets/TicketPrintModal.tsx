@@ -3,13 +3,10 @@
 import { useRef } from 'react';
 import { Button, Modal } from 'antd';
 import { PrinterOutlined, CloseOutlined } from '@ant-design/icons';
-import dynamic from 'next/dynamic';
 import dayjs from 'dayjs';
 import { Ticket } from '@/types/api';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
-
-// Barcode is canvas-based — load client-side only
-const Barcode = dynamic(() => import('react-barcode'), { ssr: false });
+import { generateQrSvg } from '@/lib/qr';
 
 interface TicketPrintModalProps {
   ticket: Ticket | null;
@@ -48,9 +45,9 @@ export function TicketPrintModal({ ticket, open, onClose }: TicketPrintModalProp
           .bold { font-weight: bold; }
           .title { font-size: 16px; font-weight: 900; margin: 6px 0; }
           .plate { font-size: 20px; font-weight: 900; letter-spacing: 3px; }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
+          .divider { border-top: 1px dashed #000; margin: 5px 0; }
           .small { font-size: 10px; }
-          svg, img { display: block; margin: 0 auto; }
+          .qr svg { display: block; margin: 0 auto; width: 120px; height: 120px; }
           ul { list-style: none; padding-left: 0; }
           li::before { content: "- "; }
         </style>
@@ -67,6 +64,7 @@ export function TicketPrintModal({ ticket, open, onClose }: TicketPrintModalProp
   const rateLabel = RATE_TYPE_LABELS[ticket.rateType] ?? ticket.rateType;
   const amount = parseFloat(ticket.rateAmount).toFixed(2);
   const entryTime = dayjs(ticket.entryTime);
+  const qrSvg = generateQrSvg(ticket.ticketCode);
 
   return (
     <Modal
@@ -86,14 +84,14 @@ export function TicketPrintModal({ ticket, open, onClose }: TicketPrintModalProp
           fontFamily: "'Courier New', monospace",
           fontSize: 12,
           color: '#000',
-          padding: '20px 24px',
+          padding: '16px 24px',
           background: '#fff',
-          lineHeight: 1.5,
+          lineHeight: 1.4,
         }}
       >
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 1 }}>Playa ROSE</div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 1 }}>Playa ROSE</div>
           <div style={{ fontSize: 11 }}>Jirón Apurimac 378, Cercado de Lima.</div>
           <div style={{ fontSize: 11 }}>Telf.: 994221608</div>
         </div>
@@ -101,19 +99,19 @@ export function TicketPrintModal({ ticket, open, onClose }: TicketPrintModalProp
         <DashedDivider />
 
         {/* Ticket title */}
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <div style={{ fontSize: 15, fontWeight: 900, letterSpacing: 1 }}>TICKET DE INGRESO</div>
-          <div style={{ fontSize: 19, fontWeight: 900, letterSpacing: 4, marginTop: 4 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 14, fontWeight: 900, letterSpacing: 1 }}>TICKET DE INGRESO</div>
+          <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 4, marginTop: 2 }}>
             {ticket.plate}
           </div>
-          <div style={{ fontSize: 11, marginTop: 6 }}>
+          <div style={{ fontSize: 11, marginTop: 3 }}>
             Ingreso: {entryTime.format('DD/MM/YYYY')} - {entryTime.format('HH:mm:ss')}
           </div>
-          <div style={{ fontSize: 12, fontWeight: 700, marginTop: 2 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, marginTop: 1 }}>
             s/. {amount} - {rateLabel}
           </div>
           {ticket.vehicleType && (
-            <div style={{ fontSize: 11, color: '#444', marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: '#444' }}>
               {ticket.vehicleType.name}
             </div>
           )}
@@ -121,28 +119,22 @@ export function TicketPrintModal({ ticket, open, onClose }: TicketPrintModalProp
 
         <DashedDivider />
 
-        {/* Barcode */}
-        <div style={{ textAlign: 'center', margin: '10px 0' }}>
-          <Barcode
-            value={ticket.ticketCode}
-            width={1.6}
-            height={55}
-            fontSize={11}
-            displayValue
-            background="#fff"
-            lineColor="#000"
-          />
+        {/* QR code */}
+        <div
+          className="qr"
+          style={{ textAlign: 'center', margin: '4px 0' }}
+          dangerouslySetInnerHTML={{ __html: qrSvg }}
+        />
+        <div style={{ fontSize: 10, fontWeight: 700, textAlign: 'center', letterSpacing: 1 }}>
+          {ticket.ticketCode}
         </div>
 
         <DashedDivider />
 
         {/* Footer info */}
-        <div style={{ fontSize: 10, textAlign: 'center', marginBottom: 6 }}>
-          Tolerancia: 5 min. pasada la hora
-        </div>
-        <div style={{ fontSize: 10, marginBottom: 8 }}>
-          <strong>Horario de Atención:</strong> Lun a Vie : 07:30am. - 10:00 pm.<br />
-          Sab: 08:30 - 10:00pm. / Dom: 09:00am. - 09:00pm.
+        <div style={{ fontSize: 10 }}>
+          <strong>Horario:</strong> Lun-Vie 07:30am-10:00pm · Sáb 08:30-10:00pm · Dom 09:00am-09:00pm.<br />
+          Tolerancia: 5 min. pasada la hora.
         </div>
 
         <DashedDivider />
@@ -150,7 +142,7 @@ export function TicketPrintModal({ ticket, open, onClose }: TicketPrintModalProp
         {/* Conditions */}
         <div style={{ fontSize: 10 }}>
           <strong>Condiciones</strong>
-          <ul style={{ marginTop: 4, paddingLeft: 0, listStyle: 'none' }}>
+          <ul style={{ marginTop: 2, paddingLeft: 0, listStyle: 'none' }}>
             {[
               'Cuide y conserve su ticket, ya que acredita el ingreso de su vehículo y la salida del mismo.',
               'Indicar si desea boleta o Factura.',

@@ -39,11 +39,19 @@ const EVENT_DOT: Record<EventColor, string> = {
   red: '#c4605c',
 };
 
-function formatElapsed(entryTime: string): string {
-  const mins = dayjs().diff(dayjs(entryTime), 'minute');
-  const h = Math.floor(mins / 60);
+/** Formats a duration in minutes as "Xd Xh Xm", omitting days when 0. */
+function formatDurationMinutes(totalMins: number): string {
+  const mins = Math.max(0, Math.floor(totalMins));
+  const d = Math.floor(mins / (60 * 24));
+  const h = Math.floor((mins % (60 * 24)) / 60);
   const m = mins % 60;
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function formatElapsed(entryTime: string): string {
+  return formatDurationMinutes(dayjs().diff(dayjs(entryTime), 'minute'));
 }
 
 interface SistemaTicketsTableProps {
@@ -120,7 +128,12 @@ export function SistemaTicketsTable({
       title: 'Tiempo',
       key: 'elapsed',
       width: 80,
-      render: (_, r) => (r.status === 'pending' ? formatElapsed(r.entryTime) : r.totalMinutes ? `${r.totalMinutes}m` : '—'),
+      render: (_, r) =>
+        r.status === 'pending'
+          ? formatElapsed(r.entryTime)
+          : r.totalMinutes != null
+            ? formatDurationMinutes(r.totalMinutes)
+            : '—',
     },
     {
       title: 'Tarifa',

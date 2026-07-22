@@ -80,3 +80,11 @@ body {
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* Ticket QR code (scalable inline SVG generated on the fly) */
+.qr svg {
+  display: block;
+  margin: 0 auto;
+  width: 120px;
+  height: 120px;
+}
