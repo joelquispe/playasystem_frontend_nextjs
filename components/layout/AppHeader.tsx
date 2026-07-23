@@ -2,10 +2,15 @@
 
 import { Avatar, Button, Dropdown, Layout, Modal, Space, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
-import { LogoutOutlined, UserOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import {
+  LogoutOutlined,
+  UserOutlined,
+  ClockCircleOutlined,
+  LoginOutlined,
+} from '@ant-design/icons';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
-import { useCheckOut, useTodayAttendance } from '@/hooks/useAttendance';
+import { useCheckIn, useCheckOut, useTodayAttendance } from '@/hooks/useAttendance';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -18,13 +23,22 @@ export function AppHeader({ title }: AppHeaderProps) {
   const { user, logout, isAdmin } = useAuth();
   const isCashier = !!user && !isAdmin && getUserRoleSlug(user) === 'cashier';
 
-  const { data: todayAttendance } = useTodayAttendance(isCashier);
+  const { data: todayAttendance, isLoading: isAttendanceLoading } =
+    useTodayAttendance(isCashier);
+  const checkIn = useCheckIn();
   const checkOut = useCheckOut();
+
+  const canStartShift =
+    isCashier && !isAttendanceLoading && !todayAttendance?.checkedInAt;
 
   const canEndShift =
     isCashier &&
     !!todayAttendance?.checkedInAt &&
     !todayAttendance?.checkedOutAt;
+
+  const handleStartShift = () => {
+    checkIn.mutateAsync(undefined);
+  };
 
   const handleEndShift = () => {
     Modal.confirm({
@@ -82,6 +96,17 @@ export function AppHeader({ title }: AppHeaderProps) {
       </Text>
 
       <Space>
+        {canStartShift && (
+          <Button
+            type="primary"
+            icon={<LoginOutlined />}
+            loading={checkIn.isPending}
+            onClick={handleStartShift}
+          >
+            Marcar asistencia
+          </Button>
+        )}
+
         {canEndShift && (
           <Button
             danger

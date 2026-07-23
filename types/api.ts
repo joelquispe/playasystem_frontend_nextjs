@@ -389,6 +389,4 @@ export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
-  /** Cashier only — null for admin */
-  attendance: AttendanceRecord | null;
 }
