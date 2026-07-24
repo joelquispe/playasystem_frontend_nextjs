@@ -3,11 +3,14 @@ import { message } from 'antd';
 import { QUERY_KEYS } from '@/lib/constants';
 import { eventsService, CreatePlateEventDto } from '@/services/events.service';
 
-export function usePlateEvents(plate: string) {
+export function usePlateEvents(plate: string, options?: { enabled?: boolean }) {
+  const normalized = plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  const enabled = (options?.enabled ?? true) && normalized.length >= 3;
+
   return useQuery({
-    queryKey: QUERY_KEYS.PLATE_EVENTS(plate),
-    queryFn: () => eventsService.getEventsByPlate(plate),
-    enabled: !!plate,
+    queryKey: QUERY_KEYS.PLATE_EVENTS(normalized),
+    queryFn: () => eventsService.getEventsByPlate(normalized),
+    enabled,
   });
 }
 

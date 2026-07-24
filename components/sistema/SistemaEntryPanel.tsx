@@ -36,7 +36,7 @@ import {
   getVehicleRates,
   pickDefaultRate,
 } from '@/lib/vehicles';
-import { isSpecialFrequentClient } from '@/lib/client';
+import { hasSpecialRate, isFrequentClient, getSpecialRateAmount, shouldShowClientCard } from '@/lib/client';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text, Title } = Typography;
@@ -153,11 +153,10 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
 
   const resolvedRateType: RateType | null = specialRateType ?? (selectedRate ? 'hour_fraction' : null);
 
-  /** Positive amount only for frequent clients (specialRate > 0 + green) */
+  /** Positive amount when client has specialRate > 0 */
   const clientSpecialAmount = useMemo((): number | null => {
     if (specialRateType) return null; // special types override client rate
-    if (!isSpecialFrequentClient(foundClient)) return null;
-    return Number(foundClient!.specialRate);
+    return getSpecialRateAmount(foundClient);
   }, [foundClient, specialRateType]);
 
   const resolvedAmount = useMemo(() => {
@@ -332,14 +331,18 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
   const rateOptions = (rates: Rate[]) => rates.map(formatRateOption);
 
   // ── Client / subscriber card ───────────────────────────────────────────────
-  // "Es cliente" only when tarifa especial > 0 AND eventColor is green
-  // (Frecuente / Amable). Normal (white) or Alerta (red) → no card.
-  // Active subscribers always get the "Abonado" card.
+  // - specialRate > 0 → purple "Tarifa especial"
+  // - eventColor green → green "Es frecuente"
+  // - both → purple tarifa especial (priority)
+  // - Active subscribers always get the "Abonado" card
   const showClientCard =
     isLookupReady &&
     !cardDismissed &&
     !isFetching &&
-    (!!foundSubscriber || isSpecialFrequentClient(foundClient));
+    (!!foundSubscriber || shouldShowClientCard(foundClient));
+
+  const isClientSpecialRate = hasSpecialRate(foundClient);
+  const isClientFrequent = isFrequentClient(foundClient);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -670,7 +673,8 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
             plate={normalizedPlate}
             amount={resolvedAmount}
             rateType={resolvedRateType}
-            isSpecialRate={clientSpecialAmount !== null}
+            isSpecialRate={isClientSpecialRate}
+            isFrequent={isClientFrequent}
             generating={createTicket.isPending}
             canGenerate={canGenerate}
             onGenerate={handleGenerate}
@@ -691,7 +695,10 @@ interface ClientInfoCardProps {
   plate: string;
   amount: number;
   rateType: RateType | null;
+  /** specialRate > 0 → purple "Tarifa especial" */
   isSpecialRate: boolean;
+  /** eventColor green → green "Es frecuente" (unless special rate takes priority) */
+  isFrequent: boolean;
   generating: boolean;
   canGenerate: boolean;
   onGenerate: () => void;
@@ -699,22 +706,36 @@ interface ClientInfoCardProps {
 }
 
 function ClientInfoCard({
-  client, subscriber, vehicle, plate, amount, rateType, isSpecialRate,
+  client, subscriber, vehicle, plate, amount, rateType, isSpecialRate, isFrequent,
   generating, canGenerate, onGenerate, onDismiss,
 }: ClientInfoCardProps) {
   const isSubscriber = !!subscriber;
   const name = subscriber?.fullName ?? client?.fullName ?? '—';
   const eventColor = client?.eventColor ?? 'white';
+  // Purple wins when special rate; otherwise green for frecuente
+  const usePurple = !isSubscriber && isSpecialRate;
+  const useGreen = !isSubscriber && !isSpecialRate && isFrequent;
+
+  const headerTag = isSubscriber
+    ? { color: 'gold' as const, label: '⭐ ABONADO ACTIVO' }
+    : usePurple
+      ? { color: 'purple' as const, label: '★ TARIFA ESPECIAL' }
+      : { color: 'green' as const, label: '✓ ES FRECUENTE' };
+
+  const accent = isSubscriber ? '#d97706' : usePurple ? '#6d28d9' : '#16a34a';
+  const border = isSubscriber ? '#ca8a04' : usePurple ? '#6d28d9' : '#16a34a';
+  const background = isSubscriber
+    ? 'linear-gradient(135deg, #fefce8, #fef9c3)'
+    : usePurple
+      ? 'linear-gradient(135deg, #f5f3ff, #ede9fe)'
+      : 'linear-gradient(135deg, #f0fdf4, #dcfce7)';
+  const amountColor = isSubscriber ? '#92400e' : usePurple ? '#6d28d9' : '#065f46';
 
   return (
     <div
       style={{
-        background: isSubscriber
-          ? 'linear-gradient(135deg, #fefce8, #fef9c3)'
-          : isSpecialRate
-          ? 'linear-gradient(135deg, #f5f3ff, #ede9fe)'
-          : 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
-        border: `2px solid ${isSubscriber ? '#ca8a04' : isSpecialRate ? '#6d28d9' : '#16a34a'}`,
+        background,
+        border: `2px solid ${border}`,
         borderRadius: 16,
         padding: 20,
         position: 'relative',
@@ -736,11 +757,16 @@ function ClientInfoCard({
       {/* Header */}
       <div style={{ marginBottom: 14 }}>
         <Tag
-          color={isSubscriber ? 'gold' : 'green'}
+          color={headerTag.color}
           style={{ fontWeight: 700, fontSize: 13, letterSpacing: 0.5, marginBottom: 4 }}
         >
-          {isSubscriber ? '⭐ ABONADO ACTIVO' : '✓ ES CLIENTE'}
+          {headerTag.label}
         </Tag>
+        {usePurple && isFrequent && (
+          <Tag color="green" style={{ fontWeight: 600, fontSize: 11, marginBottom: 4 }}>
+            Frecuente
+          </Tag>
+        )}
         {vehicle && (
           <Text style={{ display: 'block', fontSize: 11, color: '#6b7280' }}>
             {vehicle.name}
@@ -793,7 +819,7 @@ function ClientInfoCard({
           <Text style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
             Tarifa
           </Text>
-          {isSpecialRate && (
+          {usePurple && (
             <Tag
               color="purple"
               style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
@@ -801,12 +827,20 @@ function ClientInfoCard({
               Tarifa Especial
             </Tag>
           )}
+          {useGreen && (
+            <Tag
+              color="green"
+              style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
+            >
+              Es frecuente
+            </Tag>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
             fontSize: 28,
             fontWeight: 900,
-            color: isSubscriber ? '#92400e' : isSpecialRate ? '#6d28d9' : '#065f46',
+            color: amountColor,
           }}>
             s/. {amount.toFixed(2)}
           </span>
@@ -829,8 +863,8 @@ function ClientInfoCard({
           onClick={onGenerate}
           icon={<CheckCircleOutlined />}
           style={{
-            background: isSubscriber ? '#d97706' : isSpecialRate ? '#6d28d9' : '#16a34a',
-            borderColor: isSubscriber ? '#d97706' : isSpecialRate ? '#6d28d9' : '#16a34a',
+            background: accent,
+            borderColor: accent,
             fontWeight: 700,
             minWidth: 140,
           }}

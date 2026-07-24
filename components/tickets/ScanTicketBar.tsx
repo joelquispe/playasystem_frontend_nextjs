@@ -14,9 +14,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   CloseOutlined,
-  DollarOutlined,
   ExclamationCircleOutlined,
-  FileTextOutlined,
   LoadingOutlined,
   SearchOutlined,
   WifiOutlined,
@@ -103,6 +101,15 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
 
       try {
         const ticket = await scanTicket.mutateAsync(code);
+
+        // Pending → open charge modal immediately (no intermediate card)
+        if (ticket.status === 'pending') {
+          setScanStatus('idle');
+          setScannedTicket(null);
+          onTicketFound(ticket, 'charge');
+          return;
+        }
+
         setScannedTicket(ticket);
         setScanStatus(resolveScanStatus(ticket));
         scheduleDismiss();
@@ -116,7 +123,7 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
         scheduleDismiss();
       }
     },
-    [scanTicket, clearDismissTimer, scheduleDismiss],
+    [scanTicket, clearDismissTimer, scheduleDismiss, onTicketFound],
   );
 
   // ── Hardware scanner (USB HID keyboard emulation) ─────────────────────────
@@ -158,6 +165,14 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
         return;
       }
 
+      // Pending → open charge modal immediately
+      if (ticket.status === 'pending') {
+        setScanStatus('idle');
+        setScannedTicket(null);
+        onTicketFound(ticket, 'charge');
+        return;
+      }
+
       setScannedTicket(ticket);
       setScanStatus(resolveScanStatus(ticket));
       scheduleDismiss();
@@ -169,14 +184,6 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
   };
 
   // ── Action handlers ────────────────────────────────────────────────────────
-  const handleAction = (action: 'charge' | 'receipt') => {
-    if (!scannedTicket) return;
-    clearDismissTimer();
-    setScanStatus('idle');
-    setScannedTicket(null);
-    onTicketFound(scannedTicket, action);
-  };
-
   const handleDismiss = () => {
     clearDismissTimer();
     setScanStatus('idle');
@@ -270,8 +277,6 @@ export function ScanTicketBar({ onTicketFound }: ScanTicketBarProps) {
           status={scanStatus}
           ticket={scannedTicket}
           errorMessage={errorMessage}
-          onCharge={() => handleAction('charge')}
-          onReceipt={() => handleAction('receipt')}
           onDismiss={handleDismiss}
         />
       )}
@@ -285,8 +290,6 @@ interface ScanResultPanelProps {
   status: ScanStatus;
   ticket: Ticket | null;
   errorMessage: string | null;
-  onCharge: () => void;
-  onReceipt: () => void;
   onDismiss: () => void;
 }
 
@@ -348,8 +351,6 @@ function ScanResultPanel({
   status,
   ticket,
   errorMessage,
-  onCharge,
-  onReceipt,
   onDismiss,
 }: ScanResultPanelProps) {
   const cfg = STATUS_CONFIG[status];
@@ -462,28 +463,6 @@ function ScanResultPanel({
               {TICKET_STATUS_LABELS[ticket.status] ?? ticket.status}
             </Tag>
           </div>
-
-          {/* Action buttons */}
-          {status === 'found_pending' && (
-            <Button
-              type="primary"
-              icon={<DollarOutlined />}
-              onClick={onCharge}
-              style={{ background: '#16a34a', borderColor: '#16a34a', fontWeight: 700 }}
-            >
-              Cobrar
-            </Button>
-          )}
-          {(status === 'found_paid' || status === 'found_manual') && (
-            <Button
-              type="primary"
-              icon={<FileTextOutlined />}
-              onClick={onReceipt}
-              style={{ background: colors.primary, borderColor: colors.primary, fontWeight: 700 }}
-            >
-              Emitir Comprobante
-            </Button>
-          )}
         </>
       )}
 

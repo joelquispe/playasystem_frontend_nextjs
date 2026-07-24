@@ -23,7 +23,7 @@ import { useCreateTicket } from '@/hooks/useTickets';
 import { clientsService } from '@/services/clients.service';
 import { subscribersService } from '@/services/subscribers.service';
 import { Client, Subscriber } from '@/types/api';
-import { isSpecialFrequentClient } from '@/lib/client';
+import { hasSpecialRate, isFrequentClient, shouldShowClientCard } from '@/lib/client';
 
 const { Text } = Typography;
 
@@ -82,9 +82,11 @@ export function NewTicketDrawer({ open, onClose }: NewTicketDrawerProps) {
       setFoundSubscriber(subscriber);
       if (client) {
         if (client.vehicleTypeId) setValue('vehicleTypeId', client.vehicleTypeId);
-        if (isSpecialFrequentClient(client)) {
+        if (hasSpecialRate(client)) {
           setValue('rateType', 'hour_fraction');
           setValue('rateAmount', Number(client.specialRate));
+          setClientModalOpen(true);
+        } else if (isFrequentClient(client)) {
           setClientModalOpen(true);
         }
       }
@@ -145,12 +147,22 @@ export function NewTicketDrawer({ open, onClose }: NewTicketDrawerProps) {
         />
       )}
 
-      {isSpecialFrequentClient(foundClient) && !foundSubscriber && (
+      {shouldShowClientCard(foundClient) && !foundSubscriber && (
         <Alert
-          type="success"
+          type={hasSpecialRate(foundClient) ? 'info' : 'success'}
           showIcon
-          message={`Cliente frecuente: ${foundClient!.fullName}`}
-          description={`Tarifa especial: s/. ${Number(foundClient!.specialRate).toFixed(2)}`}
+          message={
+            hasSpecialRate(foundClient)
+              ? `Tarifa especial: ${foundClient!.fullName}`
+              : `Cliente frecuente: ${foundClient!.fullName}`
+          }
+          description={
+            hasSpecialRate(foundClient)
+              ? `Tarifa especial: s/. ${Number(foundClient!.specialRate).toFixed(2)}${
+                  isFrequentClient(foundClient) ? ' · Frecuente' : ''
+                }`
+              : 'Cliente frecuente / amable'
+          }
           style={{ marginBottom: 16 }}
         />
       )}
@@ -260,18 +272,26 @@ export function NewTicketDrawer({ open, onClose }: NewTicketDrawerProps) {
       </Form>
 
       <Modal
-        title="¡Es cliente!"
+        title={hasSpecialRate(foundClient) ? '¡Tarifa especial!' : '¡Es frecuente!'}
         open={clientModalOpen}
         onOk={() => setClientModalOpen(false)}
         onCancel={() => setClientModalOpen(false)}
         okText="Continuar"
         cancelButtonProps={{ style: { display: 'none' } }}
       >
-        <Text>
-          La placa <strong>{foundClient?.plate}</strong> pertenece a{' '}
-          <strong>{foundClient?.fullName}</strong> con tarifa especial de{' '}
-          <strong>s/. {foundClient ? parseFloat(foundClient.specialRate).toFixed(2) : '0'}</strong>.
-        </Text>
+        {hasSpecialRate(foundClient) ? (
+          <Text>
+            La placa <strong>{foundClient?.plate}</strong> pertenece a{' '}
+            <strong>{foundClient?.fullName}</strong> con tarifa especial de{' '}
+            <strong>s/. {foundClient ? Number(foundClient.specialRate).toFixed(2) : '0'}</strong>
+            {isFrequentClient(foundClient) ? ' (cliente frecuente)' : ''}.
+          </Text>
+        ) : (
+          <Text>
+            La placa <strong>{foundClient?.plate}</strong> pertenece a{' '}
+            <strong>{foundClient?.fullName}</strong>, cliente frecuente / amable.
+          </Text>
+        )}
       </Modal>
     </Drawer>
   );

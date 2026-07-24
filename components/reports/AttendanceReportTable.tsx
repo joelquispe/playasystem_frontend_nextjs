@@ -86,14 +86,14 @@ export function AttendanceReportTable({
       key: 'workedMinutes',
       render: (v: number) => (v > 0 ? `${v} min` : '—'),
     },
-    {
-      title: 'Notas',
-      dataIndex: 'notes',
-      key: 'notes',
-      render: (v: string | null) => (
-        <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v ?? '—'}</Text>
-      ),
-    },
+    // {
+    //   title: 'Notas',
+    //   dataIndex: 'notes',
+    //   key: 'notes',
+    //   render: (v: string | null) => (
+    //     <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v ?? '—'}</Text>
+    //   ),
+    // },
   ];
 
   const pagination: TablePaginationConfig | false = meta

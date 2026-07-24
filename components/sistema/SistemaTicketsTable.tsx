@@ -1,7 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import {
   Button,
   Checkbox,
@@ -30,6 +29,7 @@ import { RATE_TYPE_LABELS } from '@/lib/constants';
 import { cardStyle, colors } from '@/lib/theme';
 import { formatDurationMinutes } from '@/lib/ticket-calculation';
 import { normalizePlate } from '@/lib/plate';
+import { VehicleRecordsModal } from '@/components/sistema/VehicleRecordsModal';
 
 dayjs.extend(duration);
 
@@ -82,12 +82,17 @@ export function SistemaTicketsTable({
   const { data: clients = [] } = useClients();
   const revertTicket = useRevertTicket();
   const toggleKey = useToggleKey();
+  const [recordsTicket, setRecordsTicket] = useState<Ticket | null>(null);
 
   const clientByPlate = useMemo(() => {
     const map = new Map<string, Client>();
     clients.forEach((c) => map.set(normalizePlate(c.plate), c));
     return map;
   }, [clients]);
+
+  const recordsClient = recordsTicket
+    ? clientByPlate.get(normalizePlate(recordsTicket.plate)) ?? null
+    : null;
 
   const columns: ColumnsType<Ticket> = [
     {
@@ -216,14 +221,11 @@ export function SistemaTicketsTable({
       width: 100,
       render: (_, r) => {
         const client = clientByPlate.get(normalizePlate(r.plate));
-        return client ? (
-          <Link href={`/clients?plate=${r.plate}`}>
-            <Button size="small" type="link">
-              Registros
-            </Button>
-          </Link>
-        ) : (
-          '—'
+        if (!client) return '—';
+        return (
+          <Button size="small" type="link" onClick={() => setRecordsTicket(r)}>
+            Registros
+          </Button>
         );
       },
     },
@@ -392,6 +394,13 @@ export function SistemaTicketsTable({
           ),
           rowExpandable: (record) => (record.charges?.length ?? 0) > 0,
         }}
+      />
+
+      <VehicleRecordsModal
+        ticket={recordsTicket}
+        client={recordsClient}
+        open={!!recordsTicket}
+        onClose={() => setRecordsTicket(null)}
       />
     </div>
   );
