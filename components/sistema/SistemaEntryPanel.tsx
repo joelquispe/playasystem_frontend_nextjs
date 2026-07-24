@@ -36,6 +36,7 @@ import {
   getVehicleRates,
   pickDefaultRate,
 } from '@/lib/vehicles';
+import { isSpecialFrequentClient } from '@/lib/client';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text, Title } = Typography;
@@ -152,11 +153,11 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
 
   const resolvedRateType: RateType | null = specialRateType ?? (selectedRate ? 'hour_fraction' : null);
 
-  /** Positive amount from client.specialRate, or null when absent / zero */
+  /** Positive amount only for frequent clients (specialRate > 0 + green) */
   const clientSpecialAmount = useMemo((): number | null => {
     if (specialRateType) return null; // special types override client rate
-    const val = parseFloat(foundClient?.specialRate ?? '0');
-    return val > 0 ? val : null;
+    if (!isSpecialFrequentClient(foundClient)) return null;
+    return Number(foundClient!.specialRate);
   }, [foundClient, specialRateType]);
 
   const resolvedAmount = useMemo(() => {
@@ -332,18 +333,13 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
 
   // ── Client / subscriber card ───────────────────────────────────────────────
   // "Es cliente" only when tarifa especial > 0 AND eventColor is green
-  // (Frecuente / Amable). Normal (white) or Alerta (red) with rate 0 → no card.
+  // (Frecuente / Amable). Normal (white) or Alerta (red) → no card.
   // Active subscribers always get the "Abonado" card.
-  const isSpecialFrequentClient =
-    !!foundClient &&
-    parseFloat(foundClient.specialRate ?? '0') > 0 &&
-    foundClient.eventColor === 'green';
-
   const showClientCard =
     isLookupReady &&
     !cardDismissed &&
     !isFetching &&
-    (!!foundSubscriber || isSpecialFrequentClient);
+    (!!foundSubscriber || isSpecialFrequentClient(foundClient));
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (

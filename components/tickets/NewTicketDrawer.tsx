@@ -23,7 +23,7 @@ import { useCreateTicket } from '@/hooks/useTickets';
 import { clientsService } from '@/services/clients.service';
 import { subscribersService } from '@/services/subscribers.service';
 import { Client, Subscriber } from '@/types/api';
-import { EVENT_COLOR_LABELS } from '@/lib/constants';
+import { isSpecialFrequentClient } from '@/lib/client';
 
 const { Text } = Typography;
 
@@ -82,9 +82,9 @@ export function NewTicketDrawer({ open, onClose }: NewTicketDrawerProps) {
       setFoundSubscriber(subscriber);
       if (client) {
         if (client.vehicleTypeId) setValue('vehicleTypeId', client.vehicleTypeId);
-        if (client.specialRate && parseFloat(client.specialRate) > 0) {
+        if (isSpecialFrequentClient(client)) {
           setValue('rateType', 'hour_fraction');
-          setValue('rateAmount', parseFloat(client.specialRate));
+          setValue('rateAmount', Number(client.specialRate));
           setClientModalOpen(true);
         }
       }
@@ -145,16 +145,12 @@ export function NewTicketDrawer({ open, onClose }: NewTicketDrawerProps) {
         />
       )}
 
-      {foundClient && !foundSubscriber && (
+      {isSpecialFrequentClient(foundClient) && !foundSubscriber && (
         <Alert
-          type={foundClient.eventColor === 'red' ? 'error' : foundClient.eventColor === 'green' ? 'success' : 'info'}
+          type="success"
           showIcon
-          message={`Cliente registrado: ${foundClient.fullName}`}
-          description={
-            parseFloat(foundClient.specialRate) > 0
-              ? `Tarifa especial: s/. ${parseFloat(foundClient.specialRate).toFixed(2)}`
-              : EVENT_COLOR_LABELS[foundClient.eventColor]
-          }
+          message={`Cliente frecuente: ${foundClient!.fullName}`}
+          description={`Tarifa especial: s/. ${Number(foundClient!.specialRate).toFixed(2)}`}
           style={{ marginBottom: 16 }}
         />
       )}

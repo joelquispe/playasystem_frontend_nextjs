@@ -84,7 +84,7 @@ export default function ReportsAsistenciaPage() {
         <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()} size="small">
           Actualizar
         </Button>
-        <Button
+        {/* <Button
           icon={<DownloadOutlined />}
           loading={exporting}
           onClick={handleExport}
@@ -92,12 +92,11 @@ export default function ReportsAsistenciaPage() {
           type="primary"
         >
           Exportar Excel
-        </Button>
+        </Button> */}
       </div>
 
       <AttendanceReportTable
         items={report?.items ?? []}
-        accumulatedLateTime={report?.accumulatedLateTime}
         meta={report?.meta}
         loading={isLoading}
         onPageChange={(p, l) => {

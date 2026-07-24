@@ -30,7 +30,8 @@ import dayjs from 'dayjs';
 import { useCurrentShift, useAddExpense, useCloseShift } from '@/hooks/useCashRegister';
 import { useTickets } from '@/hooks/useTickets';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { CashRegister, BalanceStatus } from '@/types/api';
+import { CashRegister } from '@/types/api';
+import { formatLimaDateTime } from '@/lib/datetime';
 import { cardStyle, colors, highlightPanelStyle, nestedPanelStyle } from '@/lib/theme';
 
 const { Text, Title } = Typography;
@@ -93,6 +94,9 @@ export default function CashRegisterPage() {
   const closeShift = useCloseShift();
 
   const [closeNotes, setCloseNotes] = useState('');
+  const [unbalancedOpen, setUnbalancedOpen] = useState(false);
+  const [balanceNotes, setBalanceNotes] = useState('');
+  const [balanceNotesError, setBalanceNotesError] = useState('');
   const [closeResult, setCloseResult] = useState<CashRegister | null>(null);
 
   const isOpen = !!shift && !shift.closedAt;
@@ -108,14 +112,38 @@ export default function CashRegisterPage() {
     expenseForm.reset({ extraExpenses: 0, extraNotes: '' });
   });
 
-  // ── Close shift — one direct action per button, no intermediate steps ──────
-  const handleDirectClose = async (balanceStatus: BalanceStatus) => {
+  const handleCloseBalanced = async () => {
     const result = await closeShift.mutateAsync({
-      balanceStatus,
+      balanceStatus: 'balanced',
       differenceAmount: 0,
-      balanceNotes: balanceStatus === 'unbalanced' ? closeNotes || null : null,
+      balanceNotes: null,
       extraNotes: closeNotes || undefined,
     });
+    setCloseNotes('');
+    setCloseResult(result);
+  };
+
+  const openUnbalancedDialog = () => {
+    setBalanceNotes('');
+    setBalanceNotesError('');
+    setUnbalancedOpen(true);
+  };
+
+  const handleCloseUnbalanced = async () => {
+    const note = balanceNotes.trim();
+    if (!note) {
+      setBalanceNotesError('Ingresa el motivo del descuadre');
+      return;
+    }
+    const result = await closeShift.mutateAsync({
+      balanceStatus: 'unbalanced',
+      differenceAmount: 0,
+      balanceNotes: note,
+      extraNotes: closeNotes || undefined,
+    });
+    setUnbalancedOpen(false);
+    setBalanceNotes('');
+    setBalanceNotesError('');
     setCloseNotes('');
     setCloseResult(result);
   };
@@ -152,7 +180,7 @@ export default function CashRegisterPage() {
         subtitle={
           isOpen ? (
             <Tag color="green" style={{ fontWeight: 600 }}>
-              Turno abierto · {dayjs(shift.createdAt).format('DD/MM/YYYY HH:mm')}
+              Turno abierto · {formatLimaDateTime(shift.createdAt)}
             </Tag>
           ) : (
             <Tag color="default" style={{ fontWeight: 600 }}>
@@ -333,7 +361,7 @@ export default function CashRegisterPage() {
                 value={closeNotes}
                 onChange={(e) => setCloseNotes(e.target.value)}
                 rows={3}
-                placeholder="Observaciones del turno o motivo de descuadre..."
+                placeholder="Observaciones generales del turno..."
                 style={{ marginBottom: 20 }}
               />
 
@@ -349,7 +377,7 @@ export default function CashRegisterPage() {
                   block
                   icon={<CheckCircleOutlined />}
                   loading={closeShift.isPending}
-                  onClick={() => handleDirectClose('balanced')}
+                  onClick={handleCloseBalanced}
                   style={{ background: '#22c55e', borderColor: '#22c55e', fontWeight: 600 }}
                 >
                   Sí Cuadra
@@ -362,7 +390,7 @@ export default function CashRegisterPage() {
                   block
                   icon={<WarningOutlined />}
                   loading={closeShift.isPending}
-                  onClick={() => handleDirectClose('unbalanced')}
+                  onClick={openUnbalancedDialog}
                   style={{ fontWeight: 600 }}
                 >
                   No Cuadra
@@ -393,12 +421,53 @@ export default function CashRegisterPage() {
                 Total: s/. {parseFloat(shift.totalAmount).toFixed(2)}
               </Text>
               <Text style={{ fontSize: 12, color: colors.textMuted }}>
-                Cerrado el {dayjs(shift.closedAt).format('DD/MM/YYYY [a las] HH:mm')}
+                Cerrado el {formatLimaDateTime(shift.closedAt)}
               </Text>
             </div>
           </div>
         )
       )}
+
+      {/* ── Dialog: motivo de descuadre (balanceNotes) ───────────────────────── */}
+      <Modal
+        title="Caja no cuadra"
+        open={unbalancedOpen}
+        onCancel={() => {
+          if (closeShift.isPending) return;
+          setUnbalancedOpen(false);
+          setBalanceNotesError('');
+        }}
+        centered
+        destroyOnHidden
+        okText="Confirmar descuadre"
+        cancelText="Cancelar"
+        okButtonProps={{
+          danger: true,
+          loading: closeShift.isPending,
+          icon: <WarningOutlined />,
+        }}
+        onOk={handleCloseUnbalanced}
+      >
+        <Text style={{ color: colors.textMuted, display: 'block', marginBottom: 8 }}>
+          Indica el motivo del descuadre. Esta nota se guardará en el cierre del turno.
+        </Text>
+        <Input.TextArea
+          value={balanceNotes}
+          onChange={(e) => {
+            setBalanceNotes(e.target.value);
+            if (balanceNotesError) setBalanceNotesError('');
+          }}
+          rows={4}
+          placeholder="Ej. Faltan s/. 20 en efectivo, sobró en Yape..."
+          status={balanceNotesError ? 'error' : undefined}
+          autoFocus
+        />
+        {balanceNotesError && (
+          <Text type="danger" style={{ fontSize: 12, display: 'block', marginTop: 6 }}>
+            {balanceNotesError}
+          </Text>
+        )}
+      </Modal>
 
       {/* ── Modal de confirmación tras cerrar caja ───────────────────────────── */}
       <Modal
