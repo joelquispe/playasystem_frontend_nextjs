@@ -40,7 +40,7 @@ const reportsSubmenu: MenuItem = {
   icon: <BarChartOutlined />,
   label: 'Reportes',
   children: [
-    makeItem(<Link href="/reports/dashboard">Dashboard</Link>, '/reports/dashboard', <DashboardOutlined />),
+    makeItem(<Link href="/reports/reportes">Reportes</Link>, '/reports/reportes', <DashboardOutlined />),
     makeItem(<Link href="/reports/cajeros">Cajeros</Link>, '/reports/cajeros', <DollarOutlined />),
     makeItem(<Link href="/reports/asistencia">Asistencia</Link>, '/reports/asistencia', <CalendarOutlined />),
   ],

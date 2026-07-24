@@ -43,7 +43,7 @@ export default function ReportsDashboardPage() {
   return (
     <>
       <PageHeader
-        title="Dashboard"
+        title="Reportes"
         subtitle={month.format('MMMM YYYY')}
         extra={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -57,14 +57,14 @@ export default function ReportsDashboardPage() {
             <Button icon={<ReloadOutlined spin={isFetching} />} onClick={() => refetch()}>
               Actualizar
             </Button>
-            <Button
+            {/* <Button
               type="primary"
               icon={<DownloadOutlined />}
               loading={exporting}
               onClick={handleExport}
             >
               Exportar Excel
-            </Button>
+            </Button> */}
           </div>
         }
       />

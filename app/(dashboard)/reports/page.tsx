@@ -13,7 +13,7 @@ export default function ReportsIndexPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/reports/dashboard');
+    router.replace('/reports/reportes');
   }, [router]);
 
   return (
