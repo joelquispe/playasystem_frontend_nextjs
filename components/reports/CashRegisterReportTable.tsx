@@ -443,14 +443,13 @@ export function CashRegisterReportTable({
         destroyOnHidden
         centered
         styles={{
-          content: {
+          body: {
             background: colors.cardBg,
             border: `1px solid ${colors.cardBorder}`,
             borderRadius: 14,
-            padding: 0,
+            padding: 20,
             overflow: 'hidden',
           },
-          body: { padding: 20 },
         }}
       >
         {selected && (
