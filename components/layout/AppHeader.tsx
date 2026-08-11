@@ -1,6 +1,6 @@
 'use client';
 
-import { Avatar, Button, Dropdown, Layout, Modal, Space, Tag, Typography } from 'antd';
+import { Avatar, Button, Dropdown, Layout, Space, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   LogoutOutlined,
@@ -12,8 +12,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
-import { useCheckIn, useCheckOut } from '@/hooks/useAttendance';
-import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
+import { useCheckIn } from '@/hooks/useAttendance';
+import { useCashierSession } from '@/hooks/useCashierSession';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -24,55 +24,11 @@ interface AppHeaderProps {
 
 export function AppHeader({ title }: AppHeaderProps) {
   const router = useRouter();
-  const { user, logout } = useAuth();
-  const workflow = useCashierWorkflow();
+  const { user } = useAuth();
+  const { workflow, requestLogout, requestCheckOut, isPending } = useCashierSession();
   const checkIn = useCheckIn();
-  const checkOut = useCheckOut();
 
   const isCashier = workflow.isCashier;
-
-  const handleCheckIn = () => {
-    checkIn.mutate(undefined);
-  };
-
-  const handleCheckOut = () => {
-    Modal.confirm({
-      title: '¿Marcar salida de asistencia?',
-      content: 'Se registrará tu hora de salida. Después podrás cerrar sesión.',
-      okText: 'Marcar salida',
-      cancelText: 'Cancelar',
-      okButtonProps: { danger: true },
-      onOk: () => checkOut.mutateAsync(undefined),
-    });
-  };
-
-  const handleLogout = () => {
-    if (isCashier && workflow.isShiftOpen) {
-      Modal.confirm({
-        title: 'Turno de caja abierto',
-        content:
-          'Debes cuadrar la caja y cerrar el turno antes de cerrar sesión. Ve a Caja para finalizar tu jornada.',
-        okText: 'Ir a Caja',
-        cancelText: 'Cancelar',
-        onOk: () => router.push('/cash-register'),
-      });
-      return;
-    }
-
-    if (isCashier && workflow.canCheckOut) {
-      Modal.confirm({
-        title: 'Salida de asistencia pendiente',
-        content:
-          'Ya cerraste el turno de caja. Marca tu salida de asistencia antes de cerrar sesión.',
-        okText: 'Marcar salida',
-        cancelText: 'Cancelar',
-        onOk: () => checkOut.mutateAsync(undefined),
-      });
-      return;
-    }
-
-    logout();
-  };
 
   const menuItems: MenuProps['items'] = [
     {
@@ -91,7 +47,7 @@ export function AppHeader({ title }: AppHeaderProps) {
       icon: <LogoutOutlined />,
       label: 'Cerrar sesión',
       danger: true,
-      onClick: handleLogout,
+      onClick: requestLogout,
     },
   ];
 
@@ -123,7 +79,7 @@ export function AppHeader({ title }: AppHeaderProps) {
             type="primary"
             icon={<LoginOutlined />}
             loading={checkIn.isPending}
-            onClick={handleCheckIn}
+            onClick={() => checkIn.mutate(undefined)}
           >
             Marcar asistencia
           </Button>
@@ -133,8 +89,8 @@ export function AppHeader({ title }: AppHeaderProps) {
           <Button
             danger
             icon={<ClockCircleOutlined />}
-            loading={checkOut.isPending}
-            onClick={handleCheckOut}
+            loading={isPending}
+            onClick={requestCheckOut}
           >
             Marcar salida
           </Button>
@@ -145,7 +101,7 @@ export function AppHeader({ title }: AppHeaderProps) {
             icon={<WalletOutlined />}
             onClick={() => router.push('/cash-register')}
           >
-            Cerrar turno
+            Cuadrar caja
           </Button>
         )}
 

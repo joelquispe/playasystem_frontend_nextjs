@@ -109,7 +109,7 @@ export default function CashRegisterPage() {
   const [awaitingCheckout, setAwaitingCheckout] = useState(false);
 
   const isOpen = !!shift && !shift.closedAt;
-  const canOperateClose = workflow.canCloseShift;
+  const canOperateClose = workflow.isCheckedIn && workflow.isShiftOpen;
 
   const confirmPendingTickets = (): Promise<boolean> => {
     if (pendingTickets.length === 0) return Promise.resolve(true);
@@ -421,7 +421,9 @@ export default function CashRegisterPage() {
 
               <Text style={{ fontSize: 11, color: colors.textMuted, display: 'block', marginBottom: 10 }}>
                 {canOperateClose
-                  ? 'Revisa los montos antes de continuar. Esta acción no se puede deshacer.'
+                  ? workflow.isIdleShift
+                    ? 'Sin cobros registrados. Puedes cuadrar aquí (s/. 0.00) o cerrar sesión directamente.'
+                    : 'Revisa los montos antes de continuar. Esta acción no se puede deshacer.'
                   : 'Marca tu asistencia de ingreso para poder cuadrar y cerrar la caja.'}
               </Text>
 

@@ -101,6 +101,15 @@ export function DailySummaryReportTable({
         parseFloat(v) > 0 ? <Text type="danger">- s/. {parseFloat(v).toFixed(2)}</Text> : '—',
     },
     {
+      title: 'Obs. descuento',
+      dataIndex: 'discountObservation',
+      key: 'discountObservation',
+      width: 200,
+      render: (v: string | null) => (
+        <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v?.trim() || '—'}</Text>
+      ),
+    },
+    {
       title: 'TOTAL',
       dataIndex: 'finalAmount',
       key: 'finalAmount',
@@ -173,7 +182,7 @@ export function DailySummaryReportTable({
         loading={loading}
         pagination={pagination}
         size="small"
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1400 }}
         style={cardStyle}
       />
     </>

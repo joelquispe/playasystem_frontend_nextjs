@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/providers/AuthProvider';
 import { getUserRoleSlug } from '@/lib/roles';
+import { isShiftIdle } from '@/lib/cash-register';
 import { useTodayAttendance } from '@/hooks/useAttendance';
 import { useCurrentShift } from '@/hooks/useCashRegister';
 
@@ -25,16 +26,28 @@ export function useCashierWorkflow() {
   const isCheckedOut = !!attendance?.checkedOutAt;
   const isShiftOpen = !!shift && !shift.closedAt;
   const isShiftClosed = !!shift?.closedAt;
+  const isIdleShift = isShiftOpen && isShiftIdle(shift);
+  const hasShiftActivity = !!shift && !isShiftIdle(shift);
 
   const isLoading = isCashier && (attendanceLoading || shiftLoading);
 
   const needsCheckIn = isCashier && !attendanceLoading && !isCheckedIn;
   const canCheckIn = needsCheckIn;
   const canWork = isCashier && isCheckedIn && !isCheckedOut && isShiftOpen;
-  const canCloseShift = isCashier && isCheckedIn && !isCheckedOut && isShiftOpen;
-  const canCheckOut = isCashier && isCheckedIn && !isCheckedOut && isShiftClosed;
+  /** Manual cuadre in Caja — only when there were cobros/movimientos */
+  const canCloseShift =
+    isCashier && isCheckedIn && !isCheckedOut && isShiftOpen && hasShiftActivity;
+  /** Attendance exit — caja must be closed OR idle (auto-closes on action) */
+  const canCheckOut =
+    isCashier &&
+    isCheckedIn &&
+    !isCheckedOut &&
+    (isShiftClosed || isIdleShift);
   const canLogout =
-    !isCashier || (isShiftClosed && (!isCheckedIn || isCheckedOut));
+    !isCashier ||
+    isShiftClosed ||
+    isIdleShift ||
+    (!hasShiftActivity && !isShiftOpen);
 
   let phase: CashierWorkflowPhase = 'loading';
   if (!isCashier) {
@@ -62,6 +75,8 @@ export function useCashierWorkflow() {
     isCheckedOut,
     isShiftOpen,
     isShiftClosed,
+    isIdleShift,
+    hasShiftActivity,
     needsCheckIn,
     canCheckIn,
     canWork,
