@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Layout, Spin } from 'antd';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { AppHeader } from '@/components/layout/AppHeader';
+import { CashierShiftBootstrap } from '@/components/cashier/CashierShiftBootstrap';
 import { useAuth } from '@/providers/AuthProvider';
 import { usePathname } from 'next/navigation';
 
@@ -82,6 +83,7 @@ export default function DashboardLayout({
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#ffffff' }}>
+      <CashierShiftBootstrap />
       <AppSidebar />
       <Layout style={{ background: '#ffffff' }}>
         <AppHeader title={title} />

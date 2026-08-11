@@ -29,7 +29,11 @@ import {
 import dayjs from 'dayjs';
 import { useCurrentShift, useAddExpense, useCloseShift } from '@/hooks/useCashRegister';
 import { useTickets } from '@/hooks/useTickets';
+import { useCheckOut } from '@/hooks/useAttendance';
+import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
+import { useAuth } from '@/providers/AuthProvider';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { CashierWorkflowBanner } from '@/components/cashier/CashierWorkflowBanner';
 import { CashRegister } from '@/types/api';
 import { formatLimaDateTime } from '@/lib/datetime';
 import { cardStyle, colors, highlightPanelStyle, nestedPanelStyle } from '@/lib/theme';
@@ -88,7 +92,10 @@ function StatTile({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function CashRegisterPage() {
-  const { data: shift, isLoading, isFetching, refetch } = useCurrentShift();
+  const { logout } = useAuth();
+  const workflow = useCashierWorkflow();
+  const checkOut = useCheckOut();
+  const { data: shift, isLoading, isFetching, refetch } = useCurrentShift(workflow.isCashier);
   const { data: pendingTickets = [] } = useTickets('pending');
   const addExpense = useAddExpense();
   const closeShift = useCloseShift();
@@ -98,21 +105,34 @@ export default function CashRegisterPage() {
   const [balanceNotes, setBalanceNotes] = useState('');
   const [balanceNotesError, setBalanceNotesError] = useState('');
   const [closeResult, setCloseResult] = useState<CashRegister | null>(null);
+  const [checkoutDone, setCheckoutDone] = useState(false);
+  const [awaitingCheckout, setAwaitingCheckout] = useState(false);
 
   const isOpen = !!shift && !shift.closedAt;
+  const canOperateClose = workflow.canCloseShift;
 
-  // ── Expense form ────────────────────────────────────────────────────────────
-  const expenseForm = useForm<ExpenseForm>({
-    resolver: zodResolver(expenseSchema),
-    defaultValues: { extraExpenses: 0, extraNotes: '' },
-  });
+  const confirmPendingTickets = (): Promise<boolean> => {
+    if (pendingTickets.length === 0) return Promise.resolve(true);
 
-  const handleExpense = expenseForm.handleSubmit(async (data) => {
-    await addExpense.mutateAsync(data);
-    expenseForm.reset({ extraExpenses: 0, extraNotes: '' });
-  });
+    return new Promise((resolve) => {
+      Modal.confirm({
+        title: `${pendingTickets.length} ticket(s) pendiente(s)`,
+        content:
+          'Aún hay tickets sin cobrar. ¿Deseas cerrar la caja de todas formas?',
+        okText: 'Sí, cerrar turno',
+        cancelText: 'Cancelar',
+        okButtonProps: { danger: true },
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+  };
 
   const handleCloseBalanced = async () => {
+    if (!canOperateClose) return;
+    const proceed = await confirmPendingTickets();
+    if (!proceed) return;
+
     const result = await closeShift.mutateAsync({
       balanceStatus: 'balanced',
       differenceAmount: 0,
@@ -120,10 +140,15 @@ export default function CashRegisterPage() {
       extraNotes: closeNotes || undefined,
     });
     setCloseNotes('');
+    setCheckoutDone(false);
+    setAwaitingCheckout(true);
     setCloseResult(result);
   };
 
-  const openUnbalancedDialog = () => {
+  const openUnbalancedDialog = async () => {
+    if (!canOperateClose) return;
+    const proceed = await confirmPendingTickets();
+    if (!proceed) return;
     setBalanceNotes('');
     setBalanceNotesError('');
     setUnbalancedOpen(true);
@@ -145,8 +170,35 @@ export default function CashRegisterPage() {
     setBalanceNotes('');
     setBalanceNotesError('');
     setCloseNotes('');
+    setCheckoutDone(false);
+    setAwaitingCheckout(true);
     setCloseResult(result);
   };
+
+  const handlePostCloseCheckOut = async () => {
+    await checkOut.mutateAsync(undefined);
+    setCheckoutDone(true);
+  };
+
+  const showCheckoutStep = awaitingCheckout || workflow.canCheckOut;
+  const showLogoutStep = checkoutDone || workflow.isCheckedOut;
+
+  const handlePostCloseLogout = async () => {
+    setCloseResult(null);
+    setAwaitingCheckout(false);
+    await logout();
+  };
+
+  // ── Expense form ────────────────────────────────────────────────────────────
+  const expenseForm = useForm<ExpenseForm>({
+    resolver: zodResolver(expenseSchema),
+    defaultValues: { extraExpenses: 0, extraNotes: '' },
+  });
+
+  const handleExpense = expenseForm.handleSubmit(async (data) => {
+    await addExpense.mutateAsync(data);
+    expenseForm.reset({ extraExpenses: 0, extraNotes: '' });
+  });
 
   // ── Loading / empty states ──────────────────────────────────────────────────
   if (isLoading) {
@@ -194,6 +246,8 @@ export default function CashRegisterPage() {
           </Button>
         }
       />
+
+      <CashierWorkflowBanner context="cash-register" />
 
       {isOpen ? (
         <Row gutter={[20, 20]}>
@@ -366,7 +420,9 @@ export default function CashRegisterPage() {
               />
 
               <Text style={{ fontSize: 11, color: colors.textMuted, display: 'block', marginBottom: 10 }}>
-                Revisa los montos antes de continuar. Esta acción no se puede deshacer.
+                {canOperateClose
+                  ? 'Revisa los montos antes de continuar. Esta acción no se puede deshacer.'
+                  : 'Marca tu asistencia de ingreso para poder cuadrar y cerrar la caja.'}
               </Text>
 
               <div style={{ display: 'flex', gap: 10 }}>
@@ -377,6 +433,7 @@ export default function CashRegisterPage() {
                   block
                   icon={<CheckCircleOutlined />}
                   loading={closeShift.isPending}
+                  disabled={!canOperateClose}
                   onClick={handleCloseBalanced}
                   style={{ background: '#22c55e', borderColor: '#22c55e', fontWeight: 600 }}
                 >
@@ -390,6 +447,7 @@ export default function CashRegisterPage() {
                   block
                   icon={<WarningOutlined />}
                   loading={closeShift.isPending}
+                  disabled={!canOperateClose}
                   onClick={openUnbalancedDialog}
                   style={{ fontWeight: 600 }}
                 >
@@ -472,23 +530,63 @@ export default function CashRegisterPage() {
       {/* ── Modal de confirmación tras cerrar caja ───────────────────────────── */}
       <Modal
         open={!!closeResult}
-        onCancel={() => setCloseResult(null)}
+        onCancel={() => {
+          if (showCheckoutStep || showLogoutStep) return;
+          setCloseResult(null);
+        }}
+        closable={!showCheckoutStep && !showLogoutStep}
+        maskClosable={false}
         centered
-        footer={[
-          <Button
-            key="ok"
-            type="primary"
-            onClick={() => setCloseResult(null)}
-            style={{ background: colors.primary, borderColor: colors.primary }}
-          >
-            Entendido
-          </Button>,
-        ]}
+        footer={
+          showLogoutStep
+            ? [
+                <Button
+                  key="logout"
+                  type="primary"
+                  danger
+                  onClick={handlePostCloseLogout}
+                  style={{ fontWeight: 600 }}
+                >
+                  Cerrar sesión
+                </Button>,
+              ]
+            : showCheckoutStep
+              ? [
+                  <Button
+                    key="later"
+                    onClick={() => {
+                      setCloseResult(null);
+                      setAwaitingCheckout(false);
+                    }}
+                  >
+                    Después
+                  </Button>,
+                  <Button
+                    key="checkout"
+                    type="primary"
+                    loading={checkOut.isPending}
+                    onClick={handlePostCloseCheckOut}
+                    style={{ background: colors.primary, borderColor: colors.primary }}
+                  >
+                    Marcar salida de asistencia
+                  </Button>,
+                ]
+              : [
+                  <Button
+                    key="ok"
+                    type="primary"
+                    onClick={() => setCloseResult(null)}
+                    style={{ background: colors.primary, borderColor: colors.primary }}
+                  >
+                    Entendido
+                  </Button>,
+                ]
+        }
       >
         <div style={{ textAlign: 'center', padding: '16px 0 4px' }}>
           <CheckCircleOutlined style={{ fontSize: 56, color: '#22c55e' }} />
           <Title level={4} style={{ margin: '12px 0 4px', color: colors.text }}>
-            ¡Caja cerrada correctamente!
+            {showLogoutStep ? '¡Jornada finalizada!' : '¡Caja cerrada correctamente!'}
           </Title>
           {closeResult && (
             <>
@@ -500,6 +598,15 @@ export default function CashRegisterPage() {
               </Tag>
             </>
           )}
+          {(showLogoutStep) ? (
+            <Text style={{ display: 'block', marginTop: 16, color: colors.textMuted }}>
+              Turno cerrado y salida registrada. Ya puedes cerrar sesión.
+            </Text>
+          ) : showCheckoutStep ? (
+            <Text style={{ display: 'block', marginTop: 16, color: colors.textMuted }}>
+              Siguiente paso: marca tu salida de asistencia y luego cierra sesión.
+            </Text>
+          ) : null}
         </div>
       </Modal>
     </>

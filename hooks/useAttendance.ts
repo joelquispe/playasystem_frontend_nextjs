@@ -55,7 +55,7 @@ export function useCheckOut() {
       qc.setQueryData(QUERY_KEYS.ATTENDANCE_TODAY, data);
       qc.invalidateQueries({ queryKey: ['attendance'] });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.CASH_REGISTER_CURRENT });
-      message.success('Turno finalizado — salida registrada');
+      message.success('Salida de asistencia registrada');
     },
     onError: (err: unknown) => {
       message.error(apiErrorMessage(err, 'Error al marcar salida'));

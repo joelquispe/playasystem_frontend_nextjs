@@ -7,10 +7,13 @@ import {
   UserOutlined,
   ClockCircleOutlined,
   LoginOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
-import { useCheckIn, useCheckOut, useTodayAttendance } from '@/hooks/useAttendance';
+import { useCheckIn, useCheckOut } from '@/hooks/useAttendance';
+import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 
 const { Header } = Layout;
 const { Text } = Typography;
@@ -20,36 +23,55 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ title }: AppHeaderProps) {
-  const { user, logout, isAdmin } = useAuth();
-  const isCashier = !!user && !isAdmin && getUserRoleSlug(user) === 'cashier';
-
-  const { data: todayAttendance, isLoading: isAttendanceLoading } =
-    useTodayAttendance(isCashier);
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const workflow = useCashierWorkflow();
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
 
-  const canStartShift =
-    isCashier && !isAttendanceLoading && !todayAttendance?.checkedInAt;
+  const isCashier = workflow.isCashier;
 
-  const canEndShift =
-    isCashier &&
-    !!todayAttendance?.checkedInAt &&
-    !todayAttendance?.checkedOutAt;
-
-  const handleStartShift = () => {
-    checkIn.mutateAsync(undefined);
+  const handleCheckIn = () => {
+    checkIn.mutate(undefined);
   };
 
-  const handleEndShift = () => {
+  const handleCheckOut = () => {
     Modal.confirm({
-      title: '¿Cerrar asistencia?',
-      content:
-        'Se registrará tu hora de salida de asistencia. Esta acción no cierra la caja ni la sesión.',
-      okText: 'Cerrar asistencia',
+      title: '¿Marcar salida de asistencia?',
+      content: 'Se registrará tu hora de salida. Después podrás cerrar sesión.',
+      okText: 'Marcar salida',
       cancelText: 'Cancelar',
       okButtonProps: { danger: true },
       onOk: () => checkOut.mutateAsync(undefined),
     });
+  };
+
+  const handleLogout = () => {
+    if (isCashier && workflow.isShiftOpen) {
+      Modal.confirm({
+        title: 'Turno de caja abierto',
+        content:
+          'Debes cuadrar la caja y cerrar el turno antes de cerrar sesión. Ve a Caja para finalizar tu jornada.',
+        okText: 'Ir a Caja',
+        cancelText: 'Cancelar',
+        onOk: () => router.push('/cash-register'),
+      });
+      return;
+    }
+
+    if (isCashier && workflow.canCheckOut) {
+      Modal.confirm({
+        title: 'Salida de asistencia pendiente',
+        content:
+          'Ya cerraste el turno de caja. Marca tu salida de asistencia antes de cerrar sesión.',
+        okText: 'Marcar salida',
+        cancelText: 'Cancelar',
+        onOk: () => checkOut.mutateAsync(undefined),
+      });
+      return;
+    }
+
+    logout();
   };
 
   const menuItems: MenuProps['items'] = [
@@ -69,7 +91,7 @@ export function AppHeader({ title }: AppHeaderProps) {
       icon: <LogoutOutlined />,
       label: 'Cerrar sesión',
       danger: true,
-      onClick: logout,
+      onClick: handleLogout,
     },
   ];
 
@@ -96,25 +118,34 @@ export function AppHeader({ title }: AppHeaderProps) {
       </Text>
 
       <Space>
-        {canStartShift && (
+        {isCashier && workflow.canCheckIn && (
           <Button
             type="primary"
             icon={<LoginOutlined />}
             loading={checkIn.isPending}
-            onClick={handleStartShift}
+            onClick={handleCheckIn}
           >
             Marcar asistencia
           </Button>
         )}
 
-        {canEndShift && (
+        {isCashier && workflow.canCheckOut && (
           <Button
             danger
             icon={<ClockCircleOutlined />}
             loading={checkOut.isPending}
-            onClick={handleEndShift}
+            onClick={handleCheckOut}
           >
-            Cerrar asistencia
+            Marcar salida
+          </Button>
+        )}
+
+        {isCashier && workflow.canCloseShift && (
+          <Button
+            icon={<WalletOutlined />}
+            onClick={() => router.push('/cash-register')}
+          >
+            Cerrar turno
           </Button>
         )}
 

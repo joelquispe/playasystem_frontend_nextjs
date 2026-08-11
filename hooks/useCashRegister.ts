@@ -7,10 +7,11 @@ import {
   CloseShiftDto,
 } from '@/services/cash-register.service';
 
-export function useCurrentShift() {
+export function useCurrentShift(enabled = true) {
   return useQuery({
     queryKey: QUERY_KEYS.CASH_REGISTER_CURRENT,
     queryFn: cashRegisterService.getCurrentShift,
+    enabled,
     refetchInterval: 60_000,
   });
 }
@@ -37,7 +38,8 @@ export function useCloseShift() {
     mutationFn: (data: CloseShiftDto) => cashRegisterService.closeShift(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.CASH_REGISTER_CURRENT });
-      message.success('Turno cerrado correctamente');
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ATTENDANCE_TODAY });
+      message.success('Turno de caja cerrado correctamente');
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;

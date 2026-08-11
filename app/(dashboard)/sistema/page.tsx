@@ -19,8 +19,11 @@ import { TicketPrintModal } from '@/components/tickets/TicketPrintModal';
 import { TicketDetailModal } from '@/components/tickets/TicketDetailModal';
 import { ClientFormModal } from '@/components/clients/ClientFormModal';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { CashierWorkflowBanner } from '@/components/cashier/CashierWorkflowBanner';
+import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 
 export default function SistemaPage() {
+  const workflow = useCashierWorkflow();
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const { data: tickets = [], isLoading, isFetching, refetch } = useTickets(statusFilter);
 
@@ -61,31 +64,38 @@ export default function SistemaPage() {
         title="Sistema"
         subtitle="Ingreso, control y cobro de vehículos"
         extra={
-          <Button icon={<FileAddOutlined />} onClick={() => setManualModalOpen(true)}>
+          <Button
+            icon={<FileAddOutlined />}
+            onClick={() => setManualModalOpen(true)}
+            disabled={!workflow.canWork}
+          >
             Ticket manual
           </Button>
         }
       />
 
-      <SistemaEntryPanel onTicketCreated={() => refetch()} />
+      <CashierWorkflowBanner context="sistema" />
 
-      {/* Scanner bar: handles both USB HID hardware scanner and manual code/plate input */}
-      <ScanTicketBar onTicketFound={handleScanResult} />
+      <div style={{ pointerEvents: workflow.canWork ? 'auto' : 'none', opacity: workflow.canWork ? 1 : 0.55 }}>
+        <SistemaEntryPanel onTicketCreated={() => refetch()} />
 
-      <SistemaTicketsTable
-        tickets={tickets}
-        loading={isLoading}
-        isFetching={isFetching}
-        statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
-        onRefresh={() => refetch()}
-        onCharge={setChargeTicket}
-        onReceipt={setReceiptTicket}
-        onAddCharge={setAddChargeTicket}
-        onPrint={setPrintTicket}
-        onDetail={setDetailTicket}
-        onCreateClient={handleCreateClient}
-      />
+        <ScanTicketBar onTicketFound={handleScanResult} />
+
+        <SistemaTicketsTable
+          tickets={tickets}
+          loading={isLoading}
+          isFetching={isFetching}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          onRefresh={() => refetch()}
+          onCharge={setChargeTicket}
+          onReceipt={setReceiptTicket}
+          onAddCharge={setAddChargeTicket}
+          onPrint={setPrintTicket}
+          onDetail={setDetailTicket}
+          onCreateClient={handleCreateClient}
+        />
+      </div>
 
       <ChargeTicketModal
         ticket={chargeTicket}
