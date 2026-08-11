@@ -42,10 +42,10 @@ export function AppHeader({ title }: AppHeaderProps) {
 
   const handleEndShift = () => {
     Modal.confirm({
-      title: '¿Terminar turno?',
+      title: '¿Cerrar asistencia?',
       content:
         'Se registrará tu hora de salida de asistencia. Esta acción no cierra la caja ni la sesión.',
-      okText: 'Terminar turno',
+      okText: 'Cerrar asistencia',
       cancelText: 'Cancelar',
       okButtonProps: { danger: true },
       onOk: () => checkOut.mutateAsync(undefined),
@@ -114,7 +114,7 @@ export function AppHeader({ title }: AppHeaderProps) {
             loading={checkOut.isPending}
             onClick={handleEndShift}
           >
-            Terminar turno
+            Cerrar asistencia
           </Button>
         )}
 

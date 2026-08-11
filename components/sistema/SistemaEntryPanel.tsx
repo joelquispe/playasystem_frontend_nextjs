@@ -25,7 +25,7 @@ import {
 import dayjs from 'dayjs';
 import { useVehicles, useSetVehicleDefaultRate } from '@/hooks/useVehicles';
 import { useRates } from '@/hooks/useRates';
-import { useCreateTicket } from '@/hooks/useTickets';
+import { useCreateTicket, useTickets } from '@/hooks/useTickets';
 import { useClientByPlate } from '@/hooks/useClients';
 import { useActiveSubscriberByPlate } from '@/hooks/useSubscribers';
 import { Client, Rate, RateType, Subscriber, VehicleType } from '@/types/api';
@@ -37,6 +37,7 @@ import {
   pickDefaultRate,
 } from '@/lib/vehicles';
 import { hasSpecialRate, isFrequentClient, getSpecialRateAmount, shouldShowClientCard } from '@/lib/client';
+import { normalizePlate, platesEqual } from '@/lib/plate';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text, Title } = Typography;
@@ -69,6 +70,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
   const { data: vehicles = [] } = useVehicles();
   const createTicket = useCreateTicket();
   const setVehicleDefaultRate = useSetVehicleDefaultRate();
+  const { data: pendingTickets = [] } = useTickets('pending');
 
   // ── Local state ─────────────────────────────────────────────────────────────
   const [plate, setPlate] = useState('');
@@ -80,10 +82,18 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
   const [cardDismissed, setCardDismissed] = useState(false);
   const plateInputRef = useRef<InputRef>(null);
 
-  const normalizedPlate = plate.trim().toUpperCase();
+  const normalizedPlate = normalizePlate(plate);
   const isPlateReady = normalizedPlate.length >= 3;
   /** Auto-detect client / subscriber (and show side card) from this length */
   const isLookupReady = normalizedPlate.length >= 6;
+
+  const hasActiveTicket = useMemo(
+    () =>
+      pendingTickets.some(
+        (t) => t.status === 'pending' && platesEqual(t.plate, normalizedPlate),
+      ),
+    [pendingTickets, normalizedPlate],
+  );
 
   // ── Background queries (auto-fetch while typing) ──────────────────────────
   const { data: foundClient, isFetching: fetchingClient } = useClientByPlate(normalizedPlate);
@@ -170,7 +180,11 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
   }, [specialRateType, foundSubscriber, selectedRate, clientSpecialAmount]);
 
   const canGenerate =
-    !!normalizedPlate && !!selectedVehicleId && !!resolvedRateType && resolvedAmount > 0;
+    !!normalizedPlate &&
+    !!selectedVehicleId &&
+    !!resolvedRateType &&
+    resolvedAmount > 0 &&
+    !hasActiveTicket;
 
   // ── Determine auto-selected vehicle & rate from client/subscriber ─────────
   const getAutoSelection = useCallback((): {
@@ -247,7 +261,12 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
 
   // ── Handle generate ticket (second Enter / button) ────────────────────────
   const handleGenerate = useCallback(async () => {
-    if (!canGenerate) return;
+    if (!normalizedPlate || !selectedVehicleId || !resolvedRateType || resolvedAmount <= 0) return;
+
+    if (hasActiveTicket) {
+      message.warning(`La placa ${normalizedPlate} ya tiene un ticket pendiente por cobrar`);
+      return;
+    }
 
     const created = await createTicket.mutateAsync({
       plate: normalizedPlate,
@@ -268,7 +287,15 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     setCardDismissed(false);
     onTicketCreated?.();
     setTimeout(() => plateInputRef.current?.focus?.(), 100);
-  }, [canGenerate, createTicket, normalizedPlate, selectedVehicleId, resolvedRateType, resolvedAmount, onTicketCreated]);
+  }, [
+    createTicket,
+    normalizedPlate,
+    selectedVehicleId,
+    resolvedRateType,
+    resolvedAmount,
+    hasActiveTicket,
+    onTicketCreated,
+  ]);
 
   // ── Enter key dispatcher ──────────────────────────────────────────────────
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -287,7 +314,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     setPlate(next);
     setCardDismissed(false);
 
-    const nextNorm = next.trim().toUpperCase();
+    const nextNorm = normalizePlate(next);
     // Below lookup length: clear selection / card. At ≥ 6, auto-detect effect takes over.
     if (nextNorm.length < 6) {
       setStep('idle');
@@ -409,12 +436,17 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
               Buscando cliente / abonado…
             </Text>
           )}
-          {step === 'ready' && !showClientCard && (
+          {isLookupReady && hasActiveTicket && (
+            <Text style={{ fontSize: 11, color: '#dc2626', marginTop: 6, display: 'block' }}>
+              <WarningOutlined /> La placa <strong>{normalizedPlate}</strong> ya tiene un ticket pendiente por cobrar
+            </Text>
+          )}
+          {step === 'ready' && !showClientCard && !hasActiveTicket && (
             <Text style={{ fontSize: 11, color: '#16a34a', marginTop: 6, display: 'block' }}>
               <CheckCircleOutlined /> Vehículo seleccionado · Presiona <strong>Enter</strong> o <strong>Generar Ticket</strong>
             </Text>
           )}
-          {showClientCard && (
+          {showClientCard && !hasActiveTicket && (
             <Text style={{ fontSize: 11, color: '#16a34a', marginTop: 6, display: 'block' }}>
               <CheckCircleOutlined /> Cliente detectado · Presiona <strong>Enter</strong> o <strong>Generar Ticket</strong>
             </Text>

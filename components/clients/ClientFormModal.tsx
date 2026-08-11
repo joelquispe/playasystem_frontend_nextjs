@@ -16,7 +16,14 @@ const schema = z.object({
   fullName: z.string().min(1, 'Requerido'),
   phone: z.string().optional(),
   dni: z.string().optional(),
-  specialRate: z.number().min(0).default(0),
+  specialRate: z.preprocess(
+    (val) => {
+      if (val === null || val === undefined || val === '') return 0;
+      const n = Number(val);
+      return Number.isNaN(n) ? 0 : n;
+    },
+    z.number().min(0),
+  ),
   eventColor: z.enum(['white', 'green', 'red']).default('white'),
   notes: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -120,7 +127,10 @@ export function ClientFormModal({ open, editing, onClose, defaults }: ClientForm
     if (plateAlreadyExists) return;
 
     if (editing) {
-      await updateClient.mutateAsync({ id: editing.id, data });
+      await updateClient.mutateAsync({
+        id: editing.id,
+        data: { ...data, specialRate: data.specialRate ?? 0 },
+      });
     } else {
       await createClient.mutateAsync({
         plate: normalizePlate(data.plate),
@@ -128,7 +138,7 @@ export function ClientFormModal({ open, editing, onClose, defaults }: ClientForm
         fullName: data.fullName,
         phone: data.phone,
         dni: data.dni,
-        specialRate: data.specialRate,
+        specialRate: data.specialRate ?? 0,
         eventColor: data.eventColor,
         notes: data.notes,
       });
@@ -218,12 +228,24 @@ export function ClientFormModal({ open, editing, onClose, defaults }: ClientForm
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Form.Item label="Tarifa especial (s/.)">
+          <Form.Item
+            label="Tarifa especial (s/.)"
+            validateStatus={errors.specialRate ? 'error' : ''}
+            help={errors.specialRate?.message ?? '0 = sin tarifa especial'}
+          >
             <Controller
               name="specialRate"
               control={control}
               render={({ field }) => (
-                <InputNumber {...field} min={0} step={0.5} style={{ width: '100%' }} prefix="s/." />
+                <InputNumber
+                  min={0}
+                  step={0.5}
+                  style={{ width: '100%' }}
+                  prefix="s/."
+                  placeholder="0"
+                  value={field.value ?? 0}
+                  onChange={(v) => field.onChange(v ?? 0)}
+                />
               )}
             />
           </Form.Item>

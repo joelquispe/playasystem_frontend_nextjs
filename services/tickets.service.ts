@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/axios';
+import { normalizePlate } from '@/lib/plate';
 import {
   ApiResponse,
   PaymentMethod,
@@ -72,12 +73,16 @@ export const ticketsService = {
   },
 
   getTicketsByPlate: async (plate: string): Promise<Ticket[]> => {
-    const res = await apiClient.get<ApiResponse<Ticket[]>>(`/tickets/plate/${plate}`);
+    const normalized = normalizePlate(plate);
+    const res = await apiClient.get<ApiResponse<Ticket[]>>(`/tickets/plate/${encodeURIComponent(normalized)}`);
     return res.data.data;
   },
 
   createTicket: async (data: CreateTicketDto): Promise<Ticket> => {
-    const res = await apiClient.post<ApiResponse<Ticket>>('/tickets', data);
+    const res = await apiClient.post<ApiResponse<Ticket>>('/tickets', {
+      ...data,
+      plate: normalizePlate(data.plate),
+    });
     return res.data.data;
   },
 
@@ -117,7 +122,10 @@ export const ticketsService = {
   },
 
   createManualTicket: async (data: ManualTicketDto): Promise<Ticket> => {
-    const res = await apiClient.post<ApiResponse<Ticket>>('/tickets/manual', data);
+    const res = await apiClient.post<ApiResponse<Ticket>>('/tickets/manual', {
+      ...data,
+      plate: normalizePlate(data.plate),
+    });
     return res.data.data;
   },
 

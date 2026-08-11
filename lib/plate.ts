@@ -5,3 +5,8 @@
 export function normalizePlate(plate: string): string {
   return plate.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 }
+
+/** True if `plate` matches another plate ignoring hyphens, spaces and case. */
+export function platesEqual(a: string, b: string): boolean {
+  return normalizePlate(a) === normalizePlate(b);
+}
