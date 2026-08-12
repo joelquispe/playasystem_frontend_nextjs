@@ -1,13 +1,12 @@
 'use client';
 
-import { Alert, Button } from 'antd';
+import { Alert, Button, Spin } from 'antd';
 import { LoginOutlined, LogoutOutlined, WalletOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useCheckIn } from '@/hooks/useAttendance';
 import { useCashierSession } from '@/hooks/useCashierSession';
 
 interface CashierWorkflowBannerProps {
-  /** Where the banner is shown — adjusts messaging */
   context?: 'sistema' | 'cash-register' | 'general';
 }
 
@@ -15,21 +14,36 @@ export function CashierWorkflowBanner({ context = 'general' }: CashierWorkflowBa
   const { workflow, requestCheckOut, isPending } = useCashierSession();
   const checkIn = useCheckIn();
 
-  if (!workflow.isCashier || workflow.isLoading || workflow.phase === 'working' || workflow.phase === 'done') {
-    return null;
+  if (!workflow.isCashier) return null;
+
+  if (workflow.isLoading) {
+    return (
+      <Alert
+        type="info"
+        showIcon
+        style={{ marginBottom: 16 }}
+        message="Cargando asistencia…"
+        description={<Spin size="small" />}
+      />
+    );
   }
 
-  if (workflow.phase === 'check-in') {
+  if (workflow.phase === 'working') return null;
+
+  if (workflow.canCheckIn || workflow.phase === 'check-in') {
+    const resumed = !!workflow.attendance?.checkedOutAt;
     return (
       <Alert
         type="warning"
         showIcon
         style={{ marginBottom: 16 }}
-        message="Turno abierto — marca tu asistencia para comenzar"
+        message={resumed ? 'Nueva sesión — marca tu asistencia' : 'Marca tu asistencia para comenzar'}
         description={
-          context === 'cash-register'
-            ? 'Tu turno de caja ya está activo. Marca tu ingreso de asistencia antes de operar o cerrar la caja.'
-            : 'Al iniciar sesión se abre tu turno de caja. Marca tu asistencia de ingreso para usar el sistema.'
+          resumed
+            ? 'Al marcar asistencia se abre una caja nueva para esta sesión.'
+            : context === 'cash-register'
+              ? 'No hay caja activa sin asistencia. Marca tu ingreso para abrir el turno de caja.'
+              : 'Al marcar asistencia se abre tu turno de caja. Sin asistencia no hay caja activa.'
         }
         action={
           <Button
@@ -45,16 +59,14 @@ export function CashierWorkflowBanner({ context = 'general' }: CashierWorkflowBa
     );
   }
 
-  if (workflow.phase === 'close-shift') {
-    if (context === 'cash-register') return null;
-
+  if (workflow.canCloseShift && context !== 'cash-register') {
     return (
       <Alert
         type="info"
         showIcon
         style={{ marginBottom: 16 }}
         message="Cuadra la caja antes de salir"
-        description="Hay cobros registrados. Ve a Caja para cuadrar y cerrar el turno. Después marca tu salida de asistencia."
+        description="Hay cobros registrados. Ve a Caja para cuadrar. Al marcar salida también se cierra la caja."
         action={
           <Link href="/cash-register">
             <Button type="primary" icon={<WalletOutlined />}>
@@ -66,19 +78,14 @@ export function CashierWorkflowBanner({ context = 'general' }: CashierWorkflowBa
     );
   }
 
-  if (workflow.phase === 'check-out') {
-    const idleOpen = workflow.isIdleShift;
+  if (workflow.canCheckOut || workflow.phase === 'check-out') {
     return (
       <Alert
         type="success"
         showIcon
         style={{ marginBottom: 16 }}
-        message={idleOpen ? 'Sin cobros — puedes marcar salida o cerrar sesión' : 'Caja cerrada — marca tu salida de asistencia'}
-        description={
-          idleOpen
-            ? 'La caja no registró movimientos. Al marcar salida se cerrará el turno automáticamente.'
-            : 'La caja ya fue cuadrada. Registra tu salida de asistencia (distinto del cierre de caja).'
-        }
+        message="Marca tu salida de asistencia"
+        description="Al marcar salida se cierra la caja. No se abrirá otra hasta que marques asistencia de nuevo."
         action={
           <Button
             type="primary"

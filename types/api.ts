@@ -237,6 +237,16 @@ export interface AttendanceRecord {
     toleranceMinutes: number;
   } | null;
   user?: Pick<User, 'id' | 'username' | 'fullName'>;
+  /** Linked cash shifts (from attendance report / attendance list) */
+  cashRegisters?: Array<{
+    id: string;
+    createdAt: string;
+    closedAt: string | null;
+  }>;
+  /** Earliest linked caja open (attendance report) */
+  cashRegisterOpenedAt?: string | null;
+  /** Latest linked caja close — null if open or missing (attendance report) */
+  cashRegisterClosedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

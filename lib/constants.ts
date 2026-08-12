@@ -67,7 +67,7 @@ export const RATE_TYPE_LABELS: Record<string, string> = {
 export const TICKET_STATUS_LABELS: Record<string, string> = {
   pending: 'Pendiente',
   paid: 'Pagado',
-  cancelled: 'Cancelado',
+  cancelled: 'Anulado',
   manual: 'Manual',
 };
 

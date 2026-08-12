@@ -5,6 +5,7 @@ import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { AttendanceRecord, AttendanceStatus, PaginationMeta } from '@/types/api';
 import { ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
+import { formatLimaDateTime } from '@/lib/datetime';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -23,6 +24,23 @@ const STATUS_COLOR: Partial<Record<AttendanceStatus, string>> = {
 function statusLabel(status: AttendanceStatus): string {
   if (status === 'LATE') return ATTENDANCE_STATUS_LABELS.PRESENT ?? 'Presente';
   return ATTENDANCE_STATUS_LABELS[status] ?? status;
+}
+
+function resolveCashOpen(r: AttendanceRecord): string | null {
+  if (r.cashRegisterOpenedAt) return r.cashRegisterOpenedAt;
+  const first = r.cashRegisters?.[0];
+  return first?.createdAt ?? null;
+}
+
+function resolveCashClose(r: AttendanceRecord): string | null {
+  if (r.cashRegisterClosedAt) return r.cashRegisterClosedAt;
+  const regs = r.cashRegisters ?? [];
+  if (regs.length === 0 || regs.some((c) => !c.closedAt)) return null;
+  return regs.reduce((latest, c) => {
+    if (!c.closedAt) return latest;
+    if (!latest || c.closedAt > latest) return c.closedAt;
+    return latest;
+  }, null as string | null);
 }
 
 interface AttendanceReportTableProps {
@@ -73,6 +91,32 @@ export function AttendanceReportTable({
         v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
     },
     {
+      title: 'Caja abierta',
+      key: 'cashRegisterOpenedAt',
+      width: 150,
+      render: (_: unknown, r: AttendanceRecord) => {
+        const v = resolveCashOpen(r);
+        return v ? (
+          <Text style={{ fontSize: 12 }}>{formatLimaDateTime(v)}</Text>
+        ) : (
+          <Text style={{ color: colors.textSubtle }}>—</Text>
+        );
+      },
+    },
+    {
+      title: 'Caja cerrada',
+      key: 'cashRegisterClosedAt',
+      width: 150,
+      render: (_: unknown, r: AttendanceRecord) => {
+        const v = resolveCashClose(r);
+        return v ? (
+          <Text style={{ fontSize: 12 }}>{formatLimaDateTime(v)}</Text>
+        ) : (
+          <Text style={{ color: colors.textSubtle }}>—</Text>
+        );
+      },
+    },
+    {
       title: 'Estado',
       dataIndex: 'status',
       key: 'status',
@@ -86,14 +130,6 @@ export function AttendanceReportTable({
       key: 'workedMinutes',
       render: (v: number) => (v > 0 ? `${v} min` : '—'),
     },
-    // {
-    //   title: 'Notas',
-    //   dataIndex: 'notes',
-    //   key: 'notes',
-    //   render: (v: string | null) => (
-    //     <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v ?? '—'}</Text>
-    //   ),
-    // },
   ];
 
   const pagination: TablePaginationConfig | false = meta
@@ -114,7 +150,7 @@ export function AttendanceReportTable({
       loading={loading}
       pagination={pagination}
       size="small"
-      scroll={{ x: 900 }}
+      scroll={{ x: 1100 }}
       style={cardStyle}
     />
   );

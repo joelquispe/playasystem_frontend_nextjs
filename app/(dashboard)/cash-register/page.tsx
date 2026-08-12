@@ -214,9 +214,14 @@ export default function CashRegisterPage() {
     return (
       <>
         <PageHeader title="Caja" subtitle="Turno actual" />
+        <CashierWorkflowBanner context="cash-register" />
         <Empty
           description={
-            <Text style={{ color: colors.textMuted }}>No se encontró turno activo para este usuario</Text>
+            <Text style={{ color: colors.textMuted }}>
+              {workflow.hasOpenSession
+                ? 'No hay turno de caja abierto. Recarga o marca asistencia de nuevo.'
+                : 'No hay caja activa. Marca tu asistencia para abrir un turno de caja.'}
+            </Text>
           }
           style={{ marginTop: 80 }}
         />

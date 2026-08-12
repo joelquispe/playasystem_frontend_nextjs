@@ -21,6 +21,7 @@ export function useCreateUser() {
     mutationFn: (data: CreateUserDto) => usersService.createUser(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ATTENDANCE_SCHEDULES });
       message.success('Usuario creado correctamente');
     },
     onError: (err: unknown) => {
@@ -37,6 +38,7 @@ export function useUpdateUser() {
       usersService.updateUser(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.USERS });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.ATTENDANCE_SCHEDULES });
       message.success('Usuario actualizado');
     },
     onError: (err: unknown) => {

@@ -67,7 +67,7 @@ export default function SistemaPage() {
           <Button
             icon={<FileAddOutlined />}
             onClick={() => setManualModalOpen(true)}
-            disabled={!workflow.canWork}
+            disabled={workflow.isCashier && !workflow.canWork}
           >
             Ticket manual
           </Button>
@@ -76,7 +76,12 @@ export default function SistemaPage() {
 
       <CashierWorkflowBanner context="sistema" />
 
-      <div style={{ pointerEvents: workflow.canWork ? 'auto' : 'none', opacity: workflow.canWork ? 1 : 0.55 }}>
+      <div
+        style={{
+          pointerEvents: workflow.isCashier && !workflow.canWork ? 'none' : 'auto',
+          opacity: workflow.isCashier && !workflow.canWork ? 0.55 : 1,
+        }}
+      >
         <SistemaEntryPanel onTicketCreated={() => refetch()} />
 
         <ScanTicketBar onTicketFound={handleScanResult} />

@@ -143,7 +143,7 @@ export function SistemaTicketsTable({
       key: 'rate',
       width: 130,
       render: (_, r) => (
-        <Space direction="vertical" size={0}>
+        <Space orientation="vertical" size={0}>
           <Text style={{ fontSize: 12 }}>{RATE_TYPE_LABELS[r.rateType] ?? r.rateType}</Text>
           <Text style={{ color: colors.accent, fontWeight: 600 }}>
             s/. {parseFloat(r.rateAmount).toFixed(2)}

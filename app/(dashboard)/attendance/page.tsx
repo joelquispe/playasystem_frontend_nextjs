@@ -93,6 +93,29 @@ export default function AttendancePage() {
         v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
     },
     {
+      title: 'Caja abierta',
+      key: 'cashRegisterOpenedAt',
+      render: (_: unknown, r: AttendanceRecord) => {
+        const v = r.cashRegisters?.[0]?.createdAt;
+        return v ? dayjs(v).format('DD/MM HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>;
+      },
+    },
+    {
+      title: 'Caja cerrada',
+      key: 'cashRegisterClosedAt',
+      render: (_: unknown, r: AttendanceRecord) => {
+        const regs = r.cashRegisters ?? [];
+        if (!regs.length || regs.some((c) => !c.closedAt)) {
+          return <Text style={{ color: colors.textSubtle }}>—</Text>;
+        }
+        const closed = regs
+          .map((c) => c.closedAt!)
+          .sort()
+          .at(-1);
+        return closed ? dayjs(closed).format('DD/MM HH:mm') : '—';
+      },
+    },
+    {
       title: 'Estado',
       dataIndex: 'status',
       key: 'status',

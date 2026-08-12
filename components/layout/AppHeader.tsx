@@ -29,6 +29,9 @@ export function AppHeader({ title }: AppHeaderProps) {
   const checkIn = useCheckIn();
 
   const isCashier = workflow.isCashier;
+  const showCheckIn = isCashier && workflow.canCheckIn;
+  const showCheckOut = isCashier && workflow.canCheckOut && !workflow.canCheckIn;
+  const showCloseCash = isCashier && workflow.canCloseShift;
 
   const menuItems: MenuProps['items'] = [
     {
@@ -74,7 +77,7 @@ export function AppHeader({ title }: AppHeaderProps) {
       </Text>
 
       <Space>
-        {isCashier && workflow.canCheckIn && (
+        {showCheckIn && (
           <Button
             type="primary"
             icon={<LoginOutlined />}
@@ -85,7 +88,7 @@ export function AppHeader({ title }: AppHeaderProps) {
           </Button>
         )}
 
-        {isCashier && workflow.canCheckOut && (
+        {showCheckOut && (
           <Button
             danger
             icon={<ClockCircleOutlined />}
@@ -96,7 +99,7 @@ export function AppHeader({ title }: AppHeaderProps) {
           </Button>
         )}
 
-        {isCashier && workflow.canCloseShift && (
+        {showCloseCash && (
           <Button
             icon={<WalletOutlined />}
             onClick={() => router.push('/cash-register')}

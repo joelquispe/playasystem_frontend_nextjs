@@ -10,22 +10,49 @@ import { useCreateUser, useUpdateUser } from '@/hooks/useUsers';
 import { useRoles } from '@/hooks/useRoles';
 import { getUserRoleId } from '@/lib/roles';
 
-const createSchema = z.object({
-  username: z.string().min(1, 'Requerido'),
-  fullName: z.string().min(1, 'Requerido'),
-  password: z.string().min(6, 'Mínimo 6 caracteres'),
-  roleId: z.string().uuid('Selecciona un rol'),
-  scheduleStart: z.string().optional(),
-  scheduleEnd: z.string().optional(),
-});
+const optionalHhMm = z
+  .string()
+  .optional()
+  .refine(
+    (v) => !v || v.trim() === '' || /^([01]\d|2[0-3]):[0-5]\d$/.test(v.trim()),
+    'Formato HH:MM',
+  );
 
-const editSchema = z.object({
-  fullName: z.string().min(1, 'Requerido'),
-  roleId: z.string().uuid('Selecciona un rol'),
-  scheduleStart: z.string().optional(),
-  scheduleEnd: z.string().optional(),
-  isActive: z.boolean().optional(),
-});
+const scheduleRefine = <T extends { scheduleStart?: string; scheduleEnd?: string }>(
+  data: T,
+  ctx: z.RefinementCtx,
+) => {
+  const start = data.scheduleStart?.trim() || '';
+  const end = data.scheduleEnd?.trim() || '';
+  if ((start && !end) || (!start && end)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Indica inicio y fin de turno',
+      path: start ? ['scheduleEnd'] : ['scheduleStart'],
+    });
+  }
+};
+
+const createSchema = z
+  .object({
+    username: z.string().min(1, 'Requerido'),
+    fullName: z.string().min(1, 'Requerido'),
+    password: z.string().min(6, 'Mínimo 6 caracteres'),
+    roleId: z.string().uuid('Selecciona un rol'),
+    scheduleStart: optionalHhMm,
+    scheduleEnd: optionalHhMm,
+  })
+  .superRefine(scheduleRefine);
+
+const editSchema = z
+  .object({
+    fullName: z.string().min(1, 'Requerido'),
+    roleId: z.string().uuid('Selecciona un rol'),
+    scheduleStart: optionalHhMm,
+    scheduleEnd: optionalHhMm,
+    isActive: z.boolean().optional(),
+  })
+  .superRefine(scheduleRefine);
 
 type CreateFormData = z.infer<typeof createSchema>;
 type EditFormData = z.infer<typeof editSchema>;
@@ -72,10 +99,24 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
   }, [editing, reset, defaultCashierRoleId]);
 
   const onSubmit = async (data: CreateFormData | EditFormData) => {
+    const scheduleStart = data.scheduleStart?.trim() || undefined;
+    const scheduleEnd = data.scheduleEnd?.trim() || undefined;
+
     if (editing) {
-      await updateUser.mutateAsync({ id: editing.id, data: data as EditFormData });
+      await updateUser.mutateAsync({
+        id: editing.id,
+        data: {
+          ...(data as EditFormData),
+          scheduleStart,
+          scheduleEnd,
+        },
+      });
     } else {
-      await createUser.mutateAsync(data as CreateFormData);
+      await createUser.mutateAsync({
+        ...(data as CreateFormData),
+        scheduleStart,
+        scheduleEnd,
+      });
     }
     reset();
     onClose();
@@ -166,7 +207,11 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
         </Form.Item>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <Form.Item label="Inicio de turno">
+          <Form.Item
+            label="Inicio de turno"
+            validateStatus={errors.scheduleStart ? 'error' : ''}
+            help={errors.scheduleStart?.message}
+          >
             <Controller
               name="scheduleStart"
               control={control as never}
@@ -175,7 +220,11 @@ export function UserFormModal({ open, editing, onClose }: UserFormModalProps) {
               )}
             />
           </Form.Item>
-          <Form.Item label="Fin de turno">
+          <Form.Item
+            label="Fin de turno"
+            validateStatus={errors.scheduleEnd ? 'error' : ''}
+            help={errors.scheduleEnd?.message}
+          >
             <Controller
               name="scheduleEnd"
               control={control as never}

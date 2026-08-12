@@ -14,9 +14,12 @@ export interface CloseShiftDto {
 }
 
 export const cashRegisterService = {
-  getCurrentShift: async (): Promise<CashRegister> => {
-    const res = await apiClient.get<ApiResponse<CashRegister>>('/cash-register/current');
-    return res.data.data;
+  /** Open shift or null — caja is only created on attendance check-in */
+  getCurrentShift: async (): Promise<CashRegister | null> => {
+    const res = await apiClient.get<ApiResponse<CashRegister | null>>(
+      '/cash-register/current',
+    );
+    return res.data.data ?? null;
   },
 
   getShiftById: async (id: string): Promise<CashRegister> => {
