@@ -66,7 +66,7 @@ export function CashierWorkflowBanner({ context = 'general' }: CashierWorkflowBa
         showIcon
         style={{ marginBottom: 16 }}
         message="Cuadra la caja antes de salir"
-        description="Hay cobros registrados. Ve a Caja para cuadrar. Al marcar salida también se cierra la caja."
+        description="Hay cobros registrados. Al cuadrar se cierra la caja y se marca automáticamente la salida de asistencia."
         action={
           <Link href="/cash-register">
             <Button type="primary" icon={<WalletOutlined />}>

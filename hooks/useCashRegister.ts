@@ -39,7 +39,7 @@ export function useCloseShift() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.CASH_REGISTER_CURRENT });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.ATTENDANCE_TODAY });
-      message.success('Turno de caja cerrado correctamente');
+      message.success('Caja cerrada y salida de asistencia registrada');
     },
     onError: (err: unknown) => {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;

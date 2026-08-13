@@ -12,6 +12,44 @@
 /** Minutes of tolerance before charging the next hour (must match backend). */
 export const SYSTEM_TOLERANCE_MINUTES = 10;
 
+export interface HourFractionChargeCutoff {
+  chargeType: string;
+  appliedAt: string | Date;
+}
+
+/**
+ * When an overnight (amanecida) charge exists, hour/fraction billing must
+ * stop at the moment that charge was applied — not at final payment time.
+ */
+export function resolveHourFractionExitTime(
+  entryTime: Date,
+  paymentExitTime: Date,
+  charges: HourFractionChargeCutoff[],
+): Date {
+  const overnightAppliedAt = charges
+    .filter((c) => c.chargeType === 'overnight')
+    .map((c) => new Date(c.appliedAt))
+    .filter((d) => !Number.isNaN(d.getTime()));
+
+  if (overnightAppliedAt.length === 0) {
+    return paymentExitTime;
+  }
+
+  const earliestOvernight = new Date(
+    Math.min(...overnightAppliedAt.map((d) => d.getTime())),
+  );
+
+  const entryMs = entryTime.getTime();
+  const exitMs = paymentExitTime.getTime();
+  const cutoffMs = earliestOvernight.getTime();
+
+  if (cutoffMs <= entryMs) {
+    return entryTime;
+  }
+
+  return cutoffMs < exitMs ? earliestOvernight : paymentExitTime;
+}
+
 /**
  * Calculates the number of chargeable hours for a parking session.
  *

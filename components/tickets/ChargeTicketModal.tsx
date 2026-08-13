@@ -44,6 +44,7 @@ import { PAYMENT_METHOD_LABELS, RATE_TYPE_LABELS } from '@/lib/constants';
 import {
   calculateHourFractionAmount,
   formatDurationMinutes,
+  resolveHourFractionExitTime,
 } from '@/lib/ticket-calculation';
 
 dayjs.extend(duration);
@@ -159,17 +160,27 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
   const elapsedMins = Math.max(0, exitTime.diff(entryTime, 'minute'));
   const elapsedStr = formatDurationMinutes(elapsedMins);
 
+  const additionalCharges = ticket.charges ?? [];
+  const hourFractionExitTime = dayjs(
+    resolveHourFractionExitTime(
+      entryTime.toDate(),
+      exitTime.toDate(),
+      additionalCharges,
+    ),
+  );
+  const hourFractionMins = Math.max(0, hourFractionExitTime.diff(entryTime, 'minute'));
+  const hourFractionStr = formatDurationMinutes(hourFractionMins);
+  const stoppedByOvernight =
+    additionalCharges.some((c) => c.chargeType === 'overnight') &&
+    hourFractionExitTime.isBefore(exitTime);
+
   // ── Charge breakdown ─────────────────────────────────────────────────────────
-  // "Horas consumidas" is computed from the actual elapsed time + tolerance
-  // rule (NOT the flat per-hour rate) — this is what the cashier will
-  // actually be charged, matching the server's authoritative calculation.
+  // Hour/fraction stops at the overnight charge time when amanecida was applied.
   const ratePerHour = parseFloat(ticket.rateAmount);
   const { chargeableHours, amount: hourAmount } = calculateHourFractionAmount(
-    elapsedMins,
+    hourFractionMins,
     ratePerHour,
   );
-
-  const additionalCharges = ticket.charges ?? [];
   const additionalTotal = additionalCharges.reduce((s, c) => s + parseFloat(c.amount), 0);
   const grossAmount = hourAmount + additionalTotal;
   const discountSafe = Math.min(discount, grossAmount);
@@ -242,6 +253,16 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
   ];
 
   return (
+    <>
+    <style>{`
+      @keyframes chargeTicketKeyPulse {
+        0%, 100% { box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.28), 0 4px 14px rgba(194, 65, 12, 0.35); }
+        50% { box-shadow: 0 0 0 7px rgba(234, 88, 12, 0.18), 0 4px 18px rgba(194, 65, 12, 0.5); }
+      }
+      .charge-ticket-has-key {
+        animation: chargeTicketKeyPulse 1.6s ease-in-out infinite;
+      }
+    `}</style>
     <Modal
         title={
           <Text strong style={{ fontSize: 16 }}>
@@ -282,33 +303,41 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
           <Col flex="auto" />
           <Col>
             <div
+              className={ticket.hasKey ? 'charge-ticket-has-key' : undefined}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '4px 10px',
-                borderRadius: 8,
-                border: `2px solid ${ticket.hasKey ? '#d97706' : '#d1d5db'}`,
-                background: ticket.hasKey ? '#fef3c7' : '#f3f4f6',
+                gap: 8,
+                padding: ticket.hasKey ? '8px 16px' : '4px 10px',
+                borderRadius: ticket.hasKey ? 10 : 8,
+                border: ticket.hasKey ? '2px solid #c2410c' : '2px solid #d1d5db',
+                background: ticket.hasKey
+                  ? 'linear-gradient(180deg, #fb923c 0%, #ea580c 100%)'
+                  : '#f3f4f6',
+                boxShadow: ticket.hasKey
+                  ? '0 0 0 3px rgba(234, 88, 12, 0.28), 0 4px 14px rgba(194, 65, 12, 0.35)'
+                  : 'none',
                 cursor: 'default',
                 userSelect: 'none',
               }}
             >
               <KeyOutlined
                 style={{
-                  fontSize: 18,
-                  color: ticket.hasKey ? '#d97706' : '#9ca3af',
+                  fontSize: ticket.hasKey ? 22 : 18,
+                  color: ticket.hasKey ? '#fff' : '#9ca3af',
                 }}
               />
               <Text
                 style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: ticket.hasKey ? '#92400e' : '#6b7280',
+                  fontSize: ticket.hasKey ? 14 : 12,
+                  fontWeight: 800,
+                  letterSpacing: ticket.hasKey ? 0.4 : 0,
+                  color: ticket.hasKey ? '#fff' : '#6b7280',
                   whiteSpace: 'nowrap',
+                  textTransform: ticket.hasKey ? 'uppercase' : 'none',
                 }}
               >
-                {ticket.hasKey ? 'Dejó llave' : 'Sin llave'}
+                {ticket.hasKey ? '¡Dejó llave!' : 'Sin llave'}
               </Text>
             </div>
           </Col>
@@ -327,9 +356,20 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
             {[
               { label: 'H. Ingreso', value: entryTime.format('DD/MM/YY\nHH:mm:ss') },
               { label: 'H. Salida', value: exitTime.format('DD/MM/YY\nHH:mm:ss') },
-              { label: 'Tiempo', value: elapsedStr },
               {
-                label: 'Horas cobradas',
+                label: stoppedByOvernight ? 'Tiempo H/F' : 'Tiempo',
+                value: stoppedByOvernight ? hourFractionStr : elapsedStr,
+              },
+              ...(stoppedByOvernight
+                ? [
+                    {
+                      label: 'Tiempo total',
+                      value: elapsedStr,
+                    },
+                  ]
+                : []),
+              {
+                label: stoppedByOvernight ? 'Horas cobradas (hasta amanecida)' : 'Horas cobradas',
                 value: `${chargeableHours}h × s/.${ratePerHour.toFixed(2)}`,
               },
               {
@@ -627,7 +667,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
               )}
 
               {/* Observation */}
-              <Form.Item label="Observación">
+              <Form.Item label="Eventos">
                 <Controller
                   name="observation"
                   control={control}
@@ -747,5 +787,6 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
           </Col>
         </Row>
     </Modal>
+    </>
   );
 }

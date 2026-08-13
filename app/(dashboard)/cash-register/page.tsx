@@ -29,7 +29,6 @@ import {
 import dayjs from 'dayjs';
 import { useCurrentShift, useAddExpense, useCloseShift } from '@/hooks/useCashRegister';
 import { useTickets } from '@/hooks/useTickets';
-import { useCheckOut } from '@/hooks/useAttendance';
 import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 import { useAuth } from '@/providers/AuthProvider';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -94,7 +93,6 @@ function StatTile({
 export default function CashRegisterPage() {
   const { logout } = useAuth();
   const workflow = useCashierWorkflow();
-  const checkOut = useCheckOut();
   const { data: shift, isLoading, isFetching, refetch } = useCurrentShift(workflow.isCashier);
   const { data: pendingTickets = [] } = useTickets('pending');
   const addExpense = useAddExpense();
@@ -105,8 +103,6 @@ export default function CashRegisterPage() {
   const [balanceNotes, setBalanceNotes] = useState('');
   const [balanceNotesError, setBalanceNotesError] = useState('');
   const [closeResult, setCloseResult] = useState<CashRegister | null>(null);
-  const [checkoutDone, setCheckoutDone] = useState(false);
-  const [awaitingCheckout, setAwaitingCheckout] = useState(false);
 
   const isOpen = !!shift && !shift.closedAt;
   const canOperateClose = workflow.isCheckedIn && workflow.isShiftOpen;
@@ -140,8 +136,6 @@ export default function CashRegisterPage() {
       extraNotes: closeNotes || undefined,
     });
     setCloseNotes('');
-    setCheckoutDone(false);
-    setAwaitingCheckout(true);
     setCloseResult(result);
   };
 
@@ -170,22 +164,11 @@ export default function CashRegisterPage() {
     setBalanceNotes('');
     setBalanceNotesError('');
     setCloseNotes('');
-    setCheckoutDone(false);
-    setAwaitingCheckout(true);
     setCloseResult(result);
   };
 
-  const handlePostCloseCheckOut = async () => {
-    await checkOut.mutateAsync(undefined);
-    setCheckoutDone(true);
-  };
-
-  const showCheckoutStep = awaitingCheckout || workflow.canCheckOut;
-  const showLogoutStep = checkoutDone || workflow.isCheckedOut;
-
   const handlePostCloseLogout = async () => {
     setCloseResult(null);
-    setAwaitingCheckout(false);
     await logout();
   };
 
@@ -427,8 +410,8 @@ export default function CashRegisterPage() {
               <Text style={{ fontSize: 11, color: colors.textMuted, display: 'block', marginBottom: 10 }}>
                 {canOperateClose
                   ? workflow.isIdleShift
-                    ? 'Sin cobros registrados. Puedes cuadrar aquí (s/. 0.00) o cerrar sesión directamente.'
-                    : 'Revisa los montos antes de continuar. Esta acción no se puede deshacer.'
+                    ? 'Sin cobros registrados. Al cuadrar también se marca la salida de asistencia.'
+                    : 'Al cuadrar se cierra la caja y se marca automáticamente la salida de asistencia.'
                   : 'Marca tu asistencia de ingreso para poder cuadrar y cerrar la caja.'}
               </Text>
 
@@ -537,63 +520,29 @@ export default function CashRegisterPage() {
       {/* ── Modal de confirmación tras cerrar caja ───────────────────────────── */}
       <Modal
         open={!!closeResult}
-        onCancel={() => {
-          if (showCheckoutStep || showLogoutStep) return;
-          setCloseResult(null);
-        }}
-        closable={!showCheckoutStep && !showLogoutStep}
+        onCancel={() => setCloseResult(null)}
+        closable
         maskClosable={false}
         centered
-        footer={
-          showLogoutStep
-            ? [
-                <Button
-                  key="logout"
-                  type="primary"
-                  danger
-                  onClick={handlePostCloseLogout}
-                  style={{ fontWeight: 600 }}
-                >
-                  Cerrar sesión
-                </Button>,
-              ]
-            : showCheckoutStep
-              ? [
-                  <Button
-                    key="later"
-                    onClick={() => {
-                      setCloseResult(null);
-                      setAwaitingCheckout(false);
-                    }}
-                  >
-                    Después
-                  </Button>,
-                  <Button
-                    key="checkout"
-                    type="primary"
-                    loading={checkOut.isPending}
-                    onClick={handlePostCloseCheckOut}
-                    style={{ background: colors.primary, borderColor: colors.primary }}
-                  >
-                    Marcar salida de asistencia
-                  </Button>,
-                ]
-              : [
-                  <Button
-                    key="ok"
-                    type="primary"
-                    onClick={() => setCloseResult(null)}
-                    style={{ background: colors.primary, borderColor: colors.primary }}
-                  >
-                    Entendido
-                  </Button>,
-                ]
-        }
+        footer={[
+          <Button key="later" onClick={() => setCloseResult(null)}>
+            Después
+          </Button>,
+          <Button
+            key="logout"
+            type="primary"
+            danger
+            onClick={handlePostCloseLogout}
+            style={{ fontWeight: 600 }}
+          >
+            Cerrar sesión
+          </Button>,
+        ]}
       >
         <div style={{ textAlign: 'center', padding: '16px 0 4px' }}>
           <CheckCircleOutlined style={{ fontSize: 56, color: '#22c55e' }} />
           <Title level={4} style={{ margin: '12px 0 4px', color: colors.text }}>
-            {showLogoutStep ? '¡Jornada finalizada!' : '¡Caja cerrada correctamente!'}
+            ¡Jornada finalizada!
           </Title>
           {closeResult && (
             <>
@@ -605,15 +554,10 @@ export default function CashRegisterPage() {
               </Tag>
             </>
           )}
-          {(showLogoutStep) ? (
-            <Text style={{ display: 'block', marginTop: 16, color: colors.textMuted }}>
-              Turno cerrado y salida registrada. Ya puedes cerrar sesión.
-            </Text>
-          ) : showCheckoutStep ? (
-            <Text style={{ display: 'block', marginTop: 16, color: colors.textMuted }}>
-              Siguiente paso: marca tu salida de asistencia y luego cierra sesión.
-            </Text>
-          ) : null}
+          <Text style={{ display: 'block', marginTop: 16, color: colors.textMuted }}>
+            Caja cerrada y salida de asistencia registrada. Ya puedes cerrar sesión
+            o marcar una nueva asistencia más tarde.
+          </Text>
         </div>
       </Modal>
     </>

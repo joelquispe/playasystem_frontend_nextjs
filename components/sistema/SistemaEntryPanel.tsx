@@ -78,9 +78,17 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedRateId, setSelectedRateId] = useState<string | undefined>();
   const [specialRateType, setSpecialRateType] = useState<RateType | null>(null);
+  /**
+   * When a client has specialRate > 0, start with that amount.
+   * Cleared as soon as the cashier picks a vehicle rate (or changes the
+   * hour/fraction Select) so the manual choice wins.
+   */
+  const [preferClientSpecialRate, setPreferClientSpecialRate] = useState(false);
   /** User dismissed the auto client/subscriber card for the current plate */
   const [cardDismissed, setCardDismissed] = useState(false);
   const plateInputRef = useRef<InputRef>(null);
+  /** Plate for which auto client/subscriber selection was last applied */
+  const lastAutoPlateRef = useRef('');
 
   const normalizedPlate = normalizePlate(plate);
   const isPlateReady = normalizedPlate.length >= 3;
@@ -173,11 +181,22 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     if (specialRateType === 'subscriber' && foundSubscriber) {
       return parseFloat(foundSubscriber.monthlyAmount);
     }
-    // Client-level special rate takes priority over vehicle default
-    if (clientSpecialAmount !== null) return clientSpecialAmount;
+    // Client special rate is the default suggestion only — cashier can override
+    if (preferClientSpecialRate && clientSpecialAmount !== null) {
+      return clientSpecialAmount;
+    }
     if (selectedRate) return parseFloat(selectedRate.amount);
     return 0;
-  }, [specialRateType, foundSubscriber, selectedRate, clientSpecialAmount]);
+  }, [
+    specialRateType,
+    foundSubscriber,
+    selectedRate,
+    clientSpecialAmount,
+    preferClientSpecialRate,
+  ]);
+
+  const usingClientSpecialRate =
+    preferClientSpecialRate && clientSpecialAmount !== null && !specialRateType;
 
   const canGenerate =
     !!normalizedPlate &&
@@ -234,22 +253,32 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     setSelectedVehicleId(vehicleId);
     setSpecialRateType(specialType);
     setSelectedRateId(rateId);
+    setPreferClientSpecialRate(
+      !specialType && hasSpecialRate(foundClient),
+    );
+    lastAutoPlateRef.current = normalizedPlate;
     setStep('ready');
     setCardDismissed(false);
-  }, [isPlateReady, isFetching, getAutoSelection]);
+  }, [isPlateReady, isFetching, getAutoSelection, foundClient, normalizedPlate]);
 
   /**
    * Auto-detect: when plate has ≥ 6 chars and a client/subscriber is found,
-   * apply selection and show the side card without requiring Enter.
+   * apply selection once per plate. Vehicle type is auto-selected; special
+   * rate is suggested but the cashier can override with a standard rate.
    */
   useEffect(() => {
     if (!isLookupReady || isFetching) return;
     if (!foundClient && !foundSubscriber) return;
+    if (lastAutoPlateRef.current === normalizedPlate) return;
 
     const { vehicleId, rateId, specialType } = getAutoSelection();
     setSelectedVehicleId(vehicleId);
     setSpecialRateType(specialType);
     setSelectedRateId(rateId);
+    setPreferClientSpecialRate(
+      !specialType && hasSpecialRate(foundClient),
+    );
+    lastAutoPlateRef.current = normalizedPlate;
     setStep('ready');
   }, [
     isLookupReady,
@@ -257,6 +286,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     foundClient,
     foundSubscriber,
     getAutoSelection,
+    normalizedPlate,
   ]);
 
   // ── Handle generate ticket (second Enter / button) ────────────────────────
@@ -284,7 +314,9 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
     setSelectedVehicleId(null);
     setSelectedRateId(undefined);
     setSpecialRateType(null);
+    setPreferClientSpecialRate(false);
     setCardDismissed(false);
+    lastAutoPlateRef.current = '';
     onTicketCreated?.();
     setTimeout(() => plateInputRef.current?.focus?.(), 100);
   }, [
@@ -321,16 +353,27 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
       setSelectedVehicleId(null);
       setSelectedRateId(undefined);
       setSpecialRateType(null);
+      setPreferClientSpecialRate(false);
+      lastAutoPlateRef.current = '';
     }
   };
 
   // ── Vehicle card select ───────────────────────────────────────────────────
   const selectVehicle = (vehicle: VehicleType, e?: React.MouseEvent) => {
     if ((e?.target as HTMLElement)?.closest?.('.ant-select')) return;
-    if (selectedVehicleId === vehicle.id && !specialRateType) return;
+    // Same vehicle + already on standard rate → no-op.
+    // If client special rate is active, clicking the vehicle switches to standard.
+    if (
+      selectedVehicleId === vehicle.id &&
+      !specialRateType &&
+      !preferClientSpecialRate
+    ) {
+      return;
+    }
 
     setSelectedVehicleId(vehicle.id);
     setSpecialRateType(null);
+    setPreferClientSpecialRate(false);
 
     const defaultRate = getDefaultHourRate(vehicle);
     setSelectedRateId(defaultRate?.id);
@@ -345,14 +388,22 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
       const autoVehicle = vehicles.find((v) => v.key === 'auto') ?? vehicles[0];
       if (autoVehicle) setSelectedVehicleId(autoVehicle.id);
     }
+    setPreferClientSpecialRate(false);
     setSpecialRateType(type);
   };
 
   const handleHourRateChange = (rateId: string) => {
+    setPreferClientSpecialRate(false);
     setSelectedRateId(rateId);
     if (selectedVehicleId) {
       setVehicleDefaultRate.mutate({ vehicleTypeId: selectedVehicleId, rateId });
     }
+  };
+
+  const applyClientSpecialRate = () => {
+    if (!hasSpecialRate(foundClient)) return;
+    setSpecialRateType(null);
+    setPreferClientSpecialRate(true);
   };
 
   const rateOptions = (rates: Rate[]) => rates.map(formatRateOption);
@@ -687,9 +738,17 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                   s/. {resolvedAmount.toFixed(2)}
                 </strong>
                 {' '}· {RATE_TYPE_LABELS[resolvedRateType ?? 'hour_fraction']}
-                {selectedRate?.label && selectedRate.label !== `s/.${resolvedAmount}` &&
-                  ` · ${selectedRate.label}`}
+                {usingClientSpecialRate
+                  ? ' · Tarifa especial del cliente'
+                  : selectedRate?.label && selectedRate.label !== `s/.${resolvedAmount}`
+                    ? ` · ${selectedRate.label}`
+                    : ''}
               </Text>
+            )}
+            {isClientSpecialRate && !usingClientSpecialRate && !specialRateType && step === 'ready' && (
+              <Button size="small" type="link" onClick={applyClientSpecialRate}>
+                Usar tarifa especial (s/. {getSpecialRateAmount(foundClient)?.toFixed(2)})
+              </Button>
             )}
           </div>
         </div>
@@ -706,11 +765,13 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
             amount={resolvedAmount}
             rateType={resolvedRateType}
             isSpecialRate={isClientSpecialRate}
+            usingSpecialRate={usingClientSpecialRate}
             isFrequent={isClientFrequent}
             generating={createTicket.isPending}
             canGenerate={canGenerate}
             onGenerate={handleGenerate}
             onDismiss={() => setCardDismissed(true)}
+            onUseSpecialRate={applyClientSpecialRate}
           />
         </Col>
       )}
@@ -729,29 +790,32 @@ interface ClientInfoCardProps {
   rateType: RateType | null;
   /** specialRate > 0 → purple "Tarifa especial" */
   isSpecialRate: boolean;
+  /** Currently applying the client's special rate amount */
+  usingSpecialRate: boolean;
   /** eventColor green → green "Es frecuente" (unless special rate takes priority) */
   isFrequent: boolean;
   generating: boolean;
   canGenerate: boolean;
   onGenerate: () => void;
   onDismiss: () => void;
+  onUseSpecialRate: () => void;
 }
 
 function ClientInfoCard({
-  client, subscriber, vehicle, plate, amount, rateType, isSpecialRate, isFrequent,
-  generating, canGenerate, onGenerate, onDismiss,
+  client, subscriber, vehicle, plate, amount, rateType, isSpecialRate, usingSpecialRate,
+  isFrequent, generating, canGenerate, onGenerate, onDismiss, onUseSpecialRate,
 }: ClientInfoCardProps) {
   const isSubscriber = !!subscriber;
   const name = subscriber?.fullName ?? client?.fullName ?? '—';
   const eventColor = client?.eventColor ?? 'white';
-  // Purple wins when special rate; otherwise green for frecuente
+  // Purple wins when special rate is available; otherwise green for frecuente
   const usePurple = !isSubscriber && isSpecialRate;
   const useGreen = !isSubscriber && !isSpecialRate && isFrequent;
 
   const headerTag = isSubscriber
     ? { color: 'gold' as const, label: '⭐ ABONADO ACTIVO' }
     : usePurple
-      ? { color: 'purple' as const, label: '★ TARIFA ESPECIAL' }
+      ? { color: 'purple' as const, label: usingSpecialRate ? '★ TARIFA ESPECIAL' : '★ CLIENTE C/ TARIFA ESPECIAL' }
       : { color: 'green' as const, label: '✓ ES FRECUENTE' };
 
   const accent = isSubscriber ? '#d97706' : usePurple ? '#6d28d9' : '#16a34a';
@@ -851,12 +915,20 @@ function ClientInfoCard({
           <Text style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
             Tarifa
           </Text>
-          {usePurple && (
+          {usePurple && usingSpecialRate && (
             <Tag
               color="purple"
               style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
             >
               Tarifa Especial
+            </Tag>
+          )}
+          {usePurple && !usingSpecialRate && (
+            <Tag
+              color="default"
+              style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
+            >
+              Tarifa estándar
             </Tag>
           )}
           {useGreen && (
@@ -882,6 +954,21 @@ function ClientInfoCard({
             </Text>
           )}
         </div>
+        {usePurple && !usingSpecialRate && (
+          <Button
+            type="link"
+            size="small"
+            onClick={onUseSpecialRate}
+            style={{ padding: 0, marginTop: 4, height: 'auto', color: '#6d28d9', fontWeight: 600 }}
+          >
+            Usar tarifa especial (s/. {getSpecialRateAmount(client)?.toFixed(2)})
+          </Button>
+        )}
+        {usePurple && usingSpecialRate && (
+          <Text style={{ display: 'block', fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+            Puedes elegir Auto u otra tarifa estándar a la izquierda
+          </Text>
+        )}
       </div>
 
       {/* Event face + Generate button */}

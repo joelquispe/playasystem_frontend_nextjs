@@ -11,8 +11,9 @@ import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 /**
  * Orchestrates caja vs asistencia.
  * - Check-in (backend) opens a new caja.
- * - Check-out (backend) closes the open caja — no new caja is created.
- * - Caja with cobros → prefer manual cuadre in /cash-register before exit.
+ * - Cuadre (close shift) also checks out attendance automatically.
+ * - Check-out (backend) closes the open caja if it is still open.
+ * - Caja with cobros → must cuadrar in /cash-register before exit.
  */
 export function useCashierSession() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export function useCashierSession() {
       Modal.confirm({
         title: 'Caja con movimientos',
         content:
-          'Hay cobros registrados. Debes cuadrar la caja en Caja antes de marcar salida, o confirmar que se cierre automáticamente al marcar salida.',
+          'Hay cobros registrados. Debes cuadrar la caja en Caja. Al cuadrar también se marca la salida de asistencia.',
         okText: 'Ir a Caja',
         cancelText: 'Cancelar',
         onOk: () => router.push('/cash-register'),

@@ -64,8 +64,8 @@ export function useCashierWorkflow() {
     isCashier && hasOpenSession && isShiftOpen && hasShiftActivity;
 
   /**
-   * Exit: with open session. Idle caja (or already closed) can check out;
-   * backend closes caja on check-out. If caja has activity, prefer cuadrar first.
+   * Exit without cuadre: only idle caja (or already closed).
+   * If caja has cobros, the cashier must cuadrar — that also closes attendance.
    */
   const canCheckOut =
     isCashier &&
