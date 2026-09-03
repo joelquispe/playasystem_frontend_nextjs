@@ -1,9 +1,10 @@
 'use client';
 
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
+  Alert,
   Button,
   Form,
   Input,
@@ -43,6 +44,9 @@ export function AdditionalChargeModal({ ticket, open, onClose }: AdditionalCharg
     resolver: zodResolver(schema),
     defaultValues: { chargeType: 'overnight', amount: 0 },
   });
+
+  const chargeType = useWatch({ control, name: 'chargeType' });
+  const isHourFraction = chargeType === 'hour_fraction';
 
   const onSubmit = async (data: FormData) => {
     if (!ticket) return;
@@ -88,7 +92,7 @@ export function AdditionalChargeModal({ ticket, open, onClose }: AdditionalCharg
         </Form.Item>
 
         <Form.Item
-          label="Monto (s/.)"
+          label={isHourFraction ? 'Tarifa por hora (s/.)' : 'Monto fijo (s/.)'}
           validateStatus={errors.amount ? 'error' : ''}
           help={errors.amount?.message}
         >
@@ -106,6 +110,16 @@ export function AdditionalChargeModal({ ticket, open, onClose }: AdditionalCharg
             )}
           />
         </Form.Item>
+
+        {isHourFraction && (
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+            message="El monto final se calcula al cobrar el ticket"
+            description="Ingresa la tarifa por hora. El sistema multiplicará automáticamente por las horas transcurridas desde que se aplique este cargo."
+          />
+        )}
 
         <Form.Item label="Notas (opcional)">
           <Controller

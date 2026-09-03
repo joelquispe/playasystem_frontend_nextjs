@@ -909,67 +909,64 @@ function ClientInfoCard({
         </div>
       )}
 
-      {/* Rate */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-          <Text style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
-            Tarifa
-          </Text>
-          {usePurple && usingSpecialRate && (
-            <Tag
-              color="purple"
-              style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
-            >
-              Tarifa Especial
-            </Tag>
-          )}
+      {/* Rate — PLAYA-309: only show tariff block for subscribers or special-rate clients.
+           Frequent-only clients have no special rate; the cashier selects the standard
+           vehicle rate from the main panel. Showing an amount here would mislead the
+           cashier into thinking a special rate is being applied. */}
+      {!useGreen && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <Text style={{ fontSize: 10, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1 }}>
+              Tarifa
+            </Text>
+            {usePurple && usingSpecialRate && (
+              <Tag
+                color="purple"
+                style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
+              >
+                Tarifa Especial
+              </Tag>
+            )}
+            {usePurple && !usingSpecialRate && (
+              <Tag
+                color="default"
+                style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
+              >
+                Tarifa estándar
+              </Tag>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{
+              fontSize: 28,
+              fontWeight: 900,
+              color: amountColor,
+            }}>
+              s/. {amount.toFixed(2)}
+            </span>
+            {rateType && (
+              <Text style={{ fontSize: 11, color: '#6b7280' }}>
+                {RATE_TYPE_LABELS[rateType]}
+              </Text>
+            )}
+          </div>
           {usePurple && !usingSpecialRate && (
-            <Tag
-              color="default"
-              style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
+            <Button
+              type="link"
+              size="small"
+              onClick={onUseSpecialRate}
+              style={{ padding: 0, marginTop: 4, height: 'auto', color: '#6d28d9', fontWeight: 600 }}
             >
-              Tarifa estándar
-            </Tag>
+              Usar tarifa especial (s/. {getSpecialRateAmount(client)?.toFixed(2)})
+            </Button>
           )}
-          {useGreen && (
-            <Tag
-              color="green"
-              style={{ fontSize: 10, padding: '0 6px', lineHeight: '18px', fontWeight: 700 }}
-            >
-              Es frecuente
-            </Tag>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            fontSize: 28,
-            fontWeight: 900,
-            color: amountColor,
-          }}>
-            s/. {amount.toFixed(2)}
-          </span>
-          {rateType && (
-            <Text style={{ fontSize: 11, color: '#6b7280' }}>
-              {RATE_TYPE_LABELS[rateType]}
+          {usePurple && usingSpecialRate && (
+            <Text style={{ display: 'block', fontSize: 11, color: '#6b7280', marginTop: 4 }}>
+              Puedes elegir Auto u otra tarifa estándar a la izquierda
             </Text>
           )}
         </div>
-        {usePurple && !usingSpecialRate && (
-          <Button
-            type="link"
-            size="small"
-            onClick={onUseSpecialRate}
-            style={{ padding: 0, marginTop: 4, height: 'auto', color: '#6d28d9', fontWeight: 600 }}
-          >
-            Usar tarifa especial (s/. {getSpecialRateAmount(client)?.toFixed(2)})
-          </Button>
-        )}
-        {usePurple && usingSpecialRate && (
-          <Text style={{ display: 'block', fontSize: 11, color: '#6b7280', marginTop: 4 }}>
-            Puedes elegir Auto u otra tarifa estándar a la izquierda
-          </Text>
-        )}
-      </div>
+      )}
 
       {/* Event face + Generate button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

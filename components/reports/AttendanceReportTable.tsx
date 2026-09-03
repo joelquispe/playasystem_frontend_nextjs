@@ -26,15 +26,27 @@ function statusLabel(status: AttendanceStatus): string {
   return ATTENDANCE_STATUS_LABELS[status] ?? status;
 }
 
+/**
+ * PLAYA-308: a worker is a "cajero" only if at least one of their registers
+ * had real activity (was closed or collected money).
+ */
+function workedInCaja(r: AttendanceRecord): boolean {
+  return (r.cashRegisters ?? []).some((c) => (c as { hasActivity?: boolean }).hasActivity);
+}
+
 function resolveCashOpen(r: AttendanceRecord): string | null {
+  if (!workedInCaja(r)) return null;
   if (r.cashRegisterOpenedAt) return r.cashRegisterOpenedAt;
-  const first = r.cashRegisters?.[0];
+  const first = (r.cashRegisters ?? []).find((c) => (c as { hasActivity?: boolean }).hasActivity);
   return first?.createdAt ?? null;
 }
 
 function resolveCashClose(r: AttendanceRecord): string | null {
+  if (!workedInCaja(r)) return null;
   if (r.cashRegisterClosedAt) return r.cashRegisterClosedAt;
-  const regs = r.cashRegisters ?? [];
+  const regs = (r.cashRegisters ?? []).filter(
+    (c) => (c as { hasActivity?: boolean }).hasActivity,
+  );
   if (regs.length === 0 || regs.some((c) => !c.closedAt)) return null;
   return regs.reduce((latest, c) => {
     if (!c.closedAt) return latest;

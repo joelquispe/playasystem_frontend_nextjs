@@ -88,6 +88,49 @@ export function calculateHourFractionAmount(
   return { chargeableHours, amount };
 }
 
+/** PLAYA-311/312: rate types that use a fixed price, not per-hour. */
+export function isFixedRateType(rateType: string): boolean {
+  return rateType === 'overnight' || rateType === 'flat' || rateType === 'subscriber';
+}
+
+export interface AdditionalChargePreview {
+  chargeType: string;
+  amount: string | number;
+  appliedAt: string | Date;
+}
+
+/**
+ * Calculates the total for all additional charges at a given exit time.
+ *
+ * - overnight / flat: fixed amount as stored.
+ * - hour_fraction (PLAYA-314): `amount` is the rate per hour; final cost =
+ *   rate × chargeable hours elapsed since `appliedAt`.
+ */
+export function calculateAdditionalChargesTotal(
+  charges: AdditionalChargePreview[],
+  exitTime: Date,
+): { total: number; breakdown: Array<{ charge: AdditionalChargePreview; finalAmount: number }> } {
+  let total = 0;
+  const breakdown: Array<{ charge: AdditionalChargePreview; finalAmount: number }> = [];
+
+  for (const c of charges) {
+    let finalAmount: number;
+    if (c.chargeType === 'hour_fraction') {
+      const appliedAt = new Date(c.appliedAt);
+      const diffMs = Math.max(0, exitTime.getTime() - appliedAt.getTime());
+      const totalMinutes = Math.floor(diffMs / 60_000);
+      const { amount } = calculateHourFractionAmount(totalMinutes, parseFloat(String(c.amount)));
+      finalAmount = amount;
+    } else {
+      finalAmount = parseFloat(String(c.amount));
+    }
+    total += finalAmount;
+    breakdown.push({ charge: c, finalAmount });
+  }
+
+  return { total, breakdown };
+}
+
 /** Formats a duration in minutes as "Xd Xh Xm", omitting days when 0. */
 export function formatDurationMinutes(totalMins: number): string {
   const mins = Math.max(0, Math.floor(totalMins));

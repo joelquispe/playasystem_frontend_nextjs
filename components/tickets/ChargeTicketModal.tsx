@@ -45,6 +45,8 @@ import {
   calculateHourFractionAmount,
   formatDurationMinutes,
   resolveHourFractionExitTime,
+  isFixedRateType,
+  calculateAdditionalChargesTotal,
 } from '@/lib/ticket-calculation';
 
 dayjs.extend(duration);
@@ -161,27 +163,46 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
   const elapsedStr = formatDurationMinutes(elapsedMins);
 
   const additionalCharges = ticket.charges ?? [];
-  const hourFractionExitTime = dayjs(
-    resolveHourFractionExitTime(
-      entryTime.toDate(),
-      exitTime.toDate(),
-      additionalCharges,
-    ),
-  );
-  const hourFractionMins = Math.max(0, hourFractionExitTime.diff(entryTime, 'minute'));
-  const hourFractionStr = formatDurationMinutes(hourFractionMins);
-  const stoppedByOvernight =
-    additionalCharges.some((c) => c.chargeType === 'overnight') &&
-    hourFractionExitTime.isBefore(exitTime);
-
-  // ── Charge breakdown ─────────────────────────────────────────────────────────
-  // Hour/fraction stops at the overnight charge time when amanecida was applied.
+  const isFixed = isFixedRateType(ticket.rateType);
   const ratePerHour = parseFloat(ticket.rateAmount);
-  const { chargeableHours, amount: hourAmount } = calculateHourFractionAmount(
-    hourFractionMins,
-    ratePerHour,
-  );
-  const additionalTotal = additionalCharges.reduce((s, c) => s + parseFloat(c.amount), 0);
+
+  // PLAYA-311/312: Fixed-rate tickets (overnight, flat, subscriber) charge a
+  // single fixed amount regardless of time elapsed.
+  let hourAmount: number;
+  let chargeableHours: number;
+  let stoppedByOvernight: boolean;
+  let hourFractionMins: number;
+  let hourFractionStr: string;
+
+  if (isFixed) {
+    hourAmount = ratePerHour;
+    chargeableHours = 1;
+    stoppedByOvernight = false;
+    hourFractionMins = elapsedMins;
+    hourFractionStr = elapsedStr;
+  } else {
+    const hourFractionExitTime = dayjs(
+      resolveHourFractionExitTime(
+        entryTime.toDate(),
+        exitTime.toDate(),
+        additionalCharges,
+      ),
+    );
+    hourFractionMins = Math.max(0, hourFractionExitTime.diff(entryTime, 'minute'));
+    hourFractionStr = formatDurationMinutes(hourFractionMins);
+    stoppedByOvernight =
+      additionalCharges.some((c) => c.chargeType === 'overnight') &&
+      hourFractionExitTime.isBefore(exitTime);
+
+    const calc = calculateHourFractionAmount(hourFractionMins, ratePerHour);
+    hourAmount = calc.amount;
+    chargeableHours = calc.chargeableHours;
+  }
+
+  // PLAYA-313/314: H/F additional charges = rate × elapsed since appliedAt.
+  const { total: additionalTotal, breakdown: additionalBreakdown } =
+    calculateAdditionalChargesTotal(additionalCharges, exitTime.toDate());
+
   const grossAmount = hourAmount + additionalTotal;
   const discountSafe = Math.min(discount, grossAmount);
   const total = Math.max(0, grossAmount - discountSafe);
@@ -361,21 +382,22 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                 value: stoppedByOvernight ? hourFractionStr : elapsedStr,
               },
               ...(stoppedByOvernight
-                ? [
-                    {
-                      label: 'Tiempo total',
-                      value: elapsedStr,
-                    },
-                  ]
+                ? [{ label: 'Tiempo total', value: elapsedStr }]
                 : []),
-              {
-                label: stoppedByOvernight ? 'Horas cobradas (hasta amanecida)' : 'Horas cobradas',
-                value: `${chargeableHours}h × s/.${ratePerHour.toFixed(2)}`,
-              },
-              {
-                label: 'Monto Horas',
-                value: `s/. ${hourAmount.toFixed(2)}`,
-              },
+              ...(isFixed
+                ? [{ label: 'Tarifa fija', value: `s/. ${hourAmount.toFixed(2)}` }]
+                : [
+                    {
+                      label: stoppedByOvernight
+                        ? 'Horas cobradas (hasta amanecida)'
+                        : 'Horas cobradas',
+                      value: `${chargeableHours}h × s/.${ratePerHour.toFixed(2)}`,
+                    },
+                    {
+                      label: 'Monto Horas',
+                      value: `s/. ${hourAmount.toFixed(2)}`,
+                    },
+                  ]),
               ...(additionalTotal > 0
                 ? [
                     {
@@ -451,7 +473,14 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
               Cargos Adicionales
             </Text>
             <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {additionalCharges.map((c) => (
+              {additionalCharges.map((c) => {
+                const breakdown = additionalBreakdown.find((b) => b.charge === c);
+                const finalAmount = breakdown?.finalAmount ?? parseFloat(c.amount);
+                const isHourly = c.chargeType === 'hour_fraction';
+                const appliedMins = isHourly
+                  ? Math.max(0, exitTime.diff(dayjs(c.appliedAt), 'minute'))
+                  : 0;
+                return (
                 <div
                   key={c.id}
                   style={{
@@ -467,8 +496,14 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                       {RATE_TYPE_LABELS[c.chargeType] ?? c.chargeType}
                     </Text>
                     <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 8 }}>
-                      aplicado {dayjs(c.appliedAt).format('DD/MM HH:mm')}
+                      desde {dayjs(c.appliedAt).format('DD/MM HH:mm')}
                     </Text>
+                    {isHourly && (
+                      <Text style={{ fontSize: 11, color: '#f59e0b', marginLeft: 8 }}>
+                        · tarifa s/.{parseFloat(c.amount).toFixed(2)}/h
+                        · {formatDurationMinutes(appliedMins)}
+                      </Text>
+                    )}
                     {c.notes && (
                       <Text style={{ fontSize: 11, color: colors.textMuted, marginLeft: 8 }}>
                         · {c.notes}
@@ -477,7 +512,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <Text style={{ fontSize: 13, fontWeight: 700, color: colors.accent }}>
-                      s/. {parseFloat(c.amount).toFixed(2)}
+                      s/. {finalAmount.toFixed(2)}
                     </Text>
                     {!cancelMode && (
                       <Popconfirm
@@ -497,7 +532,8 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
