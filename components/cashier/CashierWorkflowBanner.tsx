@@ -1,18 +1,16 @@
 'use client';
 
 import { Alert, Button, Spin } from 'antd';
-import { LoginOutlined, LogoutOutlined, WalletOutlined } from '@ant-design/icons';
+import { WalletOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import { useCheckIn } from '@/hooks/useAttendance';
-import { useCashierSession } from '@/hooks/useCashierSession';
+import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 
-interface CashierWorkflowBannerProps {
-  context?: 'sistema' | 'cash-register' | 'general';
-}
-
-export function CashierWorkflowBanner({ context = 'general' }: CashierWorkflowBannerProps) {
-  const { workflow, requestCheckOut, isPending } = useCashierSession();
-  const checkIn = useCheckIn();
+/**
+ * PLAYA-302: Attendance buttons (check-in / check-out) live exclusively in
+ * AppHeader. This banner shows only cash-register operational guidance.
+ */
+export function CashierWorkflowBanner() {
+  const workflow = useCashierWorkflow();
 
   if (!workflow.isCashier) return null;
 
@@ -22,51 +20,24 @@ export function CashierWorkflowBanner({ context = 'general' }: CashierWorkflowBa
         type="info"
         showIcon
         style={{ marginBottom: 16 }}
-        message="Cargando asistencia…"
+        message="Cargando turno…"
         description={<Spin size="small" />}
       />
     );
   }
 
+  // Normal operation — nothing to show.
   if (workflow.phase === 'working') return null;
 
-  if (workflow.canCheckIn || workflow.phase === 'check-in') {
-    const resumed = !!workflow.attendance?.checkedOutAt;
+  // Attendance open but no caja → guide to open one.
+  if (workflow.phase === 'open-shift') {
     return (
       <Alert
         type="warning"
         showIcon
         style={{ marginBottom: 16 }}
-        message={resumed ? 'Nueva sesión — marca tu asistencia' : 'Marca tu asistencia para comenzar'}
-        description={
-          resumed
-            ? 'Al marcar asistencia se abre una caja nueva para esta sesión.'
-            : context === 'cash-register'
-              ? 'No hay caja activa sin asistencia. Marca tu ingreso para abrir el turno de caja.'
-              : 'Al marcar asistencia se abre tu turno de caja. Sin asistencia no hay caja activa.'
-        }
-        action={
-          <Button
-            type="primary"
-            icon={<LoginOutlined />}
-            loading={checkIn.isPending}
-            onClick={() => checkIn.mutate(undefined)}
-          >
-            Marcar asistencia
-          </Button>
-        }
-      />
-    );
-  }
-
-  if (workflow.canCloseShift && context !== 'cash-register') {
-    return (
-      <Alert
-        type="info"
-        showIcon
-        style={{ marginBottom: 16 }}
-        message="Cuadra la caja antes de salir"
-        description="Hay cobros registrados. Al cuadrar se cierra la caja y se marca automáticamente la salida de asistencia."
+        message="Sin turno de caja activo"
+        description="Tienes asistencia marcada pero no hay un turno de caja abierto. Ábrelo para poder cobrar tickets."
         action={
           <Link href="/cash-register">
             <Button type="primary" icon={<WalletOutlined />}>
@@ -78,23 +49,21 @@ export function CashierWorkflowBanner({ context = 'general' }: CashierWorkflowBa
     );
   }
 
-  if (workflow.canCheckOut || workflow.phase === 'check-out') {
+  // Caja has activity → must cuadrar before checking out.
+  if (workflow.canCloseShift) {
     return (
       <Alert
-        type="success"
+        type="info"
         showIcon
         style={{ marginBottom: 16 }}
-        message="Marca tu salida de asistencia"
-        description="Al marcar salida se cierra la caja. No se abrirá otra hasta que marques asistencia de nuevo."
+        message="Cuadra la caja antes de salir"
+        description="Hay cobros registrados. Ve a Caja para cuadrar el turno."
         action={
-          <Button
-            type="primary"
-            icon={<LogoutOutlined />}
-            loading={isPending}
-            onClick={requestCheckOut}
-          >
-            Marcar salida
-          </Button>
+          <Link href="/cash-register">
+            <Button type="primary" icon={<WalletOutlined />}>
+              Ir a Caja
+            </Button>
+          </Link>
         }
       />
     );

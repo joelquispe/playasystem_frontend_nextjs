@@ -3,16 +3,18 @@
 import { Avatar, Button, Dropdown, Layout, Space, Tag, Typography } from 'antd';
 import type { MenuProps } from 'antd';
 import {
+  LoginOutlined,
   LogoutOutlined,
+  PlusCircleOutlined,
   UserOutlined,
   ClockCircleOutlined,
-  LoginOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
 import { useCheckIn } from '@/hooks/useAttendance';
+import { useOpenShift } from '@/hooks/useCashRegister';
 import { useCashierSession } from '@/hooks/useCashierSession';
 
 const { Header } = Layout;
@@ -27,10 +29,26 @@ export function AppHeader({ title }: AppHeaderProps) {
   const { user } = useAuth();
   const { workflow, requestLogout, requestCheckOut, isPending } = useCashierSession();
   const checkIn = useCheckIn();
+  const openShift = useOpenShift();
 
   const isCashier = workflow.isCashier;
+
+  /**
+   * PLAYA-302: Attendance buttons are ONLY here in the AppHeader.
+   * CashierWorkflowBanner no longer shows attendance actions.
+   */
   const showCheckIn = isCashier && workflow.canCheckIn;
-  const showCheckOut = isCashier && workflow.canCheckOut && !workflow.canCheckIn;
+  const showCheckOut = isCashier && workflow.canCheckOut;
+
+  /**
+   * PLAYA-304: Show "Abrir caja" when attendance is open but no shift is open.
+   * This covers both "just checked in" and "shift was already closed today".
+   */
+  const showOpenShift = isCashier && workflow.canOpenShift;
+
+  /**
+   * Show "Cuadrar caja" shortcut when caja has activity.
+   */
   const showCloseCash = isCashier && workflow.canCloseShift;
 
   const menuItems: MenuProps['items'] = [
@@ -77,6 +95,7 @@ export function AppHeader({ title }: AppHeaderProps) {
       </Text>
 
       <Space>
+        {/* ── Attendance (PLAYA-302: only here) ─────────────────────────── */}
         {showCheckIn && (
           <Button
             type="primary"
@@ -96,6 +115,19 @@ export function AppHeader({ title }: AppHeaderProps) {
             onClick={requestCheckOut}
           >
             Marcar salida
+          </Button>
+        )}
+
+        {/* ── Caja shortcuts ────────────────────────────────────────────── */}
+        {showOpenShift && (
+          <Button
+            type="primary"
+            icon={<PlusCircleOutlined />}
+            loading={openShift.isPending}
+            onClick={() => openShift.mutate()}
+            style={{ background: '#0d9488', borderColor: '#0d9488' }}
+          >
+            Abrir caja
           </Button>
         )}
 

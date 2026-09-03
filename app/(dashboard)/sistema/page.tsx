@@ -74,7 +74,7 @@ export default function SistemaPage() {
         }
       />
 
-      <CashierWorkflowBanner context="sistema" />
+      <CashierWorkflowBanner />
 
       <div
         style={{

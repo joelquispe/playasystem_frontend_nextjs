@@ -6,11 +6,21 @@ import { isShiftIdle } from '@/lib/cash-register';
 import { useTodayAttendance } from '@/hooks/useAttendance';
 import { useCurrentShift } from '@/hooks/useCashRegister';
 
+/**
+ * Phases of the cashier workflow (PLAYA-301 redesign):
+ *
+ *  loading     — data still loading
+ *  check-in    — no open attendance today → show "Marcar asistencia" (header)
+ *  open-shift  — attendance open, but no caja open → show "Abrir caja"
+ *  working     — attendance + caja both open → normal operation
+ *  check-out   — attendance open, caja closed/absent → show "Marcar salida" (header)
+ *  done        — non-cashier / admin
+ */
 export type CashierWorkflowPhase =
   | 'loading'
   | 'check-in'
+  | 'open-shift'
   | 'working'
-  | 'close-shift'
   | 'check-out'
   | 'done';
 
@@ -42,6 +52,7 @@ export function useCashierWorkflow() {
 
   const isCheckedIn = !!attendance?.checkedInAt;
   const isCheckedOut = !!attendance?.checkedOutAt;
+  /** Attendance is open (checked-in, not yet checked-out). */
   const hasOpenSession = isCheckedIn && !isCheckedOut;
 
   const isShiftOpen = !!shift && !shift.closedAt;
@@ -53,32 +64,43 @@ export function useCashierWorkflow() {
     isCashier &&
     ((attendanceLoading && !attendanceFetched) || (shiftLoading && !shiftFetched));
 
-  /** No open attendance → can start a new session (opens caja on check-in) */
+  // ── Per-action capabilities ──────────────────────────────────────────────
+
+  /** No open attendance → can check in (button is in AppHeader only). */
   const canCheckIn = isCashier && !hasOpenSession;
   const needsCheckIn = canCheckIn && !isLoading && attendanceFetched;
 
-  /** Work only with open attendance AND open caja (opened on check-in) */
-  const canWork = !isCashier ? true : hasOpenSession && isShiftOpen;
-
-  const canCloseShift =
-    isCashier && hasOpenSession && isShiftOpen && hasShiftActivity;
+  /**
+   * Has open attendance but no open caja → can open a caja (PLAYA-301/304).
+   * This is also true after closing a shift (worker may open another one).
+   */
+  const canOpenShift = isCashier && hasOpenSession && !isShiftOpen;
 
   /**
-   * Exit without cuadre: only idle caja (or already closed).
-   * If caja has cobros, the cashier must cuadrar — that also closes attendance.
+   * Full operation: attendance + caja open.
+   * Non-cashiers (admins) always get true.
+   */
+  const canWork = !isCashier ? true : hasOpenSession && isShiftOpen;
+
+  /** Caja has activity and is open → must cuadrar before checking out. */
+  const canCloseShift = isCashier && hasOpenSession && isShiftOpen && hasShiftActivity;
+
+  /**
+   * Has open attendance, caja is either absent, closed, or idle.
+   * Button is in AppHeader only (PLAYA-302).
    */
   const canCheckOut =
     isCashier &&
     hasOpenSession &&
     (isShiftClosed || isIdleShift || !isShiftOpen);
 
-  const canLogout =
-    !isCashier ||
-    !hasOpenSession ||
-    isShiftClosed ||
-    isIdleShift ||
-    !isShiftOpen;
+  /**
+   * Logout is always allowed (PLAYA-303: logout ≠ check-out).
+   * If caja has activity, system warns to cuadrar first.
+   */
+  const canLogout = true;
 
+  // ── Derive phase ─────────────────────────────────────────────────────────
   let phase: CashierWorkflowPhase = 'loading';
   if (!isCashier) {
     phase = 'done';
@@ -88,6 +110,8 @@ export function useCashierWorkflow() {
     phase = 'check-in';
   } else if (canWork) {
     phase = 'working';
+  } else if (canOpenShift) {
+    phase = 'open-shift';
   } else if (canCheckOut) {
     phase = 'check-out';
   }
@@ -107,6 +131,7 @@ export function useCashierWorkflow() {
     hasShiftActivity,
     needsCheckIn,
     canCheckIn,
+    canOpenShift,
     canWork,
     canCloseShift,
     canCheckOut,

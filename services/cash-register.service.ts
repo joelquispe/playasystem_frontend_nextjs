@@ -14,7 +14,7 @@ export interface CloseShiftDto {
 }
 
 export const cashRegisterService = {
-  /** Open shift or null — caja is only created on attendance check-in */
+  /** Open shift or null — caja is independent from attendance (PLAYA-301) */
   getCurrentShift: async (): Promise<CashRegister | null> => {
     const res = await apiClient.get<ApiResponse<CashRegister | null>>(
       '/cash-register/current',
@@ -24,6 +24,12 @@ export const cashRegisterService = {
 
   getShiftById: async (id: string): Promise<CashRegister> => {
     const res = await apiClient.get<ApiResponse<CashRegister>>(`/cash-register/${id}`);
+    return res.data.data;
+  },
+
+  /** Explicitly open a new cash shift (PLAYA-301 / PLAYA-304) */
+  openShift: async (): Promise<CashRegister> => {
+    const res = await apiClient.post<ApiResponse<CashRegister>>('/cash-register/open');
     return res.data.data;
   },
 

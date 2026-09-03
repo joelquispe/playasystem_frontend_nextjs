@@ -22,12 +22,13 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   MobileOutlined,
+  PlusCircleOutlined,
   ReloadOutlined,
   WalletOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useCurrentShift, useAddExpense, useCloseShift } from '@/hooks/useCashRegister';
+import { useCurrentShift, useAddExpense, useCloseShift, useOpenShift } from '@/hooks/useCashRegister';
 import { useTickets } from '@/hooks/useTickets';
 import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 import { useAuth } from '@/providers/AuthProvider';
@@ -97,6 +98,7 @@ export default function CashRegisterPage() {
   const { data: pendingTickets = [] } = useTickets('pending');
   const addExpense = useAddExpense();
   const closeShift = useCloseShift();
+  const openShift = useOpenShift();
 
   const [closeNotes, setCloseNotes] = useState('');
   const [unbalancedOpen, setUnbalancedOpen] = useState(false);
@@ -197,17 +199,46 @@ export default function CashRegisterPage() {
     return (
       <>
         <PageHeader title="Caja" subtitle="Turno actual" />
-        <CashierWorkflowBanner context="cash-register" />
-        <Empty
-          description={
-            <Text style={{ color: colors.textMuted }}>
-              {workflow.hasOpenSession
-                ? 'No hay turno de caja abierto. Recarga o marca asistencia de nuevo.'
-                : 'No hay caja activa. Marca tu asistencia para abrir un turno de caja.'}
+        <CashierWorkflowBanner />
+
+        {/* PLAYA-304: attendance open but no caja → offer to open one */}
+        {workflow.hasOpenSession ? (
+          <div
+            style={{
+              ...cardStyle,
+              padding: '40px 24px',
+              textAlign: 'center',
+              marginTop: 16,
+            }}
+          >
+            <WalletOutlined style={{ fontSize: 48, color: colors.primary, marginBottom: 16 }} />
+            <Title level={4} style={{ color: colors.text, margin: '0 0 8px' }}>
+              No hay turno de caja abierto
+            </Title>
+            <Text style={{ color: colors.textMuted, display: 'block', marginBottom: 24 }}>
+              Tu asistencia está activa. Abre un turno de caja para empezar a cobrar tickets.
             </Text>
-          }
-          style={{ marginTop: 80 }}
-        />
+            <Button
+              type="primary"
+              size="large"
+              icon={<PlusCircleOutlined />}
+              loading={openShift.isPending}
+              onClick={() => openShift.mutate()}
+              style={{ background: colors.primary, borderColor: colors.primary, minWidth: 200 }}
+            >
+              Abrir turno de caja
+            </Button>
+          </div>
+        ) : (
+          <Empty
+            description={
+              <Text style={{ color: colors.textMuted }}>
+                No hay turno activo. Marca tu asistencia desde la barra superior y luego abre un turno de caja.
+              </Text>
+            }
+            style={{ marginTop: 80 }}
+          />
+        )}
       </>
     );
   }
@@ -235,7 +266,7 @@ export default function CashRegisterPage() {
         }
       />
 
-      <CashierWorkflowBanner context="cash-register" />
+      <CashierWorkflowBanner />
 
       {isOpen ? (
         <Row gutter={[20, 20]}>
@@ -409,10 +440,8 @@ export default function CashRegisterPage() {
 
               <Text style={{ fontSize: 11, color: colors.textMuted, display: 'block', marginBottom: 10 }}>
                 {canOperateClose
-                  ? workflow.isIdleShift
-                    ? 'Sin cobros registrados. Al cuadrar también se marca la salida de asistencia.'
-                    : 'Al cuadrar se cierra la caja y se marca automáticamente la salida de asistencia.'
-                  : 'Marca tu asistencia de ingreso para poder cuadrar y cerrar la caja.'}
+                  ? 'Revisa los montos antes de continuar. Cerrar el turno no cierra la asistencia.'
+                  : 'Necesitas asistencia marcada y turno de caja abierto para cuadrar.'}
               </Text>
 
               <div style={{ display: 'flex', gap: 10 }}>
@@ -526,7 +555,7 @@ export default function CashRegisterPage() {
         centered
         footer={[
           <Button key="later" onClick={() => setCloseResult(null)}>
-            Después
+            Continuar
           </Button>,
           <Button
             key="logout"
@@ -542,7 +571,7 @@ export default function CashRegisterPage() {
         <div style={{ textAlign: 'center', padding: '16px 0 4px' }}>
           <CheckCircleOutlined style={{ fontSize: 56, color: '#22c55e' }} />
           <Title level={4} style={{ margin: '12px 0 4px', color: colors.text }}>
-            ¡Jornada finalizada!
+            ¡Turno de caja cerrado!
           </Title>
           {closeResult && (
             <>
@@ -555,8 +584,8 @@ export default function CashRegisterPage() {
             </>
           )}
           <Text style={{ display: 'block', marginTop: 16, color: colors.textMuted }}>
-            Caja cerrada y salida de asistencia registrada. Ya puedes cerrar sesión
-            o marcar una nueva asistencia más tarde.
+            El turno de caja quedó cerrado. Tu asistencia sigue activa — marca tu salida
+            desde la barra superior cuando termines la jornada.
           </Text>
         </div>
       </Modal>

@@ -9,11 +9,12 @@ import { useCheckOut } from '@/hooks/useAttendance';
 import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 
 /**
- * Orchestrates caja vs asistencia.
- * - Check-in (backend) opens a new caja.
- * - Cuadre (close shift) also checks out attendance automatically.
- * - Check-out (backend) closes the open caja if it is still open.
- * - Caja with cobros → must cuadrar in /cash-register before exit.
+ * Orchestrates attendance vs caja actions (PLAYA-301 separation):
+ *
+ *  - Attendance (check-in / check-out) is independent of caja.
+ *  - Caja is opened explicitly; closing it does NOT close attendance.
+ *  - Logout (PLAYA-303) does NOT auto check-out. Worker must mark exit themselves.
+ *  - If caja has cobros the worker must cuadrar before checking out or logging out.
  */
 export function useCashierSession() {
   const router = useRouter();
@@ -22,20 +23,14 @@ export function useCashierSession() {
   const checkOut = useCheckOut();
   const qc = useQueryClient();
 
-  const refreshAfterExit = async () => {
+  const refreshAfterCheckOut = async () => {
     await qc.invalidateQueries({ queryKey: QUERY_KEYS.CASH_REGISTER_CURRENT });
     await qc.invalidateQueries({ queryKey: QUERY_KEYS.ATTENDANCE_TODAY });
   };
 
-  const checkOutIfNeeded = async () => {
-    if (!workflow.hasOpenSession) return;
+  const doCheckOut = async () => {
     await checkOut.mutateAsync(undefined);
-    await refreshAfterExit();
-  };
-
-  const finishLogout = async () => {
-    await checkOutIfNeeded();
-    await logout();
+    await refreshAfterCheckOut();
   };
 
   const requestCheckOut = () => {
@@ -43,7 +38,7 @@ export function useCashierSession() {
       Modal.confirm({
         title: 'Caja con movimientos',
         content:
-          'Hay cobros registrados. Debes cuadrar la caja en Caja. Al cuadrar también se marca la salida de asistencia.',
+          'Hay cobros registrados. Debes cuadrar la caja antes de marcar tu salida.',
         okText: 'Ir a Caja',
         cancelText: 'Cancelar',
         onOk: () => router.push('/cash-register'),
@@ -53,15 +48,21 @@ export function useCashierSession() {
 
     Modal.confirm({
       title: '¿Marcar salida de asistencia?',
-      content:
-        'Se registrará tu salida y se cerrará la caja del turno. Después podrás marcar una nueva asistencia (abre caja nueva).',
+      content: workflow.isShiftOpen
+        ? 'Se registrará tu salida y se cerrará el turno de caja activo.'
+        : 'Se registrará tu salida de asistencia.',
       okText: 'Marcar salida',
       cancelText: 'Cancelar',
       okButtonProps: { danger: true },
-      onOk: checkOutIfNeeded,
+      onOk: doCheckOut,
     });
   };
 
+  /**
+   * PLAYA-303: Logout ≠ check-out.
+   * Closing the session does not auto-register attendance exit.
+   * The worker marks their own exit from the AppHeader button.
+   */
   const requestLogout = () => {
     if (!workflow.isCashier) {
       logout();
@@ -72,7 +73,7 @@ export function useCashierSession() {
       Modal.confirm({
         title: 'Caja con movimientos',
         content:
-          'Hay cobros registrados. Debes cuadrar la caja y cerrar el turno antes de cerrar sesión.',
+          'Hay cobros registrados. Debes cuadrar la caja antes de cerrar sesión.',
         okText: 'Ir a Caja',
         cancelText: 'Cancelar',
         onOk: () => router.push('/cash-register'),
@@ -84,11 +85,10 @@ export function useCashierSession() {
       Modal.confirm({
         title: '¿Cerrar sesión?',
         content:
-          'Se marcará tu salida de asistencia y se cerrará la caja. No quedará turno activo.',
+          'Tu asistencia seguirá abierta. Marca tu salida desde el botón en la barra superior cuando termines tu jornada.',
         okText: 'Cerrar sesión',
         cancelText: 'Cancelar',
-        okButtonProps: { danger: true },
-        onOk: finishLogout,
+        onOk: logout,
       });
       return;
     }
@@ -100,7 +100,6 @@ export function useCashierSession() {
     workflow,
     requestLogout,
     requestCheckOut,
-    finishLogout,
     isPending: checkOut.isPending,
   };
 }
