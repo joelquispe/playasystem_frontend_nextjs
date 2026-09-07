@@ -34,7 +34,7 @@ function makeItem(
   return { key, icon, label };
 }
 
-/** Submenu "Reportes" — Dashboard / Cajeros (mes + día) / Asistencia */
+/** Submenu "Reportes" — Resumen / Cajeros */
 const reportsSubmenu: MenuItem = {
   key: '/reports',
   icon: <BarChartOutlined />,
@@ -42,7 +42,6 @@ const reportsSubmenu: MenuItem = {
   children: [
     makeItem(<Link href="/reports/reportes">Reportes</Link>, '/reports/reportes', <DashboardOutlined />),
     makeItem(<Link href="/reports/cajeros">Cajeros</Link>, '/reports/cajeros', <DollarOutlined />),
-    makeItem(<Link href="/reports/asistencia">Asistencia</Link>, '/reports/asistencia', <CalendarOutlined />),
   ],
 };
 

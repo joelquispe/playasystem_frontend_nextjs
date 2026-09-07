@@ -18,7 +18,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/reports': 'Reportes',
   '/reports/reportes': 'Reportes · Resumen',
   '/reports/cajeros': 'Reportes · Cajeros',
-  '/reports/asistencia': 'Reportes · Asistencia',
   '/users': 'Usuarios',
   '/roles': 'Roles',
   '/vehicles': 'Tipos de Vehículo',

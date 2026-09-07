@@ -15,10 +15,6 @@ import { useRevokeSession } from '@/hooks/useSessions';
 
 const { Text } = Typography;
 
-function shortId(id: string): string {
-  return id.slice(0, 8);
-}
-
 interface SessionsTableProps {
   items: UserSession[];
   meta?: PaginationMeta;
@@ -55,20 +51,7 @@ export function SessionsTable({
       ),
     },
     {
-      title: 'Sesión',
-      dataIndex: 'id',
-      key: 'id',
-      width: 110,
-      render: (id: string) => (
-        <Tooltip title={id}>
-          <Text code style={{ fontSize: 11 }}>
-            {shortId(id)}…
-          </Text>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Login',
+      title: 'Inicio sesión',
       dataIndex: 'loggedInAt',
       key: 'loggedInAt',
       width: 150,
@@ -77,7 +60,7 @@ export function SessionsTable({
       ),
     },
     {
-      title: 'Logout',
+      title: 'Cierre sesión',
       dataIndex: 'loggedOutAt',
       key: 'loggedOutAt',
       width: 150,
@@ -87,27 +70,6 @@ export function SessionsTable({
         ) : (
           <Text style={{ color: colors.textSubtle }}>—</Text>
         ),
-    },
-    {
-      title: 'Última actividad',
-      dataIndex: 'lastActivityAt',
-      key: 'lastActivityAt',
-      width: 150,
-      render: (v: string | undefined) =>
-        v ? (
-          <Text style={{ fontSize: 12 }}>{formatLimaDateTime(v)}</Text>
-        ) : (
-          '—'
-        ),
-    },
-    {
-      title: 'IP',
-      dataIndex: 'ipAddress',
-      key: 'ipAddress',
-      width: 120,
-      render: (v: string | null | undefined) => (
-        <Text style={{ fontSize: 12, fontFamily: 'monospace' }}>{v ?? '—'}</Text>
-      ),
     },
     {
       title: 'Estado',
@@ -179,7 +141,7 @@ export function SessionsTable({
       loading={loading}
       pagination={pagination}
       size="small"
-      scroll={{ x: 1000 }}
+      scroll={{ x: 800 }}
       style={cardStyle}
     />
   );

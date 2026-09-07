@@ -30,7 +30,7 @@ export function SessionCell({
       title={
         <div style={{ fontSize: 12 }}>
           <div>ID: {id}</div>
-          {loginAt && <div>Login: {loginAt}</div>}
+          {loginAt && <div>Inicio sesión: {loginAt}</div>}
           {session?.ipAddress && <div>IP: {session.ipAddress}</div>}
           {session && (
             <div>Estado: {session.isActive ? 'Activa' : 'Cerrada'}</div>
