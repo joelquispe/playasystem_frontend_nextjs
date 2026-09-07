@@ -1,5 +1,5 @@
 import { User } from '@/types/api';
-import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from './constants';
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, SESSION_ID_KEY, USER_KEY } from './constants';
 
 /** Fallback cookie lifetime (seconds) when the token has no readable `exp` claim. */
 const DEFAULT_COOKIE_MAX_AGE_SECONDS = 8 * 60 * 60;
@@ -30,6 +30,22 @@ function cookieMaxAgeFor(token: string): number {
   return remaining > 0 ? remaining : DEFAULT_COOKIE_MAX_AGE_SECONDS;
 }
 
+/**
+ * Reads `sid` from a JWT payload (session id). Used as fallback when the
+ * login response did not include sessionId explicitly.
+ */
+export function decodeJwtSessionId(token: string): string | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    const { sid } = JSON.parse(json) as { sid?: string };
+    return typeof sid === 'string' && sid.length > 0 ? sid : null;
+  } catch {
+    return null;
+  }
+}
+
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem(AUTH_TOKEN_KEY);
@@ -38,6 +54,14 @@ export function getToken(): string | null {
 export function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+export function getSessionId(): string | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem(SESSION_ID_KEY);
+  if (stored) return stored;
+  const token = getToken();
+  return token ? decodeJwtSessionId(token) : null;
 }
 
 export function getUser(): User | null {
@@ -51,11 +75,20 @@ export function getUser(): User | null {
   }
 }
 
-export function setAuth(token: string, user: User, refreshToken?: string): void {
+export function setAuth(
+  token: string,
+  user: User,
+  refreshToken?: string,
+  sessionId?: string | null,
+): void {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   if (refreshToken) {
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  }
+  const sid = sessionId || decodeJwtSessionId(token);
+  if (sid) {
+    localStorage.setItem(SESSION_ID_KEY, sid);
   }
   // Cookie for middleware — sized to match the access token's real
   // expiration (decoded from its `exp` claim) instead of a hardcoded value,
@@ -68,9 +101,17 @@ export function setAuth(token: string, user: User, refreshToken?: string): void 
  * Updates only the tokens after a silent refresh (keeps the previously
  * stored user in localStorage untouched).
  */
-export function setTokens(accessToken: string, refreshToken: string): void {
+export function setTokens(
+  accessToken: string,
+  refreshToken: string,
+  sessionId?: string | null,
+): void {
   localStorage.setItem(AUTH_TOKEN_KEY, accessToken);
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  const sid = sessionId || decodeJwtSessionId(accessToken);
+  if (sid) {
+    localStorage.setItem(SESSION_ID_KEY, sid);
+  }
   document.cookie = `${AUTH_TOKEN_KEY}=${accessToken}; path=/; max-age=${cookieMaxAgeFor(accessToken)}; SameSite=Lax`;
 }
 
@@ -78,5 +119,6 @@ export function clearAuth(): void {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(SESSION_ID_KEY);
   document.cookie = `${AUTH_TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 }

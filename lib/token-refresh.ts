@@ -4,6 +4,7 @@ import { ApiResponse, LoginResponse } from '@/types/api';
 export interface RefreshResponse {
   accessToken: string;
   refreshToken: string;
+  sessionId?: string;
   user: LoginResponse['user'];
 }
 

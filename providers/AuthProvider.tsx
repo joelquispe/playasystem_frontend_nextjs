@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (username: string, password: string) => {
     const data = await authService.login({ username, password });
-    setAuth(data.accessToken, data.user, data.refreshToken);
+    setAuth(data.accessToken, data.user, data.refreshToken, data.sessionId);
     setUser(data.user);
     const isAdminUser = data.user.role === 'admin' || data.user.roleDetail?.slug === 'admin';
     router.replace(isAdminUser ? '/reports' : '/sistema');

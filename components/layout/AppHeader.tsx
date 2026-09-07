@@ -36,6 +36,10 @@ export function AppHeader({ title }: AppHeaderProps) {
   /**
    * PLAYA-302: Attendance buttons are ONLY here in the AppHeader.
    * CashierWorkflowBanner no longer shows attendance actions.
+   *
+   * Check-in / check-out send the Bearer JWT; the backend reads `sid`
+   * and stores it on attendance_records.check_in_session_id /
+   * check_out_session_id (session opened at login).
    */
   const showCheckIn = isCashier && workflow.canCheckIn;
   const showCheckOut = isCashier && workflow.canCheckOut;

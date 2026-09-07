@@ -1,6 +1,7 @@
 export const AUTH_TOKEN_KEY = 'access_token';
 export const REFRESH_TOKEN_KEY = 'refresh_token';
 export const USER_KEY = 'user';
+export const SESSION_ID_KEY = 'session_id';
 
 export const QUERY_KEYS = {
   TICKETS: ['tickets'] as const,

@@ -13,7 +13,8 @@ import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
  *
  * PLAYA-301: Attendance and caja are independent lifecycles.
  * PLAYA-303: Logout does NOT auto check-out attendance.
- * PLAYA-307: Cannot check-out or logout while caja is open — must cuadrar first.
+ * Cerrar sesión (logout) is always allowed — even with caja abierta.
+ * Marcar salida de asistencia sigue bloqueada si la caja está abierta.
  */
 export function useCashierSession() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export function useCashierSession() {
   };
 
   /**
-   * PLAYA-307: If caja is open, redirect to cuadrar first.
+   * If caja is open, must cuadrar before marking attendance exit.
    * Otherwise proceed with check-out.
    */
   const requestCheckOut = () => {
@@ -60,8 +61,8 @@ export function useCashierSession() {
   };
 
   /**
-   * PLAYA-307: If caja is open, must cuadrar before logout.
-   * PLAYA-303: If caja is closed (or absent), logout directly without auto check-out.
+   * Logout is always allowed. Warns if caja and/or attendance remain open,
+   * but does not block or auto-close them.
    */
   const requestLogout = () => {
     if (!workflow.isCashier) {
@@ -71,12 +72,13 @@ export function useCashierSession() {
 
     if (workflow.isShiftOpen) {
       Modal.confirm({
-        title: 'Caja abierta',
+        title: '¿Cerrar sesión con caja abierta?',
         content:
-          'Debes cerrar/cuadrar tu turno de caja antes de cerrar sesión.',
-        okText: 'Ir a Caja',
+          'Tu turno de caja seguirá abierto. Al volver a ingresar podrás continuar o cuadrar la caja. La asistencia tampoco se cierra al salir.',
+        okText: 'Cerrar sesión',
         cancelText: 'Cancelar',
-        onOk: () => router.push('/cash-register'),
+        okButtonProps: { danger: true },
+        onOk: logout,
       });
       return;
     }

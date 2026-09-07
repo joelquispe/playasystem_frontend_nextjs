@@ -45,7 +45,7 @@ async function getRefreshedAccessToken(): Promise<string> {
 
     refreshPromise = refreshAccessToken(refreshToken)
       .then((data) => {
-        setTokens(data.accessToken, data.refreshToken);
+        setTokens(data.accessToken, data.refreshToken, data.sessionId);
         return data.accessToken;
       })
       .finally(() => {

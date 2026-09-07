@@ -225,6 +225,10 @@ export interface AttendanceRecord {
   expectedExitAt: string | null;
   checkedInAt: string | null;
   checkedOutAt: string | null;
+  /** Auth session that marked check-in (JWT sid / user_sessions.id) */
+  checkInSessionId?: string | null;
+  /** Auth session that marked check-out */
+  checkOutSessionId?: string | null;
   status: AttendanceStatus;
   lateMinutes: number;
   workedMinutes: number;
@@ -398,5 +402,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
+  /** Auth session id (`user_sessions.id`) opened on login — also in JWT `sid` */
+  sessionId?: string;
   user: User;
 }
