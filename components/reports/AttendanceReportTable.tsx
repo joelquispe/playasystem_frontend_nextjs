@@ -7,6 +7,7 @@ import { AttendanceRecord, AttendanceStatus, PaginationMeta } from '@/types/api'
 import { ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
 import { formatLimaDateTime } from '@/lib/datetime';
 import { cardStyle, colors } from '@/lib/theme';
+import { SessionCell } from '@/components/attendance/SessionCell';
 
 const { Text } = Typography;
 
@@ -103,6 +104,22 @@ export function AttendanceReportTable({
         v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
     },
     {
+      title: 'Sesión ingreso',
+      key: 'checkInSession',
+      width: 140,
+      render: (_: unknown, r: AttendanceRecord) => (
+        <SessionCell session={r.checkInSession} sessionId={r.checkInSessionId} />
+      ),
+    },
+    {
+      title: 'Sesión salida',
+      key: 'checkOutSession',
+      width: 140,
+      render: (_: unknown, r: AttendanceRecord) => (
+        <SessionCell session={r.checkOutSession} sessionId={r.checkOutSessionId} />
+      ),
+    },
+    {
       title: 'Caja abierta',
       key: 'cashRegisterOpenedAt',
       width: 150,
@@ -162,7 +179,7 @@ export function AttendanceReportTable({
       loading={loading}
       pagination={pagination}
       size="small"
-      scroll={{ x: 1100 }}
+      scroll={{ x: 1400 }}
       style={cardStyle}
     />
   );

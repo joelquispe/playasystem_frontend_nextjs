@@ -44,6 +44,9 @@ export const QUERY_KEYS = {
   ATTENDANCE_SCHEDULES: ['attendance', 'schedules'] as const,
   ATTENDANCE_SCHEDULE: (id: string) => ['attendance', 'schedules', id] as const,
   ATTENDANCE_DETAIL: (id: string) => ['attendance', id] as const,
+  SESSIONS: (params: Record<string, unknown>) => ['sessions', params] as const,
+  SESSIONS_ME: ['sessions', 'me'] as const,
+  SESSION: (id: string) => ['sessions', id] as const,
   PLATE_EVENTS: (plate: string) => ['events', plate] as const,
   SYSTEM_CONFIG: ['system-config'] as const,
   SUBSCRIBERS: (status?: string) => ['subscribers', status] as const,
@@ -80,6 +83,15 @@ export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
   INCOMPLETE: 'Sin salida',
   JUSTIFIED: 'Justificado',
   DAY_OFF: 'Día libre',
+};
+
+export const SESSION_REVOKE_REASON_LABELS: Record<string, string> = {
+  logout: 'Cierre de sesión',
+  admin_revoke: 'Revocada por admin',
+  refresh_rotated: 'Refresh rotado',
+  refresh_reuse: 'Refresh reutilizado',
+  expired: 'Expirada',
+  replaced: 'Reemplazada',
 };
 
 export const RECEIPT_TYPE_LABELS: Record<string, string> = {

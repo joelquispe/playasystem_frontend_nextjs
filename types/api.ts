@@ -215,6 +215,37 @@ export interface Attendance {
   notes: string | null;
 }
 
+/** Compact session info embedded on attendance rows */
+export type SessionRevokeReason =
+  | 'logout'
+  | 'admin_revoke'
+  | 'refresh_rotated'
+  | 'refresh_reuse'
+  | 'expired'
+  | 'replaced';
+
+export interface UserSessionSummary {
+  id: string;
+  userId: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  loggedInAt: string;
+  loggedOutAt?: string | null;
+  lastActivityAt?: string;
+  expiresAt?: string;
+  isActive: boolean;
+  revokedReason?: SessionRevokeReason | null;
+}
+
+/** Auth session row for admin session report */
+export interface UserSession extends UserSessionSummary {
+  user?: Pick<User, 'id' | 'username' | 'fullName'> & {
+    role?: Pick<RoleEntity, 'id' | 'name' | 'slug'>;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface AttendanceRecord {
   id: string;
   userId: string;
@@ -229,6 +260,8 @@ export interface AttendanceRecord {
   checkInSessionId?: string | null;
   /** Auth session that marked check-out */
   checkOutSessionId?: string | null;
+  checkInSession?: UserSessionSummary | null;
+  checkOutSession?: UserSessionSummary | null;
   status: AttendanceStatus;
   lateMinutes: number;
   workedMinutes: number;
@@ -335,6 +368,11 @@ export interface PaginationMeta {
   limit: number;
   totalItems: number;
   totalPages: number;
+}
+
+export interface SessionsListResult {
+  items: UserSession[];
+  meta: PaginationMeta;
 }
 
 /** Tardanza acumulada, desglosada en horas/minutos/segundos */
