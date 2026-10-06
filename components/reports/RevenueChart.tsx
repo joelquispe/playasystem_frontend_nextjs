@@ -13,6 +13,7 @@ import {
 import dayjs from 'dayjs';
 import { DashboardData } from '@/types/api';
 import { cardStyle, colors } from '@/lib/theme';
+import { FINANCIAL_LABELS } from '@/lib/financials';
 
 const { Text } = Typography;
 
@@ -23,12 +24,13 @@ interface RevenueChartProps {
 export function RevenueChart({ data }: RevenueChartProps) {
   const chartData = data.dailySeries.map((d) => ({
     date: dayjs(d.date).format('D MMM'),
-    revenue: d.revenue,
+    grossIncome: d.grossIncome,
+    netIncome: d.netIncome,
   }));
 
   return (
     <Card
-      title={<Text style={{ color: colors.text, fontWeight: 600 }}>Ingresos Diarios</Text>}
+      title={<Text style={{ color: colors.text, fontWeight: 600 }}>Ingresos diarios (bruto vs. neto)</Text>}
       style={cardStyle}
     >
       <ResponsiveContainer width="100%" height={260}>
@@ -59,11 +61,21 @@ export function RevenueChart({ data }: RevenueChartProps) {
               borderRadius: 8,
               color: colors.text,
             }}
-            formatter={(value) => [`s/. ${Number(value).toFixed(2)}`, 'Ingresos']}
+            formatter={(value, name) => [`s/. ${Number(value).toFixed(2)}`, name]}
           />
           <Area
             type="monotone"
-            dataKey="revenue"
+            dataKey="grossIncome"
+            name={FINANCIAL_LABELS.grossIncome}
+            stroke="#94a3b8"
+            strokeWidth={1.5}
+            fill="none"
+            dot={false}
+          />
+          <Area
+            type="monotone"
+            dataKey="netIncome"
+            name={FINANCIAL_LABELS.netIncome}
             stroke="#db2777"
             strokeWidth={2}
             fill="url(#revenueGradient)"

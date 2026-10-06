@@ -6,11 +6,11 @@ import {
   ArrowUpOutlined,
   CloseCircleOutlined,
   DollarOutlined,
-  RiseOutlined,
   TagOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { DashboardData } from '@/types/api';
+import { FINANCIAL_LABELS } from '@/lib/financials';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -67,13 +67,13 @@ export function DashboardStats({ data }: DashboardStatsProps) {
   return (
     <Row gutter={[16, 16]}>
       <Col xs={24} sm={8}>
-        <StatCard title="Ingresos" value={data.ingresos.toFixed(2)} prefix="s/. " color="#16a34a" icon={<ArrowUpOutlined />} />
+        <StatCard title={FINANCIAL_LABELS.grossIncome} value={data.grossIncome.toFixed(2)} prefix="s/. " color="#16a34a" icon={<ArrowUpOutlined />} />
       </Col>
       <Col xs={24} sm={8}>
-        <StatCard title="Egresos" value={data.egresos.toFixed(2)} prefix="s/. " color="#ef4444" icon={<ArrowDownOutlined />} />
+        <StatCard title={`${FINANCIAL_LABELS.netExpenses} (desc. + gastos)`} value={data.netExpenses.toFixed(2)} prefix="s/. " color="#ef4444" icon={<ArrowDownOutlined />} />
       </Col>
       <Col xs={24} sm={8}>
-        <StatCard title="Ganancia" value={data.ganancia.toFixed(2)} prefix="s/. " color={colors.accent} icon={<RiseOutlined />} />
+        <StatCard title={FINANCIAL_LABELS.netIncome} value={data.netIncome.toFixed(2)} prefix="s/. " color={colors.accent} icon={<DollarOutlined />} />
       </Col>
 
       <Col xs={24}>
@@ -84,11 +84,10 @@ export function DashboardStats({ data }: DashboardStatsProps) {
             gap: 16,
           }}
         >
-          <StatCard title="Ingresos totales" value={data.totalRevenue.toFixed(2)} prefix="s/. " color={colors.accent} icon={<DollarOutlined />} />
-          <StatCard title="Tickets cobrados" value={data.totalTickets} color="#3b82f6" icon={<ArrowUpOutlined />} />
-          <StatCard title="Cancelaciones" value={data.totalCancelled} color="#ef4444" icon={<CloseCircleOutlined />} />
-          <StatCard title="Descuentos" value={data.totalDiscounts.toFixed(2)} prefix="s/. " color="#f59e0b" icon={<TagOutlined />} />
-          <StatCard title="Gastos de Caja" value={data.gastosCaja.toFixed(2)} prefix="s/. " color="#ef4444" icon={<WalletOutlined />} />
+          <StatCard title={FINANCIAL_LABELS.discounts} value={data.discounts.toFixed(2)} prefix="s/. " color="#f59e0b" icon={<TagOutlined />} />
+          <StatCard title={FINANCIAL_LABELS.expenses} value={data.expenses.toFixed(2)} prefix="s/. " color="#ef4444" icon={<WalletOutlined />} />
+          <StatCard title="Tickets cobrados" value={data.paidTickets} color="#3b82f6" icon={<ArrowUpOutlined />} />
+          <StatCard title="Tickets anulados" value={data.cancellationsCount} color="#ef4444" icon={<CloseCircleOutlined />} />
         </div>
       </Col>
 

@@ -128,7 +128,14 @@ export function TicketDetailModal({ ticket, open, onClose }: TicketDetailModalPr
         </Descriptions.Item>
         <Descriptions.Item label="Descuento" span={1}>
           {parseFloat(ticket.discount) > 0 ? (
-            <Text type="danger">- s/. {parseFloat(ticket.discount).toFixed(2)}</Text>
+            <Space size={4} wrap>
+              <Text type="danger">- s/. {parseFloat(ticket.discount).toFixed(2)}</Text>
+              {ticket.paymentMethod && (
+                <Text style={{ color: colors.textMuted }}>
+                  | Medio de pago: {PAYMENT_METHOD_LABELS[ticket.paymentMethod] ?? ticket.paymentMethod}
+                </Text>
+              )}
+            </Space>
           ) : (
             '—'
           )}

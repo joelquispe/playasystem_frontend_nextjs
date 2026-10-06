@@ -4,7 +4,8 @@ import { Col, Row, Statistic, Table, Tag, Typography } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { DailySummaryTotals, PaginationMeta, Ticket } from '@/types/api';
-import { RATE_TYPE_LABELS, TICKET_STATUS_LABELS } from '@/lib/constants';
+import { PAYMENT_METHOD_LABELS, RATE_TYPE_LABELS, TICKET_STATUS_LABELS } from '@/lib/constants';
+import { FINANCIAL_LABELS } from '@/lib/financials';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -101,6 +102,13 @@ export function DailySummaryReportTable({
         parseFloat(v) > 0 ? <Text type="danger">- s/. {parseFloat(v).toFixed(2)}</Text> : '—',
     },
     {
+      title: 'Medio de pago',
+      dataIndex: 'paymentMethod',
+      key: 'paymentMethod',
+      width: 110,
+      render: (v: string | null) => (v ? PAYMENT_METHOD_LABELS[v] ?? v : '—'),
+    },
+    {
       title: 'Obs. descuento',
       dataIndex: 'discountObservation',
       key: 'discountObservation',
@@ -155,12 +163,17 @@ export function DailySummaryReportTable({
       {summary && (
         <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
           {[
-            { label: 'Ingreso del día', value: summary.totalRevenue, color: '#16a34a', money: true },
-            { label: 'Tickets Anulados', value: summary.totalCancelled, color: '#ef4444', money: false },
-            { label: 'Descuentos', value: summary.totalDiscounts, color: '#f59e0b', money: true },
-            { label: 'Gastos de caja', value: summary.totalExpenses, color: '#ef4444', money: true },
+            { label: FINANCIAL_LABELS.grossIncome, value: summary.grossIncome, color: '#16a34a', money: true },
+            { label: FINANCIAL_LABELS.discounts, value: summary.discounts, color: '#f59e0b', money: true },
+            { label: FINANCIAL_LABELS.expenses, value: summary.expenses, color: '#ef4444', money: true },
+            { label: FINANCIAL_LABELS.netExpenses, value: summary.netExpenses, color: '#ef4444', money: true },
+            { label: FINANCIAL_LABELS.netIncomeDay, value: summary.netIncome, color: colors.accent, money: true },
+            { label: FINANCIAL_LABELS.expectedCash, value: summary.expectedCash, color: '#16a34a', money: true },
+            { label: 'Tickets cobrados', value: summary.paidTickets, color: '#3b82f6', money: false },
+            { label: 'Tickets anulados', value: summary.cancellationsCount, color: '#ef4444', money: false },
+            { label: 'Tickets pendientes', value: summary.pendingTickets, color: '#f59e0b', money: false },
           ].map(({ label, value, color, money }) => (
-            <Col key={label} xs={12} sm={6}>
+            <Col key={label} xs={12} sm={8} lg={6} xl={4}>
               <div style={{ ...cardStyle, padding: '14px 18px' }}>
                 <Statistic
                   title={<Text style={{ color: colors.textMuted, fontSize: 12 }}>{label}</Text>}

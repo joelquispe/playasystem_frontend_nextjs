@@ -335,29 +335,38 @@ export interface SystemConfig {
   updatedAt: string;
 }
 
-export interface DashboardData {
-  /** Ingreso neto del mes (alias de totalRevenue) */
-  ingresos: number;
-  /** Dinero que salió de caja en el mes (alias de totalExpenses / gastos de caja) */
-  egresos: number;
-  /** ingresos - egresos */
-  ganancia: number;
-  /** Gastos de caja del mes — suma de `extraExpenses` registrados en cada turno cerrado */
-  gastosCaja: number;
-  totalRevenue: number;
-  totalTickets: number;
-  totalCancelled: number;
-  totalDiscounts: number;
-  totalExpenses: number;
+/**
+ * Definiciones financieras únicas (mismas en todos los reportes):
+ * - grossIncome  = Ingreso Bruto = cobrado + descuentos
+ * - netExpenses  = Egresos Netos = descuentos + gastos de caja
+ * - netIncome    = Ingreso Neto = Ingreso Bruto − Egresos Netos
+ * - expectedCash = Efectivo esperado en caja = efectivo − gastos
+ * - cancellations* son informativos: ya están fuera de lo cobrado.
+ */
+export interface FinancialTotals {
+  grossIncome: number;
+  collected: number;
+  discounts: number;
+  expenses: number;
+  netExpenses: number;
+  netIncome: number;
+  expectedCash: number;
+  cancellationsAmount: number;
+  cancellationsCount: number;
   byPaymentMethod: {
     cash: number;
     yape: number;
     plin: number;
     card: number;
   };
+}
+
+export interface DashboardData extends FinancialTotals {
+  paidTickets: number;
   dailySeries: Array<{
     date: string;
-    revenue: number;
+    grossIncome: number;
+    netIncome: number;
   }>;
 }
 
@@ -397,12 +406,7 @@ export interface CashRegisterReportItem extends CashRegister {
   ticketsCount: number;
 }
 
-export interface CashRegisterReportSummary {
-  totalRevenue: number;
-  totalDiscounts: number;
-  totalCancellationsAmount: number;
-  totalCancellationsCount: number;
-  totalExpenses: number;
+export interface CashRegisterReportSummary extends FinancialTotals {
   totalTicketsCount: number;
 }
 
@@ -412,15 +416,11 @@ export interface CashRegisterReportResult {
   summary: CashRegisterReportSummary;
 }
 
-export interface DailySummaryTotals {
-  /** Ingreso del día — suma de finalAmount de tickets pagados */
-  totalRevenue: number;
-  /** Tickets anulados — conteo */
-  totalCancelled: number;
-  /** Descuentos del día */
-  totalDiscounts: number;
-  /** Gastos de caja del día */
-  totalExpenses: number;
+export interface DailySummaryTotals extends FinancialTotals {
+  /** Tickets cobrados en los turnos del día */
+  paidTickets: number;
+  /** Tickets aún pendientes ingresados hasta ese día (pasan al siguiente cajero) */
+  pendingTickets: number;
 }
 
 export interface DailySummaryReportResult {

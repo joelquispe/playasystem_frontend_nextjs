@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import { CashRegister } from '@/types/api';
 import { cardStyle, colors, highlightPanelStyle, nestedPanelStyle } from '@/lib/theme';
+import { FINANCIAL_LABELS, calculateShiftFinancials, formatMoney } from '@/lib/financials';
 
 const { Text, Title } = Typography;
 
@@ -42,6 +43,7 @@ function AmountStat({
 
 export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
   const isOpen = shift.balanceStatus === null;
+  const totals = calculateShiftFinancials(shift);
 
   return (
     <Card
@@ -68,10 +70,14 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
         }}
       >
         <div>
-          <Text style={{ color: colors.textMuted, fontSize: 12 }}>TOTAL RECAUDADO</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 12 }}>{FINANCIAL_LABELS.netIncome.toUpperCase()}</Text>
           <div style={{ fontSize: 28, fontWeight: 800, color: colors.accent, marginTop: 2 }}>
-            s/. {parseFloat(shift.totalAmount).toFixed(2)}
+            {formatMoney(totals.netIncome)}
           </div>
+          <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+            {FINANCIAL_LABELS.grossIncome}: {formatMoney(totals.grossIncome)} · {FINANCIAL_LABELS.netExpenses}:{' '}
+            {formatMoney(totals.netExpenses)}
+          </Text>
         </div>
         <div style={{ textAlign: 'right' }}>
           <Text style={{ color: colors.textMuted, fontSize: 11 }}>Cajero</Text>
@@ -104,15 +110,15 @@ export function ShiftSummaryCard({ shift }: ShiftSummaryCardProps) {
         </Col>
         <Col span={8}>
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <Text style={{ fontSize: 11, color: colors.textMuted }}>Cancelaciones</Text>
-            <div style={{ color: '#ef4444', fontWeight: 600 }}>
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>{FINANCIAL_LABELS.cancellations}</Text>
+            <div style={{ color: colors.textMuted, fontWeight: 600 }}>
               {shift.cancellationsCount} (s/. {parseFloat(shift.cancellationsTotal).toFixed(2)})
             </div>
           </div>
         </Col>
         <Col span={8}>
           <div style={{ textAlign: 'center', padding: '8px 0' }}>
-            <Text style={{ fontSize: 11, color: colors.textMuted }}>Gastos extra</Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted }}>{FINANCIAL_LABELS.expenses}</Text>
             <div style={{ color: '#ef4444', fontWeight: 600 }}>
               - s/. {parseFloat(shift.extraExpenses).toFixed(2)}
             </div>

@@ -13,6 +13,7 @@ import {
 import dayjs from 'dayjs';
 import { CashRegisterReportItem, CashRegisterReportSummary, PaginationMeta } from '@/types/api';
 import { formatLimaDateTime } from '@/lib/datetime';
+import { FINANCIAL_LABELS, calculateShiftFinancials } from '@/lib/financials';
 import { cardStyle, colors, highlightPanelStyle, nestedPanelStyle } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -133,6 +134,7 @@ function NoteBlock({
 }
 
 function ShiftDetailContent({ shift }: { shift: CashRegisterReportItem }) {
+  const totals = calculateShiftFinancials(shift);
   const isBalanced = shift.balanceStatus === 'balanced';
   const isUnbalanced = shift.balanceStatus === 'unbalanced';
   const headerBg = isUnbalanced
@@ -198,7 +200,7 @@ function ShiftDetailContent({ shift }: { shift: CashRegisterReportItem }) {
             marginBottom: 8,
           }}
         >
-          INGRESOS
+          COBRADO POR MEDIO DE PAGO
         </Text>
         <div
           style={{
@@ -225,7 +227,7 @@ function ShiftDetailContent({ shift }: { shift: CashRegisterReportItem }) {
             marginBottom: 8,
           }}
         >
-          DEDUCCIONES
+          RESUMEN DEL TURNO
         </Text>
         <div
           style={{
@@ -234,15 +236,17 @@ function ShiftDetailContent({ shift }: { shift: CashRegisterReportItem }) {
             gap: 8,
           }}
         >
-          <DetailAmount label="Descuentos" value={shift.discountsTotal} color="#ef4444" prefix="- s/." />
+          <DetailAmount label={FINANCIAL_LABELS.grossIncome} value={totals.grossIncome} color="#16a34a" />
+          <DetailAmount label={FINANCIAL_LABELS.discounts} value={totals.discounts} color="#ef4444" prefix="- s/." />
+          <DetailAmount label={FINANCIAL_LABELS.expenses} value={totals.expenses} color="#ef4444" prefix="- s/." />
+          <DetailAmount label={FINANCIAL_LABELS.netExpenses} value={totals.netExpenses} color="#ef4444" prefix="- s/." />
+          <DetailAmount label={FINANCIAL_LABELS.expectedCash} value={totals.expectedCash} color="#16a34a" />
+          <DetailAmount label="Tickets cobrados" value={shift.ticketsCount ?? 0} color={colors.primary} prefix="" />
           <DetailAmount
-            label={`Anulados (${shift.cancellationsCount})`}
-            value={shift.cancellationsTotal}
-            color="#ef4444"
-            prefix="- s/."
+            label={`${FINANCIAL_LABELS.cancellations} (${totals.cancellationsCount})`}
+            value={totals.cancellationsAmount}
+            color={colors.textMuted}
           />
-          <DetailAmount label="Gastos de caja" value={shift.extraExpenses} color="#ef4444" prefix="- s/." />
-          <DetailAmount label="Tickets" value={shift.ticketsCount ?? 0} color={colors.primary} prefix="" />
         </div>
       </div>
 
@@ -259,7 +263,7 @@ function ShiftDetailContent({ shift }: { shift: CashRegisterReportItem }) {
       >
         <div>
           <Text style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, color: colors.textMuted }}>
-            TOTAL RECAUDADO
+            {FINANCIAL_LABELS.netIncome.toUpperCase()}
           </Text>
           {Number(shift.differenceAmount) !== 0 && (
             <Text style={{ display: 'block', fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
@@ -268,7 +272,7 @@ function ShiftDetailContent({ shift }: { shift: CashRegisterReportItem }) {
           )}
         </div>
         <span style={{ fontSize: 28, fontWeight: 900, color: colors.accent, lineHeight: 1 }}>
-          {money(shift.totalAmount)}
+          {money(totals.netIncome)}
         </span>
       </div>
 
@@ -328,9 +332,32 @@ export function CashRegisterReportTable({
     { title: 'Yape', dataIndex: 'yapeAmount', key: 'yapeAmount', width: 90, render: money },
     { title: 'Plin', dataIndex: 'plinAmount', key: 'plinAmount', width: 90, render: money },
     { title: 'Tarjeta', dataIndex: 'cardAmount', key: 'cardAmount', width: 90, render: money },
-    { title: 'Descuentos', dataIndex: 'discountsTotal', key: 'discountsTotal', width: 100, render: money },
     {
-      title: 'Anulaciones',
+      title: FINANCIAL_LABELS.grossIncome,
+      key: 'grossIncome',
+      width: 110,
+      render: (_: unknown, r: CashRegisterReportItem) => money(calculateShiftFinancials(r).grossIncome),
+    },
+    { title: 'Descuentos', dataIndex: 'discountsTotal', key: 'discountsTotal', width: 100, render: money },
+    { title: 'Gastos/Caja', dataIndex: 'extraExpenses', key: 'extraExpenses', width: 100, render: money },
+    {
+      title: FINANCIAL_LABELS.netExpenses,
+      key: 'netExpenses',
+      width: 110,
+      render: (_: unknown, r: CashRegisterReportItem) => money(calculateShiftFinancials(r).netExpenses),
+    },
+    {
+      title: FINANCIAL_LABELS.netIncome,
+      key: 'netIncome',
+      width: 110,
+      render: (_: unknown, r: CashRegisterReportItem) => (
+        <Text style={{ color: colors.accent, fontWeight: 600 }}>
+          {money(calculateShiftFinancials(r).netIncome)}
+        </Text>
+      ),
+    },
+    {
+      title: 'Anulaciones (inf.)',
       key: 'cancellations',
       width: 130,
       render: (_: unknown, r: CashRegisterReportItem) =>
@@ -342,16 +369,6 @@ export function CashRegisterReportTable({
       key: 'ticketsCount',
       width: 90,
       align: 'center',
-    },
-    { title: 'Gastos/Caja', dataIndex: 'extraExpenses', key: 'extraExpenses', width: 100, render: money },
-    {
-      title: 'Total',
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      width: 100,
-      render: (v: string) => (
-        <Text style={{ color: colors.accent, fontWeight: 600 }}>{money(v)}</Text>
-      ),
     },
     {
       title: 'Estado Cuadre',
@@ -397,20 +414,23 @@ export function CashRegisterReportTable({
       {summary && (
         <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
           {[
-            { label: 'Ingreso del período', value: summary.totalRevenue, color: '#16a34a' },
-            { label: 'Tickets Anulados', value: summary.totalCancellationsCount, color: '#ef4444' },
-            { label: 'Monto Anulado', value: summary.totalCancellationsAmount, color: '#ef4444' },
-            { label: 'Descuentos', value: summary.totalDiscounts, color: '#f59e0b' },
-            { label: 'Gastos de caja', value: summary.totalExpenses, color: '#ef4444' },
-            { label: 'Tickets Procesados', value: summary.totalTicketsCount, color: colors.primary },
-          ].map(({ label, value, color }) => (
-            <Col key={label} xs={12} sm={8} md={4}>
+            { label: FINANCIAL_LABELS.grossIncome, value: summary.grossIncome, color: '#16a34a', isMoney: true },
+            { label: FINANCIAL_LABELS.discounts, value: summary.discounts, color: '#f59e0b', isMoney: true },
+            { label: FINANCIAL_LABELS.expenses, value: summary.expenses, color: '#ef4444', isMoney: true },
+            { label: FINANCIAL_LABELS.netExpenses, value: summary.netExpenses, color: '#ef4444', isMoney: true },
+            { label: FINANCIAL_LABELS.netIncome, value: summary.netIncome, color: colors.accent, isMoney: true },
+            { label: FINANCIAL_LABELS.expectedCash, value: summary.expectedCash, color: '#16a34a', isMoney: true },
+            { label: 'Tickets Procesados', value: summary.totalTicketsCount, color: colors.primary, isMoney: false },
+            { label: 'Tickets Anulados', value: summary.cancellationsCount, color: '#ef4444', isMoney: false },
+            { label: 'Monto anulado (inf.)', value: summary.cancellationsAmount, color: colors.textMuted, isMoney: true },
+          ].map(({ label, value, color, isMoney }) => (
+            <Col key={label} xs={12} sm={8} lg={6} xl={4}>
               <div style={{ ...cardStyle, padding: '12px 16px' }}>
                 <Statistic
                   title={<Text style={{ color: colors.textMuted, fontSize: 11 }}>{label}</Text>}
                   value={value}
-                  precision={label.includes('Tickets') ? 0 : 2}
-                  prefix={label.includes('Tickets') ? undefined : 's/.'}
+                  precision={isMoney ? 2 : 0}
+                  prefix={isMoney ? 's/.' : undefined}
                   valueStyle={{ color, fontSize: 18, fontWeight: 700 }}
                 />
               </div>
