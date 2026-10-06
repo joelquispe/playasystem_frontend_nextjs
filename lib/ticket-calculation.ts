@@ -9,6 +9,8 @@
  * with a preview that doesn't match what actually gets charged.
  */
 
+import { formatMinutesHHMM } from '@/lib/datetime';
+
 /** Minutes of tolerance before charging the next hour (must match backend). */
 export const SYSTEM_TOLERANCE_MINUTES = 10;
 
@@ -131,13 +133,7 @@ export function calculateAdditionalChargesTotal(
   return { total, breakdown };
 }
 
-/** Formats a duration in minutes as "Xd Xh Xm", omitting days when 0. */
+/** Formats a parking duration in the system-wide `HH:MM` format (e.g. "02:35"). */
 export function formatDurationMinutes(totalMins: number): string {
-  const mins = Math.max(0, Math.floor(totalMins));
-  const d = Math.floor(mins / (60 * 24));
-  const h = Math.floor((mins % (60 * 24)) / 60);
-  const m = mins % 60;
-  if (d > 0) return `${d}d ${h}h ${m}m`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  return formatMinutesHHMM(totalMins);
 }

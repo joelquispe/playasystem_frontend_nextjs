@@ -5,6 +5,7 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { CashRegister } from '@/types/api';
 import { PAYMENT_METHOD_LABELS, ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
+import { formatMinutesHHMM } from '@/lib/datetime';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -52,7 +53,7 @@ export function MonthlyReportTable({ shifts, loading }: MonthlyReportTableProps)
       render: (_: unknown, r: CashRegister) => {
         const mins = r.attendance?.lateMinutes ?? 0;
         return mins > 0 ? (
-          <Text type="danger">{mins} min</Text>
+          <Text type="danger">{formatMinutesHHMM(mins)}</Text>
         ) : (
           <Text type="secondary">0</Text>
         );

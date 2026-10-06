@@ -24,9 +24,10 @@ import { useUsers } from '@/hooks/useUsers';
 import { AttendanceRecord, AttendanceStatus } from '@/types/api';
 import { ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { SessionCell } from '@/components/attendance/SessionCell';
+import { AttendanceTimeCell } from '@/components/attendance/AttendanceTimeCell';
 import { SessionsTable } from '@/components/attendance/SessionsTable';
 import { cardStyle, colors } from '@/lib/theme';
+import { formatMinutesHHMM } from '@/lib/datetime';
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -106,32 +107,16 @@ export default function AttendancePage() {
     },
     {
       title: 'Entrada',
-      dataIndex: 'checkedInAt',
       key: 'checkedInAt',
-      render: (v: string | null) =>
-        v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
-    },
-    {
-      title: 'Sesión ingreso',
-      key: 'checkInSession',
-      width: 140,
       render: (_: unknown, r: AttendanceRecord) => (
-        <SessionCell session={r.checkInSession} sessionId={r.checkInSessionId} />
+        <AttendanceTimeCell time={r.checkedInAt} session={r.checkInSession} />
       ),
     },
     {
       title: 'Salida',
-      dataIndex: 'checkedOutAt',
       key: 'checkedOutAt',
-      render: (v: string | null) =>
-        v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
-    },
-    {
-      title: 'Sesión salida',
-      key: 'checkOutSession',
-      width: 140,
       render: (_: unknown, r: AttendanceRecord) => (
-        <SessionCell session={r.checkOutSession} sessionId={r.checkOutSessionId} />
+        <AttendanceTimeCell time={r.checkedOutAt} session={r.checkOutSession} />
       ),
     },
     {
@@ -173,7 +158,7 @@ export default function AttendancePage() {
       key: 'lateMinutes',
       render: (v: number) =>
         v > 0 ? (
-          <Text style={{ color: '#f59e0b' }}>{v} min</Text>
+          <Text style={{ color: '#f59e0b' }}>{formatMinutesHHMM(v)}</Text>
         ) : (
           <Text style={{ color: colors.textSubtle }}>—</Text>
         ),
@@ -243,10 +228,10 @@ export default function AttendancePage() {
                     {[
                       { label: 'Días con tardanza', value: summary.lateCount, color: '#f59e0b' },
                       {
-                        label: 'Minutos de tardanza',
-                        value: summary.totalLateMinutes,
+                        label: 'Tardanza acumulada (HH:MM)',
+                        value: formatMinutesHHMM(summary.totalLateMinutes),
                         color: '#ef4444',
-                        suffix: ' min',
+                        suffix: undefined,
                       },
                     ].map(({ label, value, color, suffix }) => (
                       <Col key={label} xs={12} sm={6}>

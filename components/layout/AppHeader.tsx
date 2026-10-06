@@ -5,16 +5,15 @@ import type { MenuProps } from 'antd';
 import {
   LoginOutlined,
   LogoutOutlined,
-  PlusCircleOutlined,
   UserOutlined,
   ClockCircleOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/AuthProvider';
 import { getUserRoleName, getUserRoleSlug } from '@/lib/roles';
 import { useCheckIn } from '@/hooks/useAttendance';
-import { useOpenShift } from '@/hooks/useCashRegister';
 import { useCashierSession } from '@/hooks/useCashierSession';
 
 const { Header } = Layout;
@@ -29,7 +28,6 @@ export function AppHeader({ title }: AppHeaderProps) {
   const { user } = useAuth();
   const { workflow, requestLogout, requestCheckOut, isPending } = useCashierSession();
   const checkIn = useCheckIn();
-  const openShift = useOpenShift();
 
   const isCashier = workflow.isCashier;
 
@@ -42,30 +40,45 @@ export function AppHeader({ title }: AppHeaderProps) {
    * check_out_session_id (session opened at login).
    */
   const showCheckIn = isCashier && workflow.canCheckIn;
-  const showCheckOut = isCashier && workflow.canCheckOut;
 
   /**
-   * PLAYA-304: Show "Abrir caja" when attendance is open but no shift is open.
-   * This covers both "just checked in" and "shift was already closed today".
+   * "Marcar salida" lives in the user menu (not next to caja buttons) to
+   * avoid accidental clicks; it still asks for confirmation.
+   * "Abrir caja" is owned by CashierWorkflowBanner / Caja page (single action).
    */
-  const showOpenShift = isCashier && workflow.canOpenShift;
+  const showCheckOut = isCashier && workflow.hasOpenSession;
+  const checkedInAt = workflow.attendance?.checkedInAt;
 
   /**
    * Show "Cuadrar caja" shortcut when caja has activity.
    */
   const showCloseCash = isCashier && workflow.canCloseShift;
 
+  const checkOutItems: NonNullable<MenuProps['items']> = showCheckOut
+    ? [
+        { type: 'divider' },
+        {
+          key: 'check-out',
+          icon: <ClockCircleOutlined />,
+          label: 'Marcar salida de asistencia',
+          disabled: isPending,
+          onClick: requestCheckOut,
+        },
+      ]
+    : [];
+
   const menuItems: MenuProps['items'] = [
     {
       key: 'user-info',
       label: (
-        <div style={{ padding: '4px 0', minWidth: 160 }}>
+        <div style={{ padding: '4px 0', minWidth: 180 }}>
           <div style={{ fontWeight: 600, color: '#2f3639' }}>{user?.fullName}</div>
           <div style={{ fontSize: 12, color: '#65767d' }}>@{user?.username}</div>
         </div>
       ),
       disabled: true,
     },
+    ...checkOutItems,
     { type: 'divider' },
     {
       key: 'logout',
@@ -111,30 +124,13 @@ export function AppHeader({ title }: AppHeaderProps) {
           </Button>
         )}
 
-        {showCheckOut && (
-          <Button
-            danger
-            icon={<ClockCircleOutlined />}
-            loading={isPending}
-            onClick={requestCheckOut}
-          >
-            Marcar salida
-          </Button>
+        {showCheckOut && checkedInAt && (
+          <Tag icon={<ClockCircleOutlined />} color="green" style={{ marginInlineEnd: 0 }}>
+            Entrada {dayjs(checkedInAt).format('HH:mm')}
+          </Tag>
         )}
 
-        {/* ── Caja shortcuts ────────────────────────────────────────────── */}
-        {showOpenShift && (
-          <Button
-            type="primary"
-            icon={<PlusCircleOutlined />}
-            loading={openShift.isPending}
-            onClick={() => openShift.mutate()}
-            style={{ background: '#0d9488', borderColor: '#0d9488' }}
-          >
-            Abrir caja
-          </Button>
-        )}
-
+        {/* ── Caja shortcut ─────────────────────────────────────────────── */}
         {showCloseCash && (
           <Button
             icon={<WalletOutlined />}

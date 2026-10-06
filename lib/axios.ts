@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { clearAuth, getRefreshToken, getToken, setTokens } from '@/lib/auth';
+import { SESSION_CLOSED_REASON, clearAuth, getRefreshToken, getToken, setTokens } from '@/lib/auth';
 import { refreshAccessToken } from '@/lib/token-refresh';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
@@ -71,7 +71,7 @@ apiClient.interceptors.response.use(
       } catch {
         if (typeof window !== 'undefined') {
           clearAuth();
-          window.location.href = '/login';
+          window.location.href = `/login?reason=${SESSION_CLOSED_REASON}`;
         }
       }
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Image from 'next/image';
 import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useForm, Controller } from 'react-hook-form';
@@ -10,6 +10,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { ElRoseLogo } from '@/components/auth/ElRoseLogo';
 import { ButtonCustom } from '@/components/ui/ButtonCustom';
 import { InputCustom } from '@/components/ui/InputCustom';
+import { SessionClosedNotice } from '@/components/auth/SessionClosedNotice';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Ingresa tu usuario'),
@@ -48,6 +49,12 @@ export default function LoginPage() {
       <div className="flex w-full max-w-[920px] items-center justify-start gap-10 lg:gap-14">
         <div className="w-full max-w-[380px] shrink-0">
           <ElRoseLogo />
+
+          {!errors.root && (
+            <Suspense fallback={null}>
+              <SessionClosedNotice />
+            </Suspense>
+          )}
 
           {errors.root && (
             <div

@@ -1,6 +1,9 @@
 import { User } from '@/types/api';
 import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY, SESSION_ID_KEY, USER_KEY } from './constants';
 
+/** `?reason=` value on /login when the server rejected the session (revoked or expired). */
+export const SESSION_CLOSED_REASON = 'session-closed';
+
 /** Fallback cookie lifetime (seconds) when the token has no readable `exp` claim. */
 const DEFAULT_COOKIE_MAX_AGE_SECONDS = 8 * 60 * 60;
 

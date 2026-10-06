@@ -53,7 +53,7 @@ export function UserTable({ data, loading, onEdit, onResetPassword }: UserTableP
       width: 130,
       render: (_, record: User) => (
         <Text style={{ fontSize: 12, color: colors.textMuted }}>
-          {record.scheduleStart} – {record.scheduleEnd}
+          {record.scheduleStart?.slice(0, 5)} – {record.scheduleEnd?.slice(0, 5)}
         </Text>
       ),
     },

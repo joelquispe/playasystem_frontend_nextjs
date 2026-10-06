@@ -10,6 +10,7 @@ import {
 } from '@/types/api';
 import { SESSION_REVOKE_REASON_LABELS } from '@/lib/constants';
 import { formatLimaDateTime } from '@/lib/datetime';
+import { getSessionId } from '@/lib/auth';
 import { cardStyle, colors } from '@/lib/theme';
 import { useRevokeSession } from '@/hooks/useSessions';
 
@@ -32,6 +33,7 @@ export function SessionsTable({
   allowRevoke = true,
 }: SessionsTableProps) {
   const revoke = useRevokeSession();
+  const currentSessionId = getSessionId();
 
   const columns: ColumnsType<UserSession> = [
     {
@@ -97,12 +99,14 @@ export function SessionsTable({
           {
             title: '',
             key: 'actions',
-            width: 90,
+            width: 100,
             render: (_: unknown, r: UserSession) =>
-              r.isActive ? (
+              r.id === currentSessionId ? (
+                <Tag color="blue">Tu sesión</Tag>
+              ) : r.isActive ? (
                 <Popconfirm
-                  title="¿Revocar esta sesión?"
-                  description="El usuario deberá iniciar sesión de nuevo."
+                  title="¿Forzar cierre de esta sesión?"
+                  description="El usuario será expulsado del sistema en menos de un minuto. Su asistencia y su caja no se cierran."
                   okText="Revocar"
                   cancelText="Cancelar"
                   okButtonProps={{ danger: true }}

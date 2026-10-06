@@ -5,9 +5,9 @@ import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { AttendanceRecord, AttendanceStatus, PaginationMeta } from '@/types/api';
 import { ATTENDANCE_STATUS_LABELS } from '@/lib/constants';
-import { formatLimaDateTime } from '@/lib/datetime';
+import { formatLimaDateTime, formatMinutesHHMM } from '@/lib/datetime';
 import { cardStyle, colors } from '@/lib/theme';
-import { SessionCell } from '@/components/attendance/SessionCell';
+import { AttendanceTimeCell } from '@/components/attendance/AttendanceTimeCell';
 
 const { Text } = Typography;
 
@@ -91,32 +91,16 @@ export function AttendanceReportTable({
     },
     {
       title: 'Entrada',
-      dataIndex: 'checkedInAt',
       key: 'checkedInAt',
-      render: (v: string | null) =>
-        v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
-    },
-    {
-      title: 'Salida',
-      dataIndex: 'checkedOutAt',
-      key: 'checkedOutAt',
-      render: (v: string | null) =>
-        v ? dayjs(v).format('HH:mm') : <Text style={{ color: colors.textSubtle }}>—</Text>,
-    },
-    {
-      title: 'Sesión ingreso',
-      key: 'checkInSession',
-      width: 140,
       render: (_: unknown, r: AttendanceRecord) => (
-        <SessionCell session={r.checkInSession} sessionId={r.checkInSessionId} />
+        <AttendanceTimeCell time={r.checkedInAt} session={r.checkInSession} />
       ),
     },
     {
-      title: 'Sesión salida',
-      key: 'checkOutSession',
-      width: 140,
+      title: 'Salida',
+      key: 'checkedOutAt',
       render: (_: unknown, r: AttendanceRecord) => (
-        <SessionCell session={r.checkOutSession} sessionId={r.checkOutSessionId} />
+        <AttendanceTimeCell time={r.checkedOutAt} session={r.checkOutSession} />
       ),
     },
     {
@@ -157,7 +141,7 @@ export function AttendanceReportTable({
       title: 'Trabajado',
       dataIndex: 'workedMinutes',
       key: 'workedMinutes',
-      render: (v: number) => (v > 0 ? `${v} min` : '—'),
+      render: (v: number) => (v > 0 ? formatMinutesHHMM(v) : '—'),
     },
   ];
 

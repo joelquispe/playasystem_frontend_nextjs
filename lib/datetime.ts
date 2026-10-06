@@ -22,3 +22,14 @@ export function formatLimaDateTime(
     ...options,
   });
 }
+
+/**
+ * System-wide duration format `HH:MM` (e.g. 155 → "02:35").
+ * Hours are not wrapped at 24 (e.g. 1570 → "26:10").
+ */
+export function formatMinutesHHMM(totalMinutes: number | null | undefined): string {
+  const mins = Math.max(0, Math.floor(Number(totalMinutes) || 0));
+  const hours = Math.floor(mins / 60);
+  const minutes = mins % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+}

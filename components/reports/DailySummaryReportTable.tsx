@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { DailySummaryTotals, PaginationMeta, Ticket } from '@/types/api';
 import { PAYMENT_METHOD_LABELS, RATE_TYPE_LABELS, TICKET_STATUS_LABELS } from '@/lib/constants';
 import { FINANCIAL_LABELS } from '@/lib/financials';
+import { formatMinutesHHMM } from '@/lib/datetime';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -77,7 +78,7 @@ export function DailySummaryReportTable({
       dataIndex: 'totalMinutes',
       key: 'totalMinutes',
       width: 80,
-      render: (v: number | null) => (v != null ? `${v} min` : '—'),
+      render: (v: number | null) => (v != null ? formatMinutesHHMM(v) : '—'),
     },
     {
       title: 'Tarifa',

@@ -201,7 +201,6 @@ export default function CashRegisterPage() {
     return (
       <>
         <PageHeader title="Caja" subtitle="Turno actual" />
-        <CashierWorkflowBanner />
 
         {/* PLAYA-304: attendance open but no caja → offer to open one */}
         {workflow.hasOpenSession ? (
@@ -228,7 +227,7 @@ export default function CashRegisterPage() {
               onClick={() => openShift.mutate()}
               style={{ background: colors.primary, borderColor: colors.primary, minWidth: 200 }}
             >
-              Abrir turno de caja
+              Abrir caja
             </Button>
           </div>
         ) : (
