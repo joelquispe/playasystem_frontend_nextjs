@@ -36,6 +36,8 @@ import {
   useRemoveAdditionalCharge,
 } from '@/hooks/useTickets';
 import { usePlateEvents } from '@/hooks/usePlateEvents';
+import { useNow } from '@/hooks/useNow';
+import { useAuth } from '@/providers/AuthProvider';
 import { useTaxpayer, usePersonByDni } from '@/hooks/useNubefact';
 import { formatDniDisplayName } from '@/services/identity.service';
 import { printTicketDirectly } from '@/lib/print-ticket';
@@ -99,20 +101,15 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
   const chargeTicket = useChargeTicket();
   const cancelTicket = useCancelTicket();
   const removeCharge = useRemoveAdditionalCharge();
+  const { user } = useAuth();
   const { data: plateEvents = [] } = usePlateEvents(ticket?.plate ?? '');
 
   const [cancelMode, setCancelMode] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
-  // Live "now" — ticks while the modal is open so the previewed amount
-  // stays accurate as time passes (e.g. crossing an hour/tolerance boundary
-  // while the cashier is filling out the form).
-  const [now, setNow] = useState(() => dayjs());
-  useEffect(() => {
-    if (!open) return;
-    const id = setInterval(() => setNow(dayjs()), 15_000);
-    return () => clearInterval(id);
-  }, [open]);
+  // Re-synced on open and on window focus so the preview never shows a stale
+  // exit time after the app sat idle.
+  const now = useNow(1_000, open);
 
   const {
     control,
@@ -286,14 +283,21 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
     `}</style>
     <Modal
         title={
-          <Text strong style={{ fontSize: 16 }}>
-            Cobro de Ticket
-          </Text>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+            <Text strong style={{ fontSize: 16 }}>
+              Cobro de Ticket
+            </Text>
+            {user?.fullName && (
+              <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                Cajero: <Text strong style={{ fontSize: 12 }}>{user.fullName}</Text>
+              </Text>
+            )}
+          </div>
         }
         open={open}
         onCancel={() => { reset(); onClose(); }}
         footer={null}
-        width={960}
+        width={1040}
         styles={{ body: { padding: '16px 24px' } }}
       >
         {/* ── Header: Placa / Vehículo / Llave ─────────────────────────────── */}
@@ -364,16 +368,25 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
           </Col>
         </Row>
 
-        {/* ── Ticket summary row ────────────────────────────────────────────── */}
+        {/* ── Ticket summary: details grid (wraps) + total block ───────────── */}
         <div
           style={{
-            ...nestedPanelStyle,
-            padding: '10px 14px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 12,
             marginBottom: 14,
-            overflowX: 'auto',
           }}
         >
-          <Row gutter={16} wrap={false}>
+          <div
+            style={{
+              ...nestedPanelStyle,
+              flex: '1 1 480px',
+              padding: '10px 14px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
+              gap: '8px 12px',
+            }}
+          >
             {[
               { label: 'H. Ingreso', value: entryTime.format('DD/MM/YY\nHH:mm:ss') },
               { label: 'H. Salida', value: exitTime.format('DD/MM/YY\nHH:mm:ss') },
@@ -388,9 +401,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                 ? [{ label: 'Tarifa fija', value: `s/. ${hourAmount.toFixed(2)}` }]
                 : [
                     {
-                      label: stoppedByOvernight
-                        ? 'Horas cobradas (hasta amanecida)'
-                        : 'Horas cobradas',
+                      label: 'Horas cobradas',
                       value: `${chargeableHours}h × s/.${ratePerHour.toFixed(2)}`,
                     },
                     {
@@ -412,7 +423,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                 accent: true,
               },
             ].map(({ label, value, accent }) => (
-              <Col key={label} style={{ minWidth: 90, textAlign: 'center' }}>
+              <div key={label} style={{ textAlign: 'center' }}>
                 <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
                   {label}
                 </Text>
@@ -426,11 +437,23 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                 >
                   {value}
                 </Text>
-              </Col>
+              </div>
             ))}
+          </div>
 
-            {/* Descuento inline */}
-            <Col style={{ minWidth: 80, textAlign: 'center' }}>
+          <div
+            style={{
+              ...nestedPanelStyle,
+              flex: '0 1 260px',
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              gap: 12,
+              border: `2px solid ${colors.primary}`,
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
               <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
                 Descuento
               </Text>
@@ -443,27 +466,20 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                     min={0}
                     max={grossAmount}
                     step={0.5}
-                    size="small"
-                    style={{ width: 72, fontWeight: 700 }}
+                    style={{ width: 88, fontWeight: 700 }}
                   />
                 )}
               />
-            </Col>
-
-            {/* Total */}
-            <Col style={{ minWidth: 90, textAlign: 'center' }}>
+            </div>
+            <div style={{ textAlign: 'center' }}>
               <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
                 TOTAL
               </Text>
-              <Text
-                style={{
-                  fontWeight: 900, fontSize: 18, color: colors.primary,
-                }}
-              >
+              <Text style={{ fontWeight: 900, fontSize: 22, color: colors.primary, whiteSpace: 'nowrap' }}>
                 s/. {total.toFixed(2)}
               </Text>
-            </Col>
-          </Row>
+            </div>
+          </div>
         </div>
 
         {/* ── Additional charges breakdown (amanecida, hora/fracción extra) ──── */}

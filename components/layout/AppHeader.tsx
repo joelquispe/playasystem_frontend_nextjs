@@ -148,12 +148,31 @@ export function AppHeader({ title }: AppHeaderProps) {
         </Tag>
 
         <Dropdown menu={{ items: menuItems }} placement="bottomRight" trigger={['click']}>
-          <Button type="text" style={{ padding: 4, height: 'auto' }}>
+          <Button
+            type="text"
+            aria-label={`Usuario: ${user?.fullName ?? ''}`}
+            style={{ padding: '4px 8px', height: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}
+          >
             <Avatar
               size={32}
               icon={<UserOutlined />}
               style={{ background: '#2f6d73', cursor: 'pointer' }}
             />
+            {user?.fullName && (
+              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.15 }}>
+                <span style={{ fontSize: 10, color: '#65767d' }}>
+                  {isCashier ? 'Cajero' : 'Usuario'}
+                </span>
+                <span
+                  style={{
+                    fontSize: 13, fontWeight: 700, color: '#2f3639',
+                    maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {user.fullName}
+                </span>
+              </span>
+            )}
           </Button>
         </Dropdown>
       </Space>

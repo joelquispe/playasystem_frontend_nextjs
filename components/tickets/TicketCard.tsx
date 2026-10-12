@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Button, Card, Space, Tag, Tooltip, Typography } from 'antd';
 import {
   CarOutlined,
@@ -16,6 +15,8 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { Ticket } from '@/types/api';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
 import { useToggleKey } from '@/hooks/useTickets';
+import { useNow } from '@/hooks/useNow';
+import { formatMinutesHHMM } from '@/lib/datetime';
 import { cardStyle, colors, nestedPanelStyle } from '@/lib/theme';
 
 dayjs.extend(duration);
@@ -31,21 +32,8 @@ interface TicketCardProps {
 }
 
 function useElapsedTime(entryTime: string): string {
-  const [elapsed, setElapsed] = useState('');
-
-  useEffect(() => {
-    const update = () => {
-      const mins = dayjs().diff(dayjs(entryTime), 'minute');
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
-      setElapsed(h > 0 ? `${h}h ${m}m` : `${m}m`);
-    };
-    update();
-    const id = setInterval(update, 60_000);
-    return () => clearInterval(id);
-  }, [entryTime]);
-
-  return elapsed;
+  const now = useNow(30_000);
+  return formatMinutesHHMM(now.diff(dayjs(entryTime), 'minute'));
 }
 
 function getElapsedColor(entryTime: string): string {

@@ -20,9 +20,10 @@ import {
   ReloadOutlined,
   RollbackOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import { Ticket, Client, EventColor } from '@/types/api';
+import { useNow } from '@/hooks/useNow';
 import { useClients } from '@/hooks/useClients';
 import { useRevertTicket, useToggleKey } from '@/hooks/useTickets';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
@@ -41,8 +42,12 @@ const EVENT_DOT: Record<EventColor, string> = {
   red: '#c4605c',
 };
 
-function formatElapsed(entryTime: string): string {
-  return formatDurationMinutes(dayjs().diff(dayjs(entryTime), 'minute'));
+const TABLE_SCROLL_X = 1600;
+/** Vertical scroll (bar sits next to the fixed "Acciones" column). */
+const TABLE_SCROLL_Y = 'max(320px, calc(100vh - 340px))';
+
+function formatElapsed(entryTime: string, now: Dayjs): string {
+  return formatDurationMinutes(now.diff(dayjs(entryTime), 'minute'));
 }
 
 export interface CreateClientFromTicketPayload {
@@ -83,6 +88,7 @@ export function SistemaTicketsTable({
   const revertTicket = useRevertTicket();
   const toggleKey = useToggleKey();
   const [recordsTicket, setRecordsTicket] = useState<Ticket | null>(null);
+  const now = useNow(30_000);
 
   const clientByPlate = useMemo(() => {
     const map = new Map<string, Client>();
@@ -133,7 +139,7 @@ export function SistemaTicketsTable({
       width: 80,
       render: (_, r) =>
         r.status === 'pending'
-          ? formatElapsed(r.entryTime)
+          ? formatElapsed(r.entryTime, now)
           : r.totalMinutes != null
             ? formatDurationMinutes(r.totalMinutes)
             : '—',
@@ -353,9 +359,14 @@ export function SistemaTicketsTable({
   return (
     <div style={{ ...cardStyle, padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <Text strong style={{ color: colors.text, fontSize: 15 }}>
-          Vehículos en el sistema
-        </Text>
+        <Space size={8} align="center">
+          <Text strong style={{ color: colors.text, fontSize: 15 }}>
+            Vehículos en el sistema
+          </Text>
+          <Tag color="blue" style={{ fontWeight: 700, fontSize: 13, marginInlineEnd: 0 }}>
+            {tickets.length} {tickets.length === 1 ? 'vehículo' : 'vehículos'}
+          </Tag>
+        </Space>
         <Space>
           <Select
             value={statusFilter}
@@ -374,13 +385,14 @@ export function SistemaTicketsTable({
       </div>
 
       <Table
+        className="table-wide-scroll"
         rowKey="id"
         columns={columns}
         dataSource={tickets}
         loading={loading}
         size="small"
-        scroll={{ x: 1600 }}
-        pagination={{ pageSize: 15, showSizeChanger: false }}
+        scroll={{ x: TABLE_SCROLL_X, y: TABLE_SCROLL_Y }}
+        pagination={false}
         expandable={{
           expandedRowRender: (record) => (
             <div style={{ padding: '8px 0' }}>

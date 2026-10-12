@@ -1,12 +1,13 @@
 'use client';
 
-import { Button, Popconfirm, Space, Switch, Table, Tag, Tooltip, Typography } from 'antd';
+import { Button, Popconfirm, Space, Switch, Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { EditOutlined, StopOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { VehicleType } from '@/types/api';
 import { useDeactivateVehicleType, useUpdateVehicleType } from '@/hooks/useVehicles';
-import { getDefaultHourRate } from '@/lib/vehicles';
+import { getDefaultHourRate, VEHICLE_ICON_OPTIONS } from '@/lib/vehicles';
+import { VehicleIcon } from '@/components/vehicles/VehicleIcon';
 import { cardStyle } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -38,8 +39,15 @@ export function VehicleTypeTable({ data, loading, onEdit }: VehicleTypeTableProp
       title: 'Icono',
       dataIndex: 'iconName',
       key: 'iconName',
-      width: 100,
-      render: (value: string) => <Tag>{value}</Tag>,
+      width: 160,
+      render: (value: string) => (
+        <Space size={8}>
+          <VehicleIcon iconName={value} size={20} style={{ color: '#2f6d73' }} />
+          <Text style={{ fontSize: 12 }}>
+            {VEHICLE_ICON_OPTIONS.find((o) => o.value === value)?.label ?? value}
+          </Text>
+        </Space>
+      ),
     },
     {
       title: 'Orden',

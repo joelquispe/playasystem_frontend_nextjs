@@ -27,10 +27,10 @@ import {
   WalletOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import { useCurrentShift, useAddExpense, useCloseShift, useOpenShift } from '@/hooks/useCashRegister';
 import { useTickets } from '@/hooks/useTickets';
 import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
+import { useNow } from '@/hooks/useNow';
 import { useAuth } from '@/providers/AuthProvider';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { CashierWorkflowBanner } from '@/components/cashier/CashierWorkflowBanner';
@@ -100,6 +100,7 @@ export default function CashRegisterPage() {
   const addExpense = useAddExpense();
   const closeShift = useCloseShift();
   const openShift = useOpenShift();
+  const now = useNow(30_000);
 
   const [closeNotes, setCloseNotes] = useState('');
   const [unbalancedOpen, setUnbalancedOpen] = useState(false);
@@ -410,7 +411,7 @@ export default function CashRegisterPage() {
                 Cerrar Turno
               </Title>
               <Text style={{ fontSize: 12, color: colors.textMuted, display: 'block', marginBottom: 16 }}>
-                {dayjs().format('DD [de] MMMM [de] YYYY · HH:mm')}
+                {now.format('DD [de] MMMM [de] YYYY · HH:mm')}
               </Text>
 
               {/* Total reference */}

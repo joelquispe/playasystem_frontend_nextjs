@@ -16,6 +16,8 @@ export function useTickets(status?: string) {
     queryKey: status ? QUERY_KEYS.TICKETS_BY_STATUS(status) : QUERY_KEYS.TICKETS_BY_STATUS('all'),
     queryFn: () => ticketsService.getTickets(status),
     refetchInterval: 30_000,
+    // Polling pauses in background tabs; resync as soon as the cashier returns.
+    refetchOnWindowFocus: true,
   });
 }
 

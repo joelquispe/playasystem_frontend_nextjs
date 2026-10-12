@@ -3,9 +3,12 @@ import { Rate, RateType, VehicleType } from '@/types/api';
 export const VEHICLE_ICON_OPTIONS = [
   { value: 'moto', label: 'Moto' },
   { value: 'auto', label: 'Auto' },
-  { value: 'suv', label: 'SUV' },
+  { value: 'suv', label: 'Camioneta mediana (SUV)' },
   { value: 'pickup_large', label: 'Camioneta grande' },
-  { value: 'van', label: 'Van' },
+  { value: 'pickup', label: 'Pickup' },
+  { value: 'furgon', label: 'Furgón' },
+  { value: 'combi', label: 'Combi' },
+  { value: 'van', label: 'Van (igual a Combi)' },
   { value: 'truck', label: 'Camión' },
 ];
 

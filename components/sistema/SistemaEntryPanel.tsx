@@ -13,15 +13,13 @@ import {
   Typography,
 } from 'antd';
 import {
-  CarOutlined,
   CheckCircleOutlined,
   CloseOutlined,
   SearchOutlined,
   SmileOutlined,
-  TruckOutlined,
-  ThunderboltOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
+import { VehicleIcon } from '@/components/vehicles/VehicleIcon';
 import dayjs from 'dayjs';
 import { useVehicles, useSetVehicleDefaultRate } from '@/hooks/useVehicles';
 import { useRates } from '@/hooks/useRates';
@@ -41,16 +39,6 @@ import { normalizePlate, platesEqual } from '@/lib/plate';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text, Title } = Typography;
-
-// ── Vehicle icon map ──────────────────────────────────────────────────────────
-const VEHICLE_ICONS: Record<string, React.ReactNode> = {
-  moto: <ThunderboltOutlined />,
-  auto: <CarOutlined />,
-  suv: <CarOutlined />,
-  pickup_large: <TruckOutlined />,
-  truck: <TruckOutlined />,
-  van: <TruckOutlined />,
-};
 
 // ── Event colour → emoji ──────────────────────────────────────────────────────
 const EVENT_FACE: Record<string, React.ReactNode> = {
@@ -558,7 +546,7 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                             lineHeight: 1,
                           }}
                         >
-                          {VEHICLE_ICONS[vehicle.iconName] ?? <CarOutlined />}
+                          <VehicleIcon iconName={vehicle.iconName} title={vehicle.name} />
                         </span>
                         <span
                           style={{
