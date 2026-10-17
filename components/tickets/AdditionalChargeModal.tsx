@@ -116,7 +116,7 @@ export function AdditionalChargeModal({ ticket, open, onClose }: AdditionalCharg
             type="info"
             showIcon
             style={{ marginBottom: 12 }}
-            message="El monto final se calcula al cobrar el ticket"
+            title="El monto final se calcula al cobrar el ticket"
             description="Ingresa la tarifa por hora. El sistema multiplicará automáticamente por las horas transcurridas desde que se aplique este cargo."
           />
         )}

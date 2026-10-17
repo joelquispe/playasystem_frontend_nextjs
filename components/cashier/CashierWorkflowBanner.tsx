@@ -29,7 +29,7 @@ export function CashierWorkflowBanner() {
         type="info"
         showIcon
         style={{ marginBottom: 16 }}
-        message="Cargando turno…"
+        title="Cargando turno…"
         description={<Spin size="small" />}
       />
     );
@@ -52,7 +52,7 @@ export function CashierWorkflowBanner() {
         type="warning"
         showIcon
         style={{ marginBottom: 16 }}
-        message="Sin turno de caja activo"
+        title="Sin turno de caja activo"
         description="Abre un turno de caja para poder cobrar tickets. Si ya terminaste tu jornada, marca tu salida desde el menú de tu usuario (arriba a la derecha)."
         action={
           <Button
@@ -75,7 +75,7 @@ export function CashierWorkflowBanner() {
         type="info"
         showIcon
         style={{ marginBottom: 16 }}
-        message="Cuadra la caja antes de salir"
+        title="Cuadra la caja antes de salir"
         description="Hay cobros registrados. Cuadra el turno antes de marcar tu salida."
         action={
           <Link href={CASH_REGISTER_PATH}>

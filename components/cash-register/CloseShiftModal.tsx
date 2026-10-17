@@ -170,7 +170,7 @@ export function CloseShiftModal({ open, onClose, shift }: CloseShiftModalProps) 
       <Alert
         type="warning"
         showIcon
-        message="Esta acción no se puede deshacer."
+        title="Esta acción no se puede deshacer."
         style={{ marginBottom: 16, fontSize: 12 }}
       />
 

@@ -141,7 +141,7 @@ export function NewTicketDrawer({ open, onClose }: NewTicketDrawerProps) {
         <Alert
           type="info"
           showIcon
-          message={`Abonado activo: ${foundSubscriber.fullName}`}
+          title={`Abonado activo: ${foundSubscriber.fullName}`}
           description={`Vigente hasta ${foundSubscriber.periodEnd} · s/. ${parseFloat(foundSubscriber.monthlyAmount).toFixed(2)}/mes`}
           style={{ marginBottom: 16 }}
         />
@@ -151,7 +151,7 @@ export function NewTicketDrawer({ open, onClose }: NewTicketDrawerProps) {
         <Alert
           type={hasSpecialRate(foundClient) ? 'info' : 'success'}
           showIcon
-          message={
+          title={
             hasSpecialRate(foundClient)
               ? `Tarifa especial: ${foundClient!.fullName}`
               : `Cliente frecuente: ${foundClient!.fullName}`

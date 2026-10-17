@@ -560,7 +560,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
             type="warning"
             showIcon
             style={{ marginBottom: 12 }}
-            message="Cargo de amanecida aplicado hace poco"
+            title="Cargo de amanecida aplicado hace poco"
             description="El vehículo salió a los pocos minutos de activarse la amanecida. Si el cliente no llegó a usar el servicio de toda la noche, considere quitar el cargo (arriba) y cobrar únicamente las horas consumidas."
           />
         )}
@@ -568,7 +568,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
         {/* ── No payment method warning ─────────────────────────────────────── */}
         {noPaymentMethod && (
           <Alert
-            message="¡Ingrese Medio de Pago!"
+            title="¡Ingrese Medio de Pago!"
             type="warning"
             showIcon
             style={{ marginBottom: 12, fontWeight: 600 }}
