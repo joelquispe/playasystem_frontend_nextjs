@@ -5,11 +5,10 @@ export const VEHICLE_ICON_OPTIONS = [
   { value: 'auto', label: 'Auto' },
   { value: 'suv', label: 'Camioneta mediana (SUV)' },
   { value: 'pickup_large', label: 'Camioneta grande' },
+  { value: 'van', label: 'Pickup / Furgón / Combi' },
   { value: 'pickup', label: 'Pickup' },
   { value: 'furgon', label: 'Furgón' },
   { value: 'combi', label: 'Combi' },
-  { value: 'van', label: 'Van (igual a Combi)' },
-  { value: 'truck', label: 'Camión' },
 ];
 
 export function getVehicleRates(vehicle: VehicleType | undefined, rateType?: RateType): Rate[] {

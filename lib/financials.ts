@@ -9,7 +9,9 @@ export const FINANCIAL_LABELS = {
   netIncome: 'Ingresos Netos',
   netIncomeDay: 'Ingresos Netos del Día',
   expectedCash: 'Efectivo esperado en caja',
-  cancellations: 'Anulados (informativo)',
+  cancellations: 'Anulados',
+  /** Cobrado (todos los medios) − gastos: lo que debe rendir el turno. */
+  cashTotal: 'Total en caja',
 } as const;
 
 const round2 = (value: number): number => Math.round(value * 100) / 100;

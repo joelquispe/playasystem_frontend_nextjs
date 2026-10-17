@@ -8,7 +8,7 @@ import { Button, Form, Input, InputNumber, Modal, Select, Switch } from 'antd';
 import { VehicleType } from '@/types/api';
 import { useCreateVehicleType, useUpdateVehicleType } from '@/hooks/useVehicles';
 import { getDefaultHourRate, VEHICLE_ICON_OPTIONS } from '@/lib/vehicles';
-import { VehicleIcon } from '@/components/vehicles/VehicleIcon';
+import { VehicleIcon, resolveVehicleIconKey } from '@/components/vehicles/VehicleIcon';
 
 const keyRegex = /^[a-z][a-z0-9_]*$/;
 
@@ -61,7 +61,7 @@ export function VehicleTypeFormModal({ open, editing, onClose }: VehicleTypeForm
       reset({
         key: editing.key,
         name: editing.name,
-        iconName: editing.iconName,
+        iconName: resolveVehicleIconKey(editing.iconName),
         displayOrder: editing.displayOrder,
         defaultRateAmount: defaultRate ? parseFloat(defaultRate.amount) : undefined,
         defaultRateLabel: defaultRate?.label ?? '',

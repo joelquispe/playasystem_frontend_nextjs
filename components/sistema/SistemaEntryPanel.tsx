@@ -527,8 +527,8 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: 10,
-                          padding: 16,
+                          gap: 6,
+                          padding: '10px 10px 12px',
                           background: selected ? '#e6f4f4' : 'transparent',
                           border: selected
                             ? `2px solid ${colors.primary}`
@@ -541,12 +541,18 @@ export function SistemaEntryPanel({ onTicketCreated }: SistemaEntryPanelProps) {
                       >
                         <span
                           style={{
-                            fontSize: 42,
+                            position: 'relative',
+                            flex: '1 1 auto',
+                            width: '100%',
+                            minHeight: 64,
                             color: selected ? colors.primary : colors.textMuted,
-                            lineHeight: 1,
                           }}
                         >
-                          <VehicleIcon iconName={vehicle.iconName} title={vehicle.name} />
+                          <VehicleIcon
+                            iconName={vehicle.iconName}
+                            title={vehicle.name}
+                            style={{ position: 'absolute', inset: '12%', width: '76%', height: '76%' }}
+                          />
                         </span>
                         <span
                           style={{

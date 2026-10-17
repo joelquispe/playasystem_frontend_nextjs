@@ -310,13 +310,10 @@ export default function CashRegisterPage() {
                 <StatTile label="Tarjeta" value={shift.cardAmount} color="#f59e0b" icon={<BankOutlined />} />
               </div>
 
-              {/* Resumen: descuentos y gastos se restan una sola vez */}
+              {/* Gastos se restan del total; descuentos ya vienen descontados de cada cobro */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, marginTop: 8 }}>
-                <StatTile label={FINANCIAL_LABELS.grossIncome} value={shiftTotals?.grossIncome ?? 0} color="#16a34a" />
-                <StatTile label={FINANCIAL_LABELS.discounts} value={shift.discountsTotal} color="#ef4444" prefix="- s/." />
                 <StatTile label={FINANCIAL_LABELS.expenses} value={shift.extraExpenses} color="#ef4444" prefix="- s/." />
-                <StatTile label={FINANCIAL_LABELS.netExpenses} value={shiftTotals?.netExpenses ?? 0} color="#ef4444" prefix="- s/." />
-                <StatTile label={FINANCIAL_LABELS.expectedCash} value={shiftTotals?.expectedCash ?? 0} color="#22c55e" />
+                <StatTile label={FINANCIAL_LABELS.discounts} value={shift.discountsTotal} color={colors.textMuted} />
                 <StatTile
                   label={`${FINANCIAL_LABELS.cancellations} (${shift.cancellationsCount})`}
                   value={shift.cancellationsTotal}
@@ -324,7 +321,7 @@ export default function CashRegisterPage() {
                 />
               </div>
 
-              {/* Total recaudado */}
+              {/* Total en caja = cobrado − gastos */}
               <div
                 style={{
                   marginTop: 12,
@@ -337,9 +334,14 @@ export default function CashRegisterPage() {
                   gap: 8,
                 }}
               >
-                <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: 600, letterSpacing: 0.5 }}>
-                  {FINANCIAL_LABELS.netIncome.toUpperCase()}
-                </Text>
+                <div>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, fontWeight: 600, letterSpacing: 0.5, display: 'block' }}>
+                    {FINANCIAL_LABELS.cashTotal.toUpperCase()}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11 }}>
+                    Cobrado {formatMoney(shiftTotals?.collected ?? 0)} − Gastos {formatMoney(shiftTotals?.expenses ?? 0)}
+                  </Text>
+                </div>
                 <span style={{ fontSize: 26, fontWeight: 900, color: colors.accent, lineHeight: 1 }}>
                   {formatMoney(shiftTotals?.netIncome ?? 0)}
                 </span>
@@ -424,7 +426,7 @@ export default function CashRegisterPage() {
                 }}
               >
                 <Text style={{ color: colors.textMuted, fontSize: 12, display: 'block' }}>
-                  {FINANCIAL_LABELS.netIncome} del turno
+                  {FINANCIAL_LABELS.cashTotal}
                 </Text>
                 <span style={{ fontSize: 32, fontWeight: 900, color: colors.text }}>
                   {formatMoney(shiftTotals?.netIncome ?? 0)}
@@ -499,7 +501,7 @@ export default function CashRegisterPage() {
                 {shift.balanceStatus === 'balanced' ? 'Cuadrado ✓' : 'Descuadrado'}
               </Tag>
               <Text style={{ fontSize: 13, color: colors.textMuted }}>
-                {FINANCIAL_LABELS.netIncome}: {formatMoney(shiftTotals?.netIncome ?? 0)}
+                {FINANCIAL_LABELS.cashTotal}: {formatMoney(shiftTotals?.netIncome ?? 0)}
               </Text>
               <Text style={{ fontSize: 12, color: colors.textMuted }}>
                 Cerrado el {formatLimaDateTime(shift.closedAt)}

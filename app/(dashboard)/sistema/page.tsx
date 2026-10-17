@@ -22,6 +22,13 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { CashierWorkflowBanner } from '@/components/cashier/CashierWorkflowBanner';
 import { useCashierWorkflow } from '@/hooks/useCashierWorkflow';
 
+/**
+ * Viewport minus AppHeader (56px) and the dashboard Content padding (2 × 24px).
+ * A fixed height lets the tickets table absorb new rows with its own scroll
+ * instead of growing the whole section.
+ */
+const PAGE_VIEWPORT_HEIGHT = 'calc(100vh - 104px)';
+
 export default function SistemaPage() {
   const workflow = useCashierWorkflow();
   const [statusFilter, setStatusFilter] = useState<string>('pending');
@@ -59,7 +66,7 @@ export default function SistemaPage() {
   }, []);
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: PAGE_VIEWPORT_HEIGHT }}>
       <PageHeader
         title="Sistema"
         subtitle="Ingreso, control y cobro de vehículos"
@@ -78,6 +85,10 @@ export default function SistemaPage() {
 
       <div
         style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
           pointerEvents: workflow.isCashier && !workflow.canWork ? 'none' : 'auto',
           opacity: workflow.isCashier && !workflow.canWork ? 0.55 : 1,
         }}
@@ -140,6 +151,6 @@ export default function SistemaPage() {
         defaults={clientDefaults}
         onClose={handleCloseClientForm}
       />
-    </>
+    </div>
   );
 }

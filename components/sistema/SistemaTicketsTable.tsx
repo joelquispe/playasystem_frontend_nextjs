@@ -24,6 +24,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import { Ticket, Client, EventColor } from '@/types/api';
 import { useNow } from '@/hooks/useNow';
+import { useElementHeight } from '@/hooks/useElementHeight';
 import { useClients } from '@/hooks/useClients';
 import { useRevertTicket, useToggleKey } from '@/hooks/useTickets';
 import { RATE_TYPE_LABELS } from '@/lib/constants';
@@ -43,8 +44,10 @@ const EVENT_DOT: Record<EventColor, string> = {
 };
 
 const TABLE_SCROLL_X = 1600;
-/** Vertical scroll (bar sits next to the fixed "Acciones" column). */
-const TABLE_SCROLL_Y = 'max(320px, calc(100vh - 340px))';
+/** Height reserved for the sticky table header + horizontal scrollbar. */
+const TABLE_CHROME_HEIGHT = 56;
+/** Body never shrinks below this, even on short screens. */
+const MIN_TABLE_BODY_HEIGHT = 200;
 
 function formatElapsed(entryTime: string, now: Dayjs): string {
   return formatDurationMinutes(now.diff(dayjs(entryTime), 'minute'));
@@ -89,6 +92,11 @@ export function SistemaTicketsTable({
   const toggleKey = useToggleKey();
   const [recordsTicket, setRecordsTicket] = useState<Ticket | null>(null);
   const now = useNow(30_000);
+  const [tableAreaRef, tableAreaHeight] = useElementHeight<HTMLDivElement>();
+  const tableBodyHeight = Math.max(
+    MIN_TABLE_BODY_HEIGHT,
+    tableAreaHeight - TABLE_CHROME_HEIGHT,
+  );
 
   const clientByPlate = useMemo(() => {
     const map = new Map<string, Client>();
@@ -357,8 +365,17 @@ export function SistemaTicketsTable({
   ];
 
   return (
-    <div style={{ ...cardStyle, padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+    <div
+      style={{
+        ...cardStyle,
+        padding: 16,
+        flex: 1,
+        minHeight: MIN_TABLE_BODY_HEIGHT + 120,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8, flex: 'none' }}>
         <Space size={8} align="center">
           <Text strong style={{ color: colors.text, fontSize: 15 }}>
             Vehículos en el sistema
@@ -384,6 +401,7 @@ export function SistemaTicketsTable({
         </Space>
       </div>
 
+      <div ref={tableAreaRef} style={{ flex: 1, minHeight: 0 }}>
       <Table
         className="table-wide-scroll"
         rowKey="id"
@@ -391,7 +409,7 @@ export function SistemaTicketsTable({
         dataSource={tickets}
         loading={loading}
         size="small"
-        scroll={{ x: TABLE_SCROLL_X, y: TABLE_SCROLL_Y }}
+        scroll={{ x: TABLE_SCROLL_X, y: tableBodyHeight }}
         pagination={false}
         expandable={{
           expandedRowRender: (record) => (
@@ -407,6 +425,7 @@ export function SistemaTicketsTable({
           rowExpandable: (record) => (record.charges?.length ?? 0) > 0,
         }}
       />
+      </div>
 
       <VehicleRecordsModal
         ticket={recordsTicket}

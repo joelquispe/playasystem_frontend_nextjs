@@ -7,7 +7,7 @@ import dayjs from 'dayjs';
 import { VehicleType } from '@/types/api';
 import { useDeactivateVehicleType, useUpdateVehicleType } from '@/hooks/useVehicles';
 import { getDefaultHourRate, VEHICLE_ICON_OPTIONS } from '@/lib/vehicles';
-import { VehicleIcon } from '@/components/vehicles/VehicleIcon';
+import { VehicleIcon, resolveVehicleIconKey } from '@/components/vehicles/VehicleIcon';
 import { cardStyle } from '@/lib/theme';
 
 const { Text } = Typography;
@@ -44,7 +44,7 @@ export function VehicleTypeTable({ data, loading, onEdit }: VehicleTypeTableProp
         <Space size={8}>
           <VehicleIcon iconName={value} size={20} style={{ color: '#2f6d73' }} />
           <Text style={{ fontSize: 12 }}>
-            {VEHICLE_ICON_OPTIONS.find((o) => o.value === value)?.label ?? value}
+            {VEHICLE_ICON_OPTIONS.find((o) => o.value === resolveVehicleIconKey(value))?.label ?? value}
           </Text>
         </Space>
       ),

@@ -1,4 +1,25 @@
+import Image from 'next/image';
 import type { CSSProperties, ReactNode } from 'react';
+
+/**
+ * Raster illustrations in `public/vehiculos`; take precedence over the SVG silhouettes.
+ * Every file must be a 512×512 transparent PNG with the drawing trimmed and centered
+ * inside a 448×400 box, so all vehicles render at the same visual size.
+ */
+const VEHICLE_IMAGE_SIZE = 512;
+
+const PICKUP_IMAGE = '/vehiculos/pickup.png';
+
+const IMAGES: Record<string, string> = {
+  auto: '/vehiculos/auto.png',
+  moto: '/vehiculos/moto.png',
+  suv: '/vehiculos/camioneta_mediana.png',
+  pickup_large: '/vehiculos/camioneta_grande.png',
+  pickup: PICKUP_IMAGE,
+  furgon: PICKUP_IMAGE,
+  combi: PICKUP_IMAGE,
+  van: PICKUP_IMAGE,
+};
 
 const WINDOW_FILL = '#ffffff';
 const WINDOW_OPACITY = 0.85;
@@ -84,17 +105,6 @@ const SHAPES: Record<string, ReactNode> = {
       <Wheel cx={51} />
     </>
   ),
-  truck: (
-    <>
-      <Body
-        body="M2 26V5.5C2 4.7 2.7 4 3.5 4H40v22zM42 26V11c0-.6.4-1 1-1h10.5c.6 0 1.1.3 1.4.8L61 19.5c.6.9 1 1.9 1 3V26z"
-        windows="M45 12.5h8l4.5 7H45z"
-      />
-      <Wheel cx={11} r={4.8} />
-      <Wheel cx={23} r={4.8} />
-      <Wheel cx={53} r={4.8} />
-    </>
-  ),
   moto: (
     <>
       <path
@@ -114,15 +124,17 @@ const SHAPES: Record<string, ReactNode> = {
 
 /** Legacy / alternate icon keys stored in existing vehicle types. */
 const ALIASES: Record<string, string> = {
-  van: 'combi',
   camioneta_mediana: 'suv',
   camioneta_grande: 'pickup_large',
+  // Older seeds stored "Camioneta Grande" with the `truck` icon.
+  truck: 'pickup_large',
 };
 
 export function resolveVehicleIconKey(iconName?: string | null): string {
   const key = (iconName ?? '').trim().toLowerCase();
-  if (SHAPES[key]) return key;
-  return ALIASES[key] ?? 'auto';
+  if (ALIASES[key]) return ALIASES[key];
+  if (SHAPES[key] || IMAGES[key]) return key;
+  return 'auto';
 }
 
 interface VehicleIconProps {
@@ -133,18 +145,46 @@ interface VehicleIconProps {
   title?: string;
 }
 
-/** Side-profile vehicle silhouette that inherits `color` from its parent. */
+/**
+ * Vehicle icon: a raster illustration when one exists for the type, otherwise a
+ * side-profile SVG silhouette that inherits `color` from its parent.
+ * Both share the same 16:9 footprint so cards and lists stay aligned.
+ */
 export function VehicleIcon({ iconName, size = '1em', style, title }: VehicleIconProps) {
   const height = typeof size === 'number' ? `${size}px` : size;
+  const key = resolveVehicleIconKey(iconName);
+  const image = IMAGES[key];
+
+  if (image) {
+    return (
+      <Image
+        src={image}
+        width={VEHICLE_IMAGE_SIZE}
+        height={VEHICLE_IMAGE_SIZE}
+        alt={title ?? key}
+        title={title}
+        // Vehicle cards are above the fold on Sistema (LCP candidate).
+        loading="eager"
+        style={{
+          height,
+          width: `calc(${height} * 1.78)`,
+          objectFit: 'contain',
+          display: 'inline-block',
+          ...style,
+        }}
+      />
+    );
+  }
+
   return (
     <svg
       viewBox="0 0 64 36"
       style={{ height, width: `calc(${height} * 1.78)`, display: 'inline-block', ...style }}
       role="img"
-      aria-label={title ?? resolveVehicleIconKey(iconName)}
+      aria-label={title ?? key}
     >
       {title && <title>{title}</title>}
-      {SHAPES[resolveVehicleIconKey(iconName)]}
+      {SHAPES[key]}
     </svg>
   );
 }
