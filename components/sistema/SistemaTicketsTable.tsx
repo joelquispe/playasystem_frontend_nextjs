@@ -43,7 +43,7 @@ const EVENT_DOT: Record<EventColor, string> = {
   red: '#c4605c',
 };
 
-const TABLE_SCROLL_X = 1600;
+const TABLE_SCROLL_X = 1730;
 /** Height reserved for the sticky table header + horizontal scrollbar. */
 const TABLE_CHROME_HEIGHT = 56;
 /** Body never shrinks below this, even on short screens. */
@@ -126,6 +126,24 @@ export function SistemaTicketsTable({
       key: 'vehicle',
       width: 120,
       render: (_, r) => r.vehicleType?.name ?? '—',
+    },
+    {
+      title: 'Cajero',
+      key: 'cashier',
+      width: 130,
+      render: (_, r) => (
+        <Tooltip
+          title={
+            r.status === 'pending'
+              ? 'Registró el ingreso'
+              : r.status === 'cancelled'
+                ? 'Anuló el ticket'
+                : 'Cobró el ticket'
+          }
+        >
+          <Text style={{ fontSize: 12 }}>{r.cashier?.fullName ?? r.cashier?.username ?? '—'}</Text>
+        </Tooltip>
+      ),
     },
     {
       title: 'H. Ingreso',
