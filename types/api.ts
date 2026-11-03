@@ -340,7 +340,6 @@ export interface SystemConfig {
  * - grossIncome  = Ingreso Bruto = cobrado + descuentos
  * - netExpenses  = Egresos Netos = descuentos + gastos de caja
  * - netIncome    = Ingreso Neto = Ingreso Bruto − Egresos Netos
- * - expectedCash = Efectivo esperado en caja = efectivo − gastos
  * - cancellations* son informativos: ya están fuera de lo cobrado.
  */
 export interface FinancialTotals {
@@ -350,7 +349,6 @@ export interface FinancialTotals {
   expenses: number;
   netExpenses: number;
   netIncome: number;
-  expectedCash: number;
   cancellationsAmount: number;
   cancellationsCount: number;
   byPaymentMethod: {

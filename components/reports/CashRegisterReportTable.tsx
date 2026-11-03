@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Col, Modal, Row, Statistic, Table, Tag, Typography } from 'antd';
+import { Modal, Statistic, Table, Tag, Typography } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
 import {
   BankOutlined,
@@ -240,7 +240,6 @@ function ShiftDetailContent({ shift }: { shift: CashRegisterReportItem }) {
           <DetailAmount label={FINANCIAL_LABELS.discounts} value={totals.discounts} color="#ef4444" prefix="- s/." />
           <DetailAmount label={FINANCIAL_LABELS.expenses} value={totals.expenses} color="#ef4444" prefix="- s/." />
           <DetailAmount label={FINANCIAL_LABELS.netExpenses} value={totals.netExpenses} color="#ef4444" prefix="- s/." />
-          <DetailAmount label={FINANCIAL_LABELS.expectedCash} value={totals.expectedCash} color="#16a34a" />
           <DetailAmount label="Tickets cobrados" value={shift.ticketsCount ?? 0} color={colors.primary} prefix="" />
           <DetailAmount
             label={`${FINANCIAL_LABELS.cancellations} (${totals.cancellationsCount})`}
@@ -412,31 +411,35 @@ export function CashRegisterReportTable({
   return (
     <>
       {summary && (
-        <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+        // Row 1: totals (Bruto, Egresos, Neto). Row 2: breakdown + ticket counts.
+        <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
           {[
             { label: FINANCIAL_LABELS.grossIncome, value: summary.grossIncome, color: '#16a34a', isMoney: true },
-            { label: FINANCIAL_LABELS.discounts, value: summary.discounts, color: '#f59e0b', isMoney: true },
-            { label: FINANCIAL_LABELS.expenses, value: summary.expenses, color: '#ef4444', isMoney: true },
             { label: FINANCIAL_LABELS.netExpenses, value: summary.netExpenses, color: '#ef4444', isMoney: true },
             { label: FINANCIAL_LABELS.netIncome, value: summary.netIncome, color: colors.accent, isMoney: true },
-            { label: FINANCIAL_LABELS.expectedCash, value: summary.expectedCash, color: '#16a34a', isMoney: true },
+            {
+              label: FINANCIAL_LABELS.discounts,
+              value: summary.discounts,
+              color: '#f59e0b',
+              isMoney: true,
+              className: 'xl:col-start-1',
+            },
+            { label: FINANCIAL_LABELS.expenses, value: summary.expenses, color: '#ef4444', isMoney: true },
             { label: 'Tickets Procesados', value: summary.totalTicketsCount, color: colors.primary, isMoney: false },
             { label: 'Tickets Anulados', value: summary.cancellationsCount, color: '#ef4444', isMoney: false },
             { label: 'Monto anulado (inf.)', value: summary.cancellationsAmount, color: colors.textMuted, isMoney: true },
-          ].map(({ label, value, color, isMoney }) => (
-            <Col key={label} xs={12} sm={8} lg={6} xl={4}>
-              <div style={{ ...cardStyle, padding: '12px 16px' }}>
-                <Statistic
-                  title={<Text style={{ color: colors.textMuted, fontSize: 11 }}>{label}</Text>}
-                  value={value}
-                  precision={isMoney ? 2 : 0}
-                  prefix={isMoney ? 's/.' : undefined}
-                  valueStyle={{ color, fontSize: 18, fontWeight: 700 }}
-                />
-              </div>
-            </Col>
+          ].map(({ label, value, color, isMoney, className }) => (
+            <div key={label} className={className} style={{ ...cardStyle, padding: '14px 18px' }}>
+              <Statistic
+                title={<Text style={{ color: colors.textMuted, fontSize: 12 }}>{label}</Text>}
+                value={value}
+                precision={isMoney ? 2 : 0}
+                prefix={isMoney ? 's/.' : undefined}
+                valueStyle={{ color, fontSize: 22, fontWeight: 700 }}
+              />
+            </div>
           ))}
-        </Row>
+        </div>
       )}
 
       <Table

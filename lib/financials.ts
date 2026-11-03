@@ -8,7 +8,6 @@ export const FINANCIAL_LABELS = {
   netExpenses: 'Egresos Netos',
   netIncome: 'Ingresos Netos',
   netIncomeDay: 'Ingresos Netos del Día',
-  expectedCash: 'Efectivo esperado en caja',
   cancellations: 'Anulados',
   /** Cobrado (todos los medios) − gastos: lo que debe rendir el turno. */
   cashTotal: 'Total en caja',
@@ -52,7 +51,6 @@ export function calculateShiftFinancials(shift: ShiftAmounts): FinancialTotals {
     expenses: round2(expenses),
     netExpenses: round2(netExpenses),
     netIncome: round2(grossIncome - netExpenses),
-    expectedCash: round2(cash - expenses),
     cancellationsAmount: round2(Number(shift.cancellationsTotal)),
     cancellationsCount: Number(shift.cancellationsCount),
     byPaymentMethod: { cash, yape, plin, card },

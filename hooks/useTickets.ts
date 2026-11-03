@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
 import { QUERY_KEYS } from '@/lib/constants';
+import { Ticket } from '@/types/api';
 import {
   ticketsService,
   AdditionalChargeDto,
@@ -10,6 +11,20 @@ import {
   ManualTicketDto,
   PostPaymentReceiptDto,
 } from '@/services/tickets.service';
+
+type TicketsCacheEntry = Ticket[] | Ticket | undefined;
+
+/**
+ * Applies `patch` to a ticket wherever it is cached (status lists and the
+ * single-ticket query) so every open view updates without waiting a refetch.
+ */
+function patchCachedTicket(qc: QueryClient, ticketId: string, patch: (ticket: Ticket) => Ticket) {
+  qc.setQueriesData<TicketsCacheEntry>({ queryKey: QUERY_KEYS.TICKETS }, (data) => {
+    if (!data) return data;
+    if (Array.isArray(data)) return data.map((t) => (t.id === ticketId ? patch(t) : t));
+    return data.id === ticketId ? patch(data) : data;
+  });
+}
 
 export function useTickets(status?: string) {
   return useQuery({
@@ -118,7 +133,10 @@ export function useAdditionalCharge() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: AdditionalChargeDto }) =>
       ticketsService.addAdditionalCharge(id, data),
-    onSuccess: () => {
+    onSuccess: (charge, { id }) => {
+      if (charge?.id) {
+        patchCachedTicket(qc, id, (t) => ({ ...t, charges: [...(t.charges ?? []), charge] }));
+      }
       qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.PENDING_TICKETS });
       message.success('Cargo adicional agregado');
@@ -135,14 +153,27 @@ export function useRemoveAdditionalCharge() {
   return useMutation({
     mutationFn: ({ id, chargeId }: { id: string; chargeId: string }) =>
       ticketsService.removeAdditionalCharge(id, chargeId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.PENDING_TICKETS });
+    // Optimistic: drop the charge immediately so totals recalc without a flash.
+    onMutate: async ({ id, chargeId }) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.TICKETS });
+      const snapshot = qc.getQueriesData<TicketsCacheEntry>({ queryKey: QUERY_KEYS.TICKETS });
+      patchCachedTicket(qc, id, (t) => ({
+        ...t,
+        charges: (t.charges ?? []).filter((c) => c.id !== chargeId),
+      }));
+      return { snapshot };
+    },
+    onSuccess: (updated, { id }) => {
+      if (updated?.id) patchCachedTicket(qc, id, () => updated);
       message.success('Cargo adicional eliminado');
     },
-    onError: (err: unknown) => {
+    onError: (err: unknown, _vars, context) => {
+      context?.snapshot.forEach(([key, data]) => qc.setQueryData(key, data));
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       message.error(msg ?? 'Error al quitar el cargo');
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.TICKETS });
     },
   });
 }

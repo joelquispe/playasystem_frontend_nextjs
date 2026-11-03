@@ -34,6 +34,7 @@ import {
   useChargeTicket,
   useCancelTicket,
   useRemoveAdditionalCharge,
+  useTickets,
 } from '@/hooks/useTickets';
 import { usePlateEvents } from '@/hooks/usePlateEvents';
 import { useNow } from '@/hooks/useNow';
@@ -97,7 +98,13 @@ interface ChargeTicketModalProps {
   onClose: () => void;
 }
 
-export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalProps) {
+export function ChargeTicketModal({ ticket: ticketProp, open, onClose }: ChargeTicketModalProps) {
+  // The prop is a snapshot taken when the modal opened; read the live copy from
+  // the pending-tickets cache so removing/adding charges updates the modal.
+  const { data: pendingTickets } = useTickets('pending');
+  const ticket =
+    (ticketProp && pendingTickets?.find((t) => t.id === ticketProp.id)) ?? ticketProp;
+
   const chargeTicket = useChargeTicket();
   const cancelTicket = useCancelTicket();
   const removeCharge = useRemoveAdditionalCharge();
@@ -368,19 +375,28 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
           </Col>
         </Row>
 
-        {/* ── Ticket summary: details grid (wraps) + total block ───────────── */}
+        {/* ── Left: details + additional charges | Right: discount + total ── */}
         <div
           style={{
             display: 'flex',
             flexWrap: 'wrap',
+            alignItems: 'stretch',
             gap: 12,
             marginBottom: 14,
           }}
         >
           <div
             style={{
-              ...nestedPanelStyle,
               flex: '1 1 480px',
+              minWidth: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+          <div
+            style={{
+              ...nestedPanelStyle,
               padding: '10px 14px',
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
@@ -398,30 +414,24 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                 ? [{ label: 'Tiempo total', value: elapsedStr }]
                 : []),
               ...(isFixed
-                ? [{ label: 'Tarifa fija', value: `s/. ${hourAmount.toFixed(2)}` }]
+                ? [
+                    {
+                      label: `Tarifa fija (${RATE_TYPE_LABELS[ticket.rateType] ?? ticket.rateType})`,
+                      value: `s/. ${hourAmount.toFixed(2)}`,
+                      accent: true,
+                    },
+                  ]
                 : [
                     {
                       label: 'Horas cobradas',
                       value: `${chargeableHours}h × s/.${ratePerHour.toFixed(2)}`,
                     },
                     {
-                      label: 'Monto Horas',
+                      label: 'Monto Hora/Fracción',
                       value: `s/. ${hourAmount.toFixed(2)}`,
+                      accent: true,
                     },
                   ]),
-              ...(additionalTotal > 0
-                ? [
-                    {
-                      label: 'Cargos Adic.',
-                      value: `s/. ${additionalTotal.toFixed(2)}`,
-                    },
-                  ]
-                : []),
-              {
-                label: 'Monto',
-                value: `s/. ${grossAmount.toFixed(2)}`,
-                accent: true,
-              },
             ].map(({ label, value, accent }) => (
               <div key={label} style={{ textAlign: 'center' }}>
                 <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
@@ -441,50 +451,9 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
             ))}
           </div>
 
-          <div
-            style={{
-              ...nestedPanelStyle,
-              flex: '0 1 260px',
-              padding: '10px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-around',
-              gap: 12,
-              border: `2px solid ${colors.primary}`,
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
-                Descuento
-              </Text>
-              <Controller
-                name="discount"
-                control={control}
-                render={({ field }) => (
-                  <InputNumber
-                    {...field}
-                    min={0}
-                    max={grossAmount}
-                    step={0.5}
-                    style={{ width: 88, fontWeight: 700 }}
-                  />
-                )}
-              />
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
-                TOTAL
-              </Text>
-              <Text style={{ fontWeight: 900, fontSize: 22, color: colors.primary, whiteSpace: 'nowrap' }}>
-                s/. {total.toFixed(2)}
-              </Text>
-            </div>
-          </div>
-        </div>
-
         {/* ── Additional charges breakdown (amanecida, hora/fracción extra) ──── */}
         {additionalCharges.length > 0 && (
-          <div style={{ marginBottom: 12 }}>
+          <div>
             <Text style={{ fontSize: 12, fontWeight: 600, color: colors.text }}>
               Cargos Adicionales
             </Text>
@@ -542,7 +511,7 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
                           type="text"
                           danger
                           icon={<CloseCircleOutlined />}
-                          loading={removeCharge.isPending}
+                          disabled={removeCharge.isPending}
                         />
                       </Popconfirm>
                     )}
@@ -553,6 +522,48 @@ export function ChargeTicketModal({ ticket, open, onClose }: ChargeTicketModalPr
             </div>
           </div>
         )}
+          </div>
+
+          <div
+            style={{
+              ...nestedPanelStyle,
+              flex: '0 1 260px',
+              padding: '10px 14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              gap: 12,
+              border: `2px solid ${colors.primary}`,
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
+                Descuento
+              </Text>
+              <Controller
+                name="discount"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber
+                    {...field}
+                    min={0}
+                    max={grossAmount}
+                    step={0.5}
+                    style={{ width: 88, fontWeight: 700 }}
+                  />
+                )}
+              />
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <Text style={{ fontSize: 10, color: colors.textMuted, display: 'block' }}>
+                TOTAL
+              </Text>
+              <Text style={{ fontWeight: 900, fontSize: 22, color: colors.primary, whiteSpace: 'nowrap' }}>
+                s/. {total.toFixed(2)}
+              </Text>
+            </div>
+          </div>
+        </div>
 
         {/* ── Recent "amanecida" warning ──────────────────────────────────────── */}
         {recentOvernightCharges.length > 0 && (
