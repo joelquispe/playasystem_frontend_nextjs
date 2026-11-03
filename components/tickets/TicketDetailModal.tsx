@@ -18,7 +18,7 @@ import {
   TICKET_STATUS_LABELS,
 } from '@/lib/constants';
 import { colors, nestedPanelStyle } from '@/lib/theme';
-import { formatMinutesHHMM } from '@/lib/datetime';
+import { formatMinutesVerbose } from '@/lib/datetime';
 
 const { Text } = Typography;
 
@@ -100,7 +100,7 @@ export function TicketDetailModal({ ticket, open, onClose }: TicketDetailModalPr
           {ticket.exitTime ? dayjs(ticket.exitTime).format('DD/MM/YYYY HH:mm') : '—'}
         </Descriptions.Item>
         <Descriptions.Item label="Tiempo total" span={1}>
-          {ticket.totalMinutes != null ? formatMinutesHHMM(ticket.totalMinutes) : '—'}
+          {ticket.totalMinutes != null ? formatMinutesVerbose(ticket.totalMinutes) : '—'}
         </Descriptions.Item>
         <Descriptions.Item label="Cajero" span={1}>
           {ticket.cashier?.fullName ?? ticket.cashier?.username ?? '—'}

@@ -33,3 +33,18 @@ export function formatMinutesHHMM(totalMinutes: number | null | undefined): stri
   const minutes = mins % 60;
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
+
+/**
+ * Formats minutes as readable text: 140 → "2 horas 20 minutos",
+ * 60 → "1 hora", 5 → "5 minutos", 0 → "0 minutos".
+ */
+export function formatMinutesVerbose(totalMinutes: number | null | undefined): string {
+  const mins = Math.max(0, Math.floor(Number(totalMinutes) || 0));
+  const hours = Math.floor(mins / 60);
+  const minutes = mins % 60;
+
+  const parts: string[] = [];
+  if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hora' : 'horas'}`);
+  if (minutes > 0 || hours === 0) parts.push(`${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`);
+  return parts.join(' ');
+}
