@@ -19,6 +19,7 @@ import {
 } from '@/lib/constants';
 import { colors, nestedPanelStyle } from '@/lib/theme';
 import { formatMinutesVerbose } from '@/lib/datetime';
+import { getTicketCancellationTimes } from '@/lib/ticket-cancellation';
 
 const { Text } = Typography;
 
@@ -45,6 +46,7 @@ export function TicketDetailModal({ ticket, open, onClose }: TicketDetailModalPr
     ticket.customerBusinessName ||
     ticket.customerFirstName;
   const hasNubefact = ticket.nubefactEnlace || ticket.nubefactPdfUrl;
+  const cancellation = getTicketCancellationTimes(ticket);
 
   return (
     <Modal
@@ -106,6 +108,43 @@ export function TicketDetailModal({ ticket, open, onClose }: TicketDetailModalPr
           {ticket.cashier?.fullName ?? ticket.cashier?.username ?? '—'}
         </Descriptions.Item>
       </Descriptions>
+
+      {/* ── Cancellation ──────────────────────────────────────────── */}
+      {cancellation && (
+        <>
+          <Divider style={{ margin: '14px 0' }}>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>Anulación</Text>
+          </Divider>
+          <Descriptions
+            size="small"
+            column={2}
+            bordered
+            labelStyle={{ color: colors.textMuted, fontWeight: 500 }}
+            contentStyle={{ color: colors.text }}
+          >
+            <Descriptions.Item label="Fecha y hora de creación" span={1}>
+              {dayjs(cancellation.createdAt).format('DD/MM/YYYY HH:mm:ss')}
+            </Descriptions.Item>
+            <Descriptions.Item label="Fecha y hora de anulación" span={1}>
+              {cancellation.cancelledAt
+                ? dayjs(cancellation.cancelledAt).format('DD/MM/YYYY HH:mm:ss')
+                : '—'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Tiempo transcurrido" span={2}>
+              <Text strong style={{ color: '#ef4444' }}>
+                {cancellation.elapsedMinutes != null
+                  ? formatMinutesVerbose(cancellation.elapsedMinutes)
+                  : '—'}
+              </Text>
+            </Descriptions.Item>
+            {ticket.cancelReason && (
+              <Descriptions.Item label="Motivo" span={2}>
+                {ticket.cancelReason}
+              </Descriptions.Item>
+            )}
+          </Descriptions>
+        </>
+      )}
 
       {/* ── Amounts ───────────────────────────────────────────────── */}
       <Divider style={{ margin: '14px 0' }} />

@@ -148,6 +148,8 @@ export interface Ticket {
   hasKey: boolean;
   observation: string | null;
   cancelReason: string | null;
+  /** When the ticket was voided (null unless status is cancelled) */
+  cancelledAt: string | null;
   nubefactId: string | null;
   /** Main viewer link from NubeFact (enlace) */
   nubefactEnlace: string | null;

@@ -6,10 +6,13 @@ import dayjs from 'dayjs';
 import { DailySummaryTotals, PaginationMeta, Ticket } from '@/types/api';
 import { PAYMENT_METHOD_LABELS, RATE_TYPE_LABELS, TICKET_STATUS_LABELS } from '@/lib/constants';
 import { FINANCIAL_LABELS } from '@/lib/financials';
-import { formatMinutesHHMM } from '@/lib/datetime';
+import { formatMinutesHHMM, formatMinutesVerbose } from '@/lib/datetime';
+import { getTicketCancellationTimes } from '@/lib/ticket-cancellation';
 import { cardStyle, colors } from '@/lib/theme';
 
 const { Text } = Typography;
+
+const formatDateTime = (value: string): string => dayjs(value).format('DD/MM/YYYY HH:mm:ss');
 
 const STATUS_COLOR: Record<string, string> = {
   pending: 'processing',
@@ -139,6 +142,31 @@ export function DailySummaryReportTable({
       ),
     },
     {
+      title: 'Anulación',
+      key: 'cancellation',
+      width: 210,
+      render: (_: unknown, r: Ticket) => {
+        const times = getTicketCancellationTimes(r);
+        if (!times) return '—';
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 12 }}>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>
+              Anulado:{' '}
+              <Text style={{ fontSize: 12 }}>
+                {times.cancelledAt ? formatDateTime(times.cancelledAt) : '—'}
+              </Text>
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>
+              Transcurrido:{' '}
+              <Text strong style={{ fontSize: 12, color: '#ef4444' }}>
+                {times.elapsedMinutes != null ? formatMinutesVerbose(times.elapsedMinutes) : '—'}
+              </Text>
+            </Text>
+          </div>
+        );
+      },
+    },
+    {
       title: 'Observaciones',
       dataIndex: 'observation',
       key: 'observation',
@@ -200,7 +228,7 @@ export function DailySummaryReportTable({
         loading={loading}
         pagination={pagination}
         size="small"
-        scroll={{ x: 1400 }}
+        scroll={{ x: 1850 }}
         style={cardStyle}
       />
     </>

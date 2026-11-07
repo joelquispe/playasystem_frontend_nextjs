@@ -34,6 +34,12 @@ export function formatMinutesHHMM(totalMinutes: number | null | undefined): stri
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
+/** Whole minutes elapsed between two instants (never negative). */
+export function minutesBetween(from: string | Date, to: string | Date): number {
+  const diff = new Date(to).getTime() - new Date(from).getTime();
+  return Number.isNaN(diff) ? 0 : Math.max(0, Math.floor(diff / 60_000));
+}
+
 /**
  * Formats minutes as readable text: 140 → "2 horas 20 minutos",
  * 60 → "1 hora", 5 → "5 minutos", 0 → "0 minutos".
