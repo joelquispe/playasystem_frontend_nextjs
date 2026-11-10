@@ -13,7 +13,7 @@ const { Text } = Typography;
 
 const STATUS_COLOR: Partial<Record<AttendanceStatus, string>> = {
   PRESENT: 'success',
-  LATE: 'success',
+  LATE: 'warning',
   ABSENT: 'error',
   INCOMPLETE: 'orange',
   PENDING: 'default',
@@ -21,10 +21,10 @@ const STATUS_COLOR: Partial<Record<AttendanceStatus, string>> = {
   DAY_OFF: 'default',
 };
 
-/** Display label — LATE is shown as Presente (tardiness UI omitted). */
-function statusLabel(status: AttendanceStatus): string {
-  if (status === 'LATE') return ATTENDANCE_STATUS_LABELS.PRESENT ?? 'Presente';
-  return ATTENDANCE_STATUS_LABELS[status] ?? status;
+/** Status label; late arrivals include the tardiness measured against the user's schedule. */
+function statusLabel(r: AttendanceRecord): string {
+  const label = ATTENDANCE_STATUS_LABELS[r.status] ?? r.status;
+  return r.lateMinutes > 0 ? `${label} · ${formatMinutesHHMM(r.lateMinutes)}` : label;
 }
 
 /**
@@ -133,8 +133,8 @@ export function AttendanceReportTable({
       title: 'Estado',
       dataIndex: 'status',
       key: 'status',
-      render: (v: AttendanceStatus) => (
-        <Tag color={STATUS_COLOR[v] ?? 'default'}>{statusLabel(v)}</Tag>
+      render: (v: AttendanceStatus, r: AttendanceRecord) => (
+        <Tag color={STATUS_COLOR[v] ?? 'default'}>{statusLabel(r)}</Tag>
       ),
     },
     {
