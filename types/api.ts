@@ -366,8 +366,8 @@ export interface DashboardData extends FinancialTotals {
   paidTickets: number;
   dailySeries: Array<{
     date: string;
-    grossIncome: number;
     netIncome: number;
+    netExpenses: number;
   }>;
 }
 
