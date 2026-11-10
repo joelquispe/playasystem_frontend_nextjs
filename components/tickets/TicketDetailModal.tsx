@@ -20,6 +20,7 @@ import {
 import { colors, nestedPanelStyle } from '@/lib/theme';
 import { formatMinutesVerbose } from '@/lib/datetime';
 import { getTicketCancellationTimes } from '@/lib/ticket-cancellation';
+import { TicketChargesList } from '@/components/tickets/TicketChargesList';
 
 const { Text } = Typography;
 
@@ -217,14 +218,7 @@ export function TicketDetailModal({ ticket, open, onClose }: TicketDetailModalPr
           <Divider style={{ margin: '14px 0' }}>
             <Text style={{ fontSize: 12, color: colors.textMuted }}>Cargos adicionales</Text>
           </Divider>
-          <div style={{ ...nestedPanelStyle, padding: '8px 12px' }}>
-            {ticket.charges.map((c) => (
-              <div key={c.id} style={{ fontSize: 13, color: colors.text, marginBottom: 4 }}>
-                · <strong>{c.chargeType}</strong>: s/. {parseFloat(c.amount).toFixed(2)}
-                {c.notes ? <span style={{ color: colors.textMuted }}> — {c.notes}</span> : null}
-              </div>
-            ))}
-          </div>
+          <TicketChargesList ticket={ticket} />
         </>
       )}
 

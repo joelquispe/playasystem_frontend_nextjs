@@ -105,6 +105,7 @@ export interface TicketCharge {
   amount: string;
   notes: string | null;
   appliedById: string;
+  appliedBy?: Pick<User, 'id' | 'username' | 'fullName'> | null;
   appliedAt: string;
 }
 

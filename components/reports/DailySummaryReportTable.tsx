@@ -1,8 +1,11 @@
 'use client';
 
-import { Statistic, Table, Tag, Typography } from 'antd';
+import { useState } from 'react';
+import { Badge, Button, Statistic, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
+import { EyeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { TicketDetailModal } from '@/components/tickets/TicketDetailModal';
 import { DailySummaryTotals, PaginationMeta, Ticket } from '@/types/api';
 import { PAYMENT_METHOD_LABELS, RATE_TYPE_LABELS, TICKET_STATUS_LABELS } from '@/lib/constants';
 import { FINANCIAL_LABELS } from '@/lib/financials';
@@ -36,6 +39,8 @@ export function DailySummaryReportTable({
   loading,
   onPageChange,
 }: DailySummaryReportTableProps) {
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+
   const columns: ColumnsType<Ticket> = [
     {
       title: 'Placa',
@@ -66,8 +71,18 @@ export function DailySummaryReportTable({
       title: 'H. Ingreso',
       dataIndex: 'entryTime',
       key: 'entryTime',
-      width: 90,
-      render: (v: string) => dayjs(v).format('HH:mm:ss'),
+      width: 120,
+      render: (v: string, r: Ticket) => {
+        const reportedAt = r.exitTime ?? r.cancelledAt;
+        const enteredEarlier = reportedAt && !dayjs(v).isSame(reportedAt, 'day');
+        return enteredEarlier ? (
+          <Tooltip title="Ingresó en una fecha anterior">
+            <Text style={{ fontSize: 12, color: '#f59e0b' }}>{dayjs(v).format('DD/MM HH:mm:ss')}</Text>
+          </Tooltip>
+        ) : (
+          dayjs(v).format('HH:mm:ss')
+        );
+      },
     },
     {
       title: 'H. Salida',
@@ -175,6 +190,28 @@ export function DailySummaryReportTable({
         <Text style={{ color: colors.textMuted, fontSize: 12 }}>{v ?? '—'}</Text>
       ),
     },
+    {
+      title: 'Detalle',
+      key: 'actions',
+      fixed: 'right',
+      width: 80,
+      align: 'center',
+      render: (_: unknown, r: Ticket) => {
+        const chargesCount = r.charges?.length ?? 0;
+        return (
+          <Tooltip title={chargesCount > 0 ? `Ver detalle · ${chargesCount} cargo(s) adicional(es)` : 'Ver detalle'}>
+            <Badge count={chargesCount} size="small" color={colors.accent}>
+              <Button
+                size="small"
+                icon={<EyeOutlined />}
+                aria-label={`Ver detalle del ticket ${r.plate}`}
+                onClick={() => setSelectedTicket(r)}
+              />
+            </Badge>
+          </Tooltip>
+        );
+      },
+    },
   ];
 
   const pagination: TablePaginationConfig | false = meta
@@ -228,8 +265,14 @@ export function DailySummaryReportTable({
         loading={loading}
         pagination={pagination}
         size="small"
-        scroll={{ x: 1850 }}
+        scroll={{ x: 1960 }}
         style={cardStyle}
+      />
+
+      <TicketDetailModal
+        ticket={selectedTicket}
+        open={!!selectedTicket}
+        onClose={() => setSelectedTicket(null)}
       />
     </>
   );
