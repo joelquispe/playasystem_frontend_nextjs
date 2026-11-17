@@ -137,10 +137,10 @@ export function DailySummaryReportTable({
       ),
     },
     {
-      title: 'TOTAL',
+      title: 'Total cobrado',
       dataIndex: 'finalAmount',
       key: 'finalAmount',
-      width: 100,
+      width: 110,
       render: (v: string) => (
         <Text style={{ color: colors.accent, fontWeight: 600 }}>
           s/. {parseFloat(v).toFixed(2)}
@@ -267,6 +267,39 @@ export function DailySummaryReportTable({
         size="small"
         scroll={{ x: 1960 }}
         style={cardStyle}
+        summary={() =>
+          summary ? (
+            <Table.Summary fixed>
+              <Table.Summary.Row>
+                <Table.Summary.Cell index={0} colSpan={11}>
+                  <Text strong style={{ color: colors.textMuted }}>
+                    {FINANCIAL_LABELS.expenses} (del día)
+                  </Text>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={11}>
+                  <Text strong style={{ color: '#ef4444' }}>
+                    - s/. {summary.expenses.toFixed(2)}
+                  </Text>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={12} colSpan={4} />
+              </Table.Summary.Row>
+              <Table.Summary.Row>
+                <Table.Summary.Cell index={0} colSpan={11}>
+                  <Text strong>{FINANCIAL_LABELS.netIncomeDay}</Text>
+                  <Text style={{ display: 'block', fontSize: 11, color: colors.textMuted }}>
+                    Total cobrado − {FINANCIAL_LABELS.expenses.toLowerCase()}
+                  </Text>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={11}>
+                  <Text strong style={{ color: colors.accent, fontSize: 15 }}>
+                    s/. {summary.netIncome.toFixed(2)}
+                  </Text>
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={12} colSpan={4} />
+              </Table.Summary.Row>
+            </Table.Summary>
+          ) : null
+        }
       />
 
       <TicketDetailModal

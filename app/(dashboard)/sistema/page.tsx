@@ -10,7 +10,6 @@ import {
   SistemaTicketsTable,
   CreateClientFromTicketPayload,
 } from '@/components/sistema/SistemaTicketsTable';
-import { ScanTicketBar } from '@/components/tickets/ScanTicketBar';
 import { ChargeTicketModal } from '@/components/tickets/ChargeTicketModal';
 import { AdditionalChargeModal } from '@/components/tickets/AdditionalChargeModal';
 import { ManualTicketModal } from '@/components/tickets/ManualTicketModal';
@@ -42,18 +41,6 @@ export default function SistemaPage() {
   const [detailTicket, setDetailTicket] = useState<Ticket | null>(null);
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [clientDefaults, setClientDefaults] = useState<CreateClientFromTicketPayload | null>(null);
-
-  /** Handles the ticket resolved by the scanner bar. */
-  const handleScanResult = useCallback(
-    (ticket: Ticket, action: 'charge' | 'receipt') => {
-      if (action === 'charge') {
-        setChargeTicket(ticket);
-      } else {
-        setReceiptTicket(ticket);
-      }
-    },
-    [],
-  );
 
   const handleCreateClient = useCallback((payload: CreateClientFromTicketPayload) => {
     setClientDefaults(payload);
@@ -94,8 +81,6 @@ export default function SistemaPage() {
         }}
       >
         <SistemaEntryPanel onTicketCreated={() => refetch()} />
-
-        <ScanTicketBar onTicketFound={handleScanResult} />
 
         <SistemaTicketsTable
           tickets={tickets}

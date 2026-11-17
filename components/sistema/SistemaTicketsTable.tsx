@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   Button,
   Checkbox,
+  Input,
   Select,
   Space,
   Table,
@@ -19,6 +20,7 @@ import {
   PlusOutlined,
   ReloadOutlined,
   RollbackOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import duration from 'dayjs/plugin/duration';
@@ -91,6 +93,7 @@ export function SistemaTicketsTable({
   const revertTicket = useRevertTicket();
   const toggleKey = useToggleKey();
   const [recordsTicket, setRecordsTicket] = useState<Ticket | null>(null);
+  const [plateQuery, setPlateQuery] = useState('');
   const now = useNow(30_000);
   const [tableAreaRef, tableAreaHeight] = useElementHeight<HTMLDivElement>();
   const tableBodyHeight = Math.max(
@@ -103,6 +106,13 @@ export function SistemaTicketsTable({
     clients.forEach((c) => map.set(normalizePlate(c.plate), c));
     return map;
   }, [clients]);
+
+  /** Filter only within the current status list (pending / paid / cancelled). */
+  const filteredTickets = useMemo(() => {
+    const query = normalizePlate(plateQuery);
+    if (!query) return tickets;
+    return tickets.filter((t) => normalizePlate(t.plate).includes(query));
+  }, [tickets, plateQuery]);
 
   const recordsClient = recordsTicket
     ? clientByPlate.get(normalizePlate(recordsTicket.plate)) ?? null
@@ -393,19 +403,45 @@ export function SistemaTicketsTable({
         flexDirection: 'column',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8, flex: 'none' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 16,
+          flexWrap: 'wrap',
+          gap: 8,
+          flex: 'none',
+        }}
+      >
         <Space size={8} align="center">
           <Text strong style={{ color: colors.text, fontSize: 15 }}>
             Vehículos en el sistema
           </Text>
           <Tag color="blue" style={{ fontWeight: 700, fontSize: 13, marginInlineEnd: 0 }}>
-            {tickets.length} {tickets.length === 1 ? 'vehículo' : 'vehículos'}
+            {filteredTickets.length}
+            {plateQuery.trim() && filteredTickets.length !== tickets.length
+              ? ` / ${tickets.length}`
+              : ''}{' '}
+            {filteredTickets.length === 1 ? 'vehículo' : 'vehículos'}
           </Tag>
         </Space>
-        <Space>
+        <Space wrap size={8}>
+          <Input
+            allowClear
+            prefix={<SearchOutlined style={{ color: colors.textMuted }} />}
+            placeholder="Buscar por placa…"
+            value={plateQuery}
+            onChange={(e) => setPlateQuery(e.target.value.toUpperCase())}
+            style={{ width: 200, fontFamily: 'monospace' }}
+            aria-label="Buscar por placa en la tabla"
+          />
           <Select
             value={statusFilter}
-            onChange={onStatusFilterChange}
+            onChange={(status) => {
+              onStatusFilterChange(status);
+              setPlateQuery('');
+            }}
             style={{ width: 200 }}
             options={[
               { value: 'pending', label: 'Pendientes por cobrar' },
@@ -424,7 +460,7 @@ export function SistemaTicketsTable({
         className="table-wide-scroll"
         rowKey="id"
         columns={columns}
-        dataSource={tickets}
+        dataSource={filteredTickets}
         loading={loading}
         size="small"
         scroll={{ x: TABLE_SCROLL_X, y: tableBodyHeight }}
